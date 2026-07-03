@@ -19,4 +19,5 @@ jobs:
           docker info
           docker buildx version
           docker compose version
+          aws sts get-caller-identity >/dev/null
           docker run --rm public.ecr.aws/docker/library/busybox:1.37.0 true

@@ -6,6 +6,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   decodeJitPayload,
   encodeJitPayload,
+  encodeRunHookPayload,
   MAX_RUN_HOOK_PAYLOAD_BYTES,
 } from "../src/payload.js";
 
@@ -35,6 +36,16 @@ describe("JIT payload codec", () => {
     expect(() =>
       encodeJitPayload(secret, () => undefined, byteLength - 1),
     ).toThrow(`${String(byteLength - 1)}-byte limit`);
+  });
+
+  it("round-trips the versioned run hook envelope without exposing it", () => {
+    const jit = "encoded-jit-secret";
+    const mask = vi.fn();
+
+    const payload = encodeRunHookPayload(jit, "us-east-1", mask);
+
+    expect(decodeJitPayload(payload)).toBe(jit);
+    expect(mask).toHaveBeenCalledWith(payload);
   });
 
   it("never includes the JIT value in errors", () => {

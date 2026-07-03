@@ -143,7 +143,7 @@ upsert_role() {
   aws iam wait role-exists --role-name "${role_name}"
 }
 
-if aws s3api head-bucket --bucket "${ARTIFACT_BUCKET}" 2>/dev/null; then
+if aws s3api head-bucket --bucket "${ARTIFACT_BUCKET}" >/dev/null 2>&1; then
   log "Using S3 bucket ${ARTIFACT_BUCKET}"
 else
   log "Creating S3 bucket ${ARTIFACT_BUCKET}"
@@ -256,7 +256,6 @@ jq -n \
 
 jq -n \
   --arg logsArn "arn:${partition}:logs:${REGION}:${account_id}:log-group:${RUNTIME_LOG_GROUP}:*" \
-  --arg microvmArn "${MICROVM_RESOURCE_ARN}" \
   '{
     Version: "2012-10-17",
     Statement: [
@@ -270,7 +269,7 @@ jq -n \
         Sid: "TerminateSelf",
         Effect: "Allow",
         Action: "lambda:TerminateMicrovm",
-        Resource: $microvmArn
+        Resource: "*"
       }
     ]
   }' >"${temporary_directory}/runtime-permissions.json"

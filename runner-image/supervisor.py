@@ -9,6 +9,7 @@ import json
 import os
 import pwd
 import random
+import re
 import shutil
 import signal
 import subprocess
@@ -366,7 +367,7 @@ class SelfTerminator:
         self.sleeper = sleeper
         self.random_source = random_source
 
-    def terminate(self, microvm_id: str) -> bool:
+    def terminate(self, microvm_id: str, region: str | None = None) -> bool:
         command = [
             "aws",
             "lambda-microvms",
@@ -374,8 +375,9 @@ class SelfTerminator:
             "--microvm-identifier",
             microvm_id,
         ]
-        if self.settings.aws_region:
-            command.extend(["--region", self.settings.aws_region])
+        selected_region = region or self.settings.aws_region
+        if selected_region:
+            command.extend(["--region", selected_region])
 
         for attempt in range(5):
             try:
@@ -426,7 +428,9 @@ class RunnerSupervisor:
 
     def run(self, payload: dict[str, Any]) -> bool:
         try:
-            microvm_id, encoded_jit_config = parse_run_payload(payload)
+            microvm_id, encoded_jit_config, aws_region = parse_run_payload(
+                payload
+            )
         except ValueError:
             log("run hook payload is invalid")
             return False
@@ -445,7 +449,9 @@ class RunnerSupervisor:
             self.external_termination = False
 
         if not self.docker.start():
-            self._fail_start(microvm_id, "docker startup failed")
+            self._fail_start(
+                microvm_id, aws_region, "docker startup failed"
+            )
             return False
 
         with self.lock:
@@ -454,13 +460,17 @@ class RunnerSupervisor:
         try:
             process = self.launcher.launch(encoded_jit_config)
         except OSError:
-            self._fail_start(microvm_id, "runner spawn failed")
+            self._fail_start(
+                microvm_id, aws_region, "runner spawn failed"
+            )
             return False
         finally:
             encoded_jit_config = ""
 
         if process.poll() is not None:
-            self._fail_start(microvm_id, "runner exited during startup")
+            self._fail_start(
+                microvm_id, aws_region, "runner exited during startup"
+            )
             return False
 
         with self.lock:
@@ -468,7 +478,7 @@ class RunnerSupervisor:
             self.state = RunnerState.RUNNING
             watcher = threading.Thread(
                 target=self._watch_runner,
-                args=(process, microvm_id),
+                args=(process, microvm_id, aws_region),
                 name="runner-watcher",
                 daemon=True,
             )
@@ -505,7 +515,10 @@ class RunnerSupervisor:
         self.terminate()
 
     def _watch_runner(
-        self, process: subprocess.Popen[bytes], microvm_id: str
+        self,
+        process: subprocess.Popen[bytes],
+        microvm_id: str,
+        aws_region: str | None,
     ) -> None:
         exit_code = process.wait()
         process.args = ["runner", "***"]
@@ -515,16 +528,18 @@ class RunnerSupervisor:
             self.state = RunnerState.TERMINATING
             should_self_terminate = not self.external_termination
         if should_self_terminate:
-            self.terminator.terminate(microvm_id)
+            self.terminator.terminate(microvm_id, aws_region)
 
-    def _fail_start(self, microvm_id: str, reason: str) -> None:
+    def _fail_start(
+        self, microvm_id: str, aws_region: str | None, reason: str
+    ) -> None:
         log(reason)
         self.docker.stop()
         with self.lock:
             self.state = RunnerState.FAILED
         thread = threading.Thread(
             target=self.terminator.terminate,
-            args=(microvm_id,),
+            args=(microvm_id, aws_region),
             name="failed-start-terminator",
             daemon=True,
         )
@@ -756,7 +771,9 @@ class Hooks(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
 
-def parse_run_payload(payload: dict[str, Any]) -> tuple[str, str]:
+def parse_run_payload(
+    payload: dict[str, Any],
+) -> tuple[str, str, str | None]:
     microvm_id = payload.get("microvmId")
     run_hook_payload = payload.get("runHookPayload")
     if (
@@ -767,7 +784,28 @@ def parse_run_payload(payload: dict[str, Any]) -> tuple[str, str]:
         or not isinstance(run_hook_payload, str)
     ):
         raise ValueError("invalid run payload")
-    return microvm_id, decode_jit_payload(run_hook_payload)
+    encoded_jit_config, aws_region = decode_run_hook_payload(run_hook_payload)
+    return microvm_id, encoded_jit_config, aws_region
+
+
+def decode_run_hook_payload(payload: str) -> tuple[str, str | None]:
+    value = decode_jit_payload(payload)
+    try:
+        envelope = json.loads(value)
+    except json.JSONDecodeError:
+        return value, None
+    if not isinstance(envelope, dict) or envelope.get("version") != 1:
+        return value, None
+    encoded_jit_config = envelope.get("jit")
+    aws_region = envelope.get("region")
+    if (
+        not isinstance(encoded_jit_config, str)
+        or not encoded_jit_config
+        or not isinstance(aws_region, str)
+        or re.fullmatch(r"[a-z]{2}(?:-[a-z0-9]+)+-\d", aws_region) is None
+    ):
+        raise ValueError("invalid run hook envelope")
+    return encoded_jit_config, aws_region
 
 
 def decode_jit_payload(payload: str) -> str:

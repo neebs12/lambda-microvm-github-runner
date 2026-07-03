@@ -7,11 +7,11 @@ ARG BUILDX_SHA256=c4248d6cbc4a619a7e0b4609c11e509ad4ac0b475e1c64817c0ac20c5d90c7
 ARG COMPOSE_VERSION=5.3.0
 ARG COMPOSE_SHA256=ba0d9f5ce70086b3830448ce2f8a6405513c996065fe45d2f7c144a1f0d99398
 ARG DOCKER_PACKAGE=docker-25.0.16-1.amzn2023.0.2.aarch64
-ARG AWSCLI_PACKAGE=awscli-2-2.33.15-1.amzn2023.0.1.noarch
+ARG AWSCLI_VERSION=2.35.13
+ARG AWSCLI_SHA256=c562b596fa9711f340c82307ca9eff576a4b96e75f1a003d1e6b2fec77820883
 
 RUN dnf install -y --setopt=install_weak_deps=0 \
       "${DOCKER_PACKAGE}" \
-      "${AWSCLI_PACKAGE}" \
       bzip2 \
       ca-certificates \
       curl-minimal \
@@ -35,6 +35,18 @@ RUN dnf install -y --setopt=install_weak_deps=0 \
       zlib \
   && dnf clean all \
   && rm -rf /var/cache/dnf /var/cache/libdnf5
+
+RUN set -eux; \
+    awscli_archive="/tmp/awscliv2.zip"; \
+    curl --fail --location --silent --show-error \
+      "https://awscli.amazonaws.com/awscli-exe-linux-aarch64-${AWSCLI_VERSION}.zip" \
+      --output "${awscli_archive}"; \
+    echo "${AWSCLI_SHA256}  ${awscli_archive}" | sha256sum --check --strict; \
+    unzip -q "${awscli_archive}" -d /tmp; \
+    /tmp/aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli; \
+    rm -rf "${awscli_archive}" /tmp/aws; \
+    aws --version; \
+    aws lambda-microvms help >/dev/null
 
 RUN set -eux; \
     runner_archive="/tmp/actions-runner.tar.gz"; \

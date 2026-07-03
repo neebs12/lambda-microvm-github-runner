@@ -11,7 +11,7 @@ import {
   createRunnerLabels,
   type WorkflowIdentity,
 } from "./identity.js";
-import { encodeJitPayload } from "./payload.js";
+import { encodeRunHookPayload } from "./payload.js";
 import { pollSequentially } from "./polling.js";
 import {
   getSafeErrorName,
@@ -92,8 +92,9 @@ export async function startRunner(
     }
 
     stage = "JIT payload encoding";
-    const runHookPayload = encodeJitPayload(
+    const runHookPayload = encodeRunHookPayload(
       jitRunner.encodedJitConfig,
+      config.region,
       (secret) => {
         reporter.setSecret(secret);
       },

@@ -110,7 +110,9 @@ class FakeTerminator:
         self.calls: list[str] = []
         self.called = threading.Event()
 
-    def terminate(self, microvm_id: str) -> bool:
+    def terminate(
+        self, microvm_id: str, _region: str | None = None
+    ) -> bool:
         self.calls.append(microvm_id)
         self.called.set()
         return True
@@ -129,7 +131,16 @@ class PayloadTests(unittest.TestCase):
                     "runHookPayload": encoded_payload(secret),
                 }
             ),
-            ("mvm-123", secret),
+            ("mvm-123", secret, None),
+        )
+
+    def test_versioned_payload_includes_termination_region(self) -> None:
+        envelope = json.dumps(
+            {"version": 1, "jit": "jit-secret", "region": "us-east-1"}
+        )
+        self.assertEqual(
+            supervisor.decode_run_hook_payload(encoded_payload(envelope)),
+            ("jit-secret", "us-east-1"),
         )
 
     def test_payload_rejects_invalid_and_oversized_values(self) -> None:
