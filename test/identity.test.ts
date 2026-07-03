@@ -58,7 +58,7 @@ describe("runner identity", () => {
     ).toEqual([
       "lambda-mvm-1-2-3-abc",
       "self-hosted",
-      "LINUX",
+      "linux",
       "ARM64",
       "lambda-microvm",
       "docker",

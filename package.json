@@ -20,7 +20,8 @@
   },
   "dependencies": {
     "@actions/core": "3.0.1",
-    "@actions/github": "9.1.1"
+    "@actions/github": "9.1.1",
+    "@aws-sdk/client-lambda-microvms": "^3.1079.0"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

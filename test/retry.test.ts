@@ -103,4 +103,33 @@ describe("bounded full-jitter retry", () => {
     expect(capacity).toHaveBeenCalledOnce();
     expect(fatal).toHaveBeenCalledOnce();
   });
+
+  it("retries HTTP throttling and transient network error codes", async () => {
+    let time = 0;
+    const task = vi
+      .fn<() => Promise<string>>()
+      .mockRejectedValueOnce(
+        Object.assign(new Error("network"), {
+          code: "ECONNRESET",
+        }),
+      )
+      .mockRejectedValueOnce({
+        name: "UnknownAwsError",
+        $metadata: { httpStatusCode: 429 },
+      })
+      .mockResolvedValue("ok");
+
+    await expect(
+      retryWithFullJitter(task, {
+        operation: "RunMicrovm",
+        deadline: 10_000,
+        random: () => 0,
+        now: () => time,
+        sleep: async (milliseconds) => {
+          time += milliseconds;
+        },
+      }),
+    ).resolves.toBe("ok");
+    expect(task).toHaveBeenCalledTimes(3);
+  });
 });

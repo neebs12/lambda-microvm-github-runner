@@ -5,17 +5,32 @@ Actions runner on an AWS Lambda MicroVM.
 
 ## Status
 
-This initial scaffold defines and tests the safety-critical local primitives:
+The Action implements and tests:
 
 - strict mode-dependent Action input parsing;
 - collision-resistant runner identity and deterministic launch client tokens;
 - masked gzip/base64 JIT payloads with a 4,096-byte limit;
 - bounded full-jitter retry and quota-aware polling;
-- typed GitHub and AWS client boundaries with scripted test doubles.
+- repository JIT creation and exact-runner readiness polling;
+- idempotent Lambda MicroVM launch, readiness, cleanup, and termination;
+- typed GitHub and AWS adapters with mocked-boundary integration tests.
 
-External GitHub and AWS orchestration is intentionally not connected in this
-scaffold. Running the Action validates its inputs and then exits with a clear
-not-yet-implemented error. No live AWS calls are made.
+The production AL2023 runner image and live account validation are the next
+release gates.
+
+## Usage
+
+The workflow needs an existing active MicroVM image, a least-privilege MicroVM
+execution role, AWS credentials obtained through GitHub OIDC, and a short-lived
+GitHub App installation token with repository Administration write access.
+
+Copy [examples/basic.yml](examples/basic.yml) into a private repository's
+`.github/workflows/` directory, configure the referenced variables and secret,
+then pin this Action and its dependencies to reviewed immutable commits.
+
+The start job emits a unique label for one target job. The runner is JIT-only
+and single-use. Its supervisor self-terminates after that job; the explicit stop
+job and platform maximum duration are independent cleanup backstops.
 
 ## Development
 

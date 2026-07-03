@@ -13,6 +13,9 @@ export type RetryOptions = {
 };
 
 export class OperationRetryError extends Error {
+  public readonly reason: "capacity" | "deadline" | "exhausted" | "fatal";
+  public readonly errorName: string | undefined;
+
   public constructor(
     operation: string,
     reason: "capacity" | "deadline" | "exhausted" | "fatal",
@@ -21,6 +24,8 @@ export class OperationRetryError extends Error {
     const suffix = errorName === undefined ? "" : ` (${errorName})`;
     super(`${operation} failed: ${reason}${suffix}`);
     this.name = "OperationRetryError";
+    this.reason = reason;
+    this.errorName = errorName;
   }
 }
 
@@ -54,7 +59,7 @@ export async function retryWithFullJitter<T>(
       return await task(attempt);
     } catch (error: unknown) {
       const classification = classify(error);
-      const name = safeErrorName(error);
+      const name = getSafeErrorName(error);
 
       if (classification === "capacity") {
         throw new OperationRetryError(options.operation, "capacity", name);
@@ -83,31 +88,36 @@ export async function retryWithFullJitter<T>(
 }
 
 export function classifyAwsError(error: unknown): RetryClassification {
-  const name = safeErrorName(error);
-  if (name === "ServiceQuotaExceededException") {
+  const identifiers = getErrorIdentifiers(error);
+  if (identifiers.includes("ServiceQuotaExceededException")) {
     return "capacity";
   }
 
-  if (
-    new Set([
-      "Throttling",
-      "ThrottlingException",
-      "TooManyRequestsException",
-      "RequestTimeout",
-      "RequestTimeoutException",
-      "TimeoutError",
-      "ServiceUnavailable",
-      "ServiceUnavailableException",
-      "InternalFailure",
-      "InternalServerError",
-      "InternalServerException",
-    ]).has(name)
-  ) {
+  const retryableNames = new Set([
+    "Throttling",
+    "ThrottlingException",
+    "TooManyRequestsException",
+    "RequestTimeout",
+    "RequestTimeoutException",
+    "TimeoutError",
+    "ServiceUnavailable",
+    "ServiceUnavailableException",
+    "InternalFailure",
+    "InternalServerError",
+    "InternalServerException",
+    "ECONNRESET",
+    "ECONNREFUSED",
+    "EAI_AGAIN",
+    "ENETUNREACH",
+  ]);
+  if (identifiers.some((identifier) => retryableNames.has(identifier))) {
     return "retryable";
   }
 
   const statusCode = safeStatusCode(error);
-  return statusCode !== undefined && statusCode >= 500 ? "retryable" : "fatal";
+  return statusCode === 429 || (statusCode !== undefined && statusCode >= 500)
+    ? "retryable"
+    : "fatal";
 }
 
 export function fullJitterDelay(
@@ -155,21 +165,26 @@ function validateOptions(
   }
 }
 
-function safeErrorName(error: unknown): string {
+export function getSafeErrorName(error: unknown): string {
+  return getErrorIdentifiers(error)[0] ?? "UnknownError";
+}
+
+function getErrorIdentifiers(error: unknown): string[] {
   if (typeof error !== "object" || error === null) {
-    return "UnknownError";
+    return [];
   }
 
+  const identifiers: string[] = [];
   for (const field of ["name", "code"] as const) {
     const value: unknown = Reflect.get(error, field) as unknown;
     if (
       typeof value === "string" &&
       /^[A-Za-z][A-Za-z0-9_.-]{0,127}$/.test(value)
     ) {
-      return value;
+      identifiers.push(value);
     }
   }
-  return "UnknownError";
+  return identifiers;
 }
 
 function safeStatusCode(error: unknown): number | undefined {

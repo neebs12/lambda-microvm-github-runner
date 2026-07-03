@@ -89,7 +89,10 @@ export function createRunnerLabels(
     ...REQUIRED_RUNNER_LABELS,
     ...additionalLabels,
   ]) {
-    labels.set(label.toLowerCase(), label);
+    const key = label.toLowerCase();
+    if (!labels.has(key)) {
+      labels.set(key, label);
+    }
   }
   return [...labels.values()];
 }
