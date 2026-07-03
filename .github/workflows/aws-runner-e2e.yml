@@ -11,6 +11,8 @@ on:
         options:
           - success
           - failure
+          - cancellation
+          - startup-timeout
           - maximum-duration
 
 permissions:
@@ -33,6 +35,7 @@ jobs:
           aws-region: ${{ vars.MICROVM_AWS_REGION }}
       - uses: ./
         id: start
+        continue-on-error: ${{ inputs.scenario == 'startup-timeout' }}
         with:
           mode: start
           github-token: ${{ secrets.RUNNER_E2E_TOKEN }}
@@ -42,10 +45,29 @@ jobs:
           cloudwatch-log-group: ${{ vars.MICROVM_RUNTIME_LOG_GROUP }}
           runner-labels: lambda-microvm,docker,e2e
           maximum-duration-seconds:
-            ${{ inputs.scenario == 'maximum-duration' && '60' || '900' }}
+            ${{ inputs.scenario == 'maximum-duration' && '60' || inputs.scenario
+            == 'cancellation' && '180' || '900' }}
+          startup-timeout-seconds:
+            ${{ inputs.scenario == 'startup-timeout' && '45' || '180' }}
+          egress-connectors:
+            ${{ inputs.scenario == 'startup-timeout' && '[]' ||
+            'INTERNET_EGRESS' }}
+      - name: Verify expected startup outcome
+        if: always()
+        env:
+          EXPECTED_FAILURE: ${{ inputs.scenario == 'startup-timeout' }}
+          START_OUTCOME: ${{ steps.start.outcome }}
+        run: |
+          if [[ "${EXPECTED_FAILURE}" == "true" ]]; then
+            test "${START_OUTCOME}" = "failure"
+          else
+            test "${START_OUTCOME}" = "success"
+          fi
 
   target:
-    if: inputs.scenario != 'maximum-duration'
+    if:
+      inputs.scenario != 'maximum-duration' && inputs.scenario !=
+      'startup-timeout'
     needs: start-runner
     runs-on: ${{ needs.start-runner.outputs.label }}
     timeout-minutes: 15
@@ -120,6 +142,10 @@ jobs:
       - name: Exercise failing-job cleanup
         if: inputs.scenario == 'failure'
         run: exit 1
+
+      - name: Wait for cancellation
+        if: inputs.scenario == 'cancellation'
+        run: sleep 300
 
   duration-audit:
     if: inputs.scenario == 'maximum-duration'
