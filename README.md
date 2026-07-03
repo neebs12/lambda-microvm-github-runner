@@ -15,8 +15,9 @@ The Action implements and tests:
 - idempotent Lambda MicroVM launch, readiness, cleanup, and termination;
 - typed GitHub and AWS adapters with mocked-boundary integration tests.
 
-The production AL2023 runner image and live account validation are the next
-release gates.
+The production AL2023 runner image is implemented and locally validated,
+including nested Docker with the documented local `vfs` fallback. AWS image
+build and private-repository end-to-end validation remain release gates.
 
 ## Usage
 
