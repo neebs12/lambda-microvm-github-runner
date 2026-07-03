@@ -50,6 +50,28 @@ export function encodeJitPayload(
   return payload;
 }
 
+export function encodeRunHookPayload(
+  encodedJitConfig: string,
+  region: string,
+  maskSecret: SecretMasker,
+  maximumBytes = MAX_RUN_HOOK_PAYLOAD_BYTES,
+): string {
+  maskSecret(encodedJitConfig);
+  return encodeJitPayload(
+    JSON.stringify({
+      version: 1,
+      jit: encodedJitConfig,
+      region,
+    }),
+    (value) => {
+      if (value !== encodedJitConfig) {
+        maskSecret(value);
+      }
+    },
+    maximumBytes,
+  );
+}
+
 export function decodeJitPayload(payload: string): string {
   if (
     payload.length === 0 ||
@@ -60,10 +82,30 @@ export function decodeJitPayload(payload: string): string {
   }
 
   try {
-    return gunzipSync(Buffer.from(payload, "base64"), {
+    const decoded = gunzipSync(Buffer.from(payload, "base64"), {
       maxOutputLength: MAX_JIT_CONFIG_BYTES,
     }).toString("utf8");
+    const envelope = parseRunHookEnvelope(decoded);
+    return envelope ?? decoded;
   } catch {
     throw new PayloadEncodingError("payload decompression failed");
   }
+}
+
+function parseRunHookEnvelope(value: string): string | undefined {
+  try {
+    const parsed: unknown = JSON.parse(value);
+    if (
+      typeof parsed === "object" &&
+      parsed !== null &&
+      Reflect.get(parsed, "version") === 1 &&
+      typeof Reflect.get(parsed, "jit") === "string" &&
+      typeof Reflect.get(parsed, "region") === "string"
+    ) {
+      return Reflect.get(parsed, "jit") as string;
+    }
+  } catch {
+    return undefined;
+  }
+  return undefined;
 }

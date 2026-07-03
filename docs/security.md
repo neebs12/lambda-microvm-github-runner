@@ -15,6 +15,9 @@ and trusted workflow changes only. Public fork pull requests are unsupported.
 - GitHub-hosted start and stop jobs obtain AWS credentials through OIDC.
 - The default MicroVM execution role can write its logs and terminate runner
   MicroVMs. It has no application deployment permissions.
+- The runtime role's only unscoped resource permission is
+  `lambda:TerminateMicrovm`, because that API does not expose a per-instance IAM
+  resource ARN. No other Lambda or application action is granted by it.
 - Deployment jobs should assume a separate role through GitHub OIDC.
 
 The GitHub App private key never enters the MicroVM. No long-lived AWS key is

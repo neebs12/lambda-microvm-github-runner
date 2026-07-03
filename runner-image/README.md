@@ -8,7 +8,7 @@ ARM64 throughout. The Dockerfile pins and verifies:
 - Docker Engine RPM 25.0.16;
 - Docker Buildx 0.35.0;
 - Docker Compose 5.3.0;
-- AWS CLI 2.33.15.
+- AWS CLI 2.35.13, including the `lambda-microvms` service model.
 
 The image snapshot contains no registered runner, JIT configuration, Docker
 daemon, or live network connection. The lifecycle supervisor starts Docker and
@@ -46,5 +46,5 @@ Production keeps `ALLOW_VFS_FALLBACK=false`; AWS image validation fails unless
 - `/run`, `/resume`, `/suspend`, and `/terminate` runtime hooks enabled.
 
 Runner launches should use managed `NO_INGRESS` and `INTERNET_EGRESS`. The
-MicroVM execution role needs CloudWatch log delivery and scoped
-`lambda:TerminateMicrovm` permission for the supervisor's cleanup call.
+MicroVM execution role needs CloudWatch log delivery and only the
+`lambda:TerminateMicrovm` action for the supervisor's cleanup call.

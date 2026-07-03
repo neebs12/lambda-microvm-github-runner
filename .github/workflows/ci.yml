@@ -59,4 +59,5 @@ jobs:
               docker buildx version
               docker compose version
               aws --version
+              aws lambda-microvms help >/dev/null
             '
