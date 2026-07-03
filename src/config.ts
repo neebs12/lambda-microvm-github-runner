@@ -102,15 +102,16 @@ export function parseActionConfig(
     validateIdempotencyKey(idempotencyKey);
   }
 
+  const imageId = validateOpaqueIdentifier(
+    required(raw.imageId, "image-id"),
+    "image-id",
+  );
   const config: StartConfig = {
     mode,
     region,
     debug,
     githubToken: required(raw.githubToken, "github-token"),
-    imageId: validateOpaqueIdentifier(
-      required(raw.imageId, "image-id"),
-      "image-id",
-    ),
+    imageId,
     executionRoleArn: validateRoleArn(
       required(raw.executionRoleArn, "execution-role-arn"),
     ),
@@ -135,13 +136,21 @@ export function parseActionConfig(
       1,
       MAX_STARTUP_TIMEOUT_SECONDS,
     ),
-    egressConnectors: parseConnectorList(
-      optional(raw.egressConnectors) ?? "INTERNET_EGRESS",
-      "egress-connectors",
+    egressConnectors: expandManagedConnectors(
+      parseConnectorList(
+        optional(raw.egressConnectors) ?? "INTERNET_EGRESS",
+        "egress-connectors",
+      ),
+      region,
+      imageId,
     ),
-    ingressConnectors: parseConnectorList(
-      optional(raw.ingressConnectors) ?? "NO_INGRESS",
-      "ingress-connectors",
+    ingressConnectors: expandManagedConnectors(
+      parseConnectorList(
+        optional(raw.ingressConnectors) ?? "NO_INGRESS",
+        "ingress-connectors",
+      ),
+      region,
+      imageId,
     ),
     ...(imageVersion === undefined ? {} : { imageVersion }),
     ...(cloudwatchLogGroup === undefined ? {} : { cloudwatchLogGroup }),
@@ -253,6 +262,27 @@ function parseConnectorList(value: string, field: string): string[] {
     }
     return trimmed;
   });
+}
+
+function expandManagedConnectors(
+  connectors: string[],
+  region: string,
+  imageId: string,
+): string[] {
+  const imagePartition = /^arn:([^:]+):/.exec(imageId)?.[1];
+  const partition =
+    imagePartition ??
+    (region.startsWith("cn-")
+      ? "aws-cn"
+      : region.startsWith("us-gov-")
+        ? "aws-us-gov"
+        : "aws");
+
+  return connectors.map((connector) =>
+    connector === "INTERNET_EGRESS" || connector === "NO_INGRESS"
+      ? `arn:${partition}:lambda:${region}:aws:network-connector:aws-network-connector:${connector}`
+      : connector,
+  );
 }
 
 function parseCommaSeparated(value: string, field: string): string[] {
