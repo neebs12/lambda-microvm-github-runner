@@ -41,9 +41,17 @@ Every candidate version must prove in AWS:
 
 ## Private repository gate
 
-The manual `.github/workflows/aws-runner-target.yml` job waits for a runner with
-the additional `e2e` label. Launch a candidate with that label to exercise
-checkout, the ARM64 host, Docker, Buildx, Compose, and a nested container.
+The manual `.github/workflows/aws-runner-e2e.yml` workflow exercises the
+production three-job pattern through the GitHub OIDC role. Set a temporary
+`RUNNER_E2E_TOKEN` repository secret with Administration read/write permission,
+then run its `success`, `failure`, and `maximum-duration` scenarios. Remove the
+secret after testing. The workflow verifies checkout, the ARM64 host, Docker,
+Buildx, Compose, service containers, DNS, egress, failure cleanup, idempotent
+stop, and the platform duration backstop.
+
+The lower-level `.github/workflows/aws-runner-target.yml` job remains available
+for a runner launched outside GitHub Actions. It waits for a runner with the
+additional `e2e` label.
 
 Run successful and failing target jobs, Docker builds, service containers,
 Compose, cancellation, startup timeout cleanup, duplicate launch retry, two

@@ -1,0 +1,189 @@
+name: AWS runner end to end
+
+on:
+  workflow_dispatch:
+    inputs:
+      scenario:
+        description: Lifecycle scenario to verify
+        required: true
+        type: choice
+        default: success
+        options:
+          - success
+          - failure
+          - maximum-duration
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  start-runner:
+    runs-on: ubuntu-latest
+    outputs:
+      label: ${{ steps.start.outputs.label }}
+      microvm-id: ${{ steps.start.outputs.microvm-id }}
+      region: ${{ steps.start.outputs.region }}
+      runner-id: ${{ steps.start.outputs.runner-id }}
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      - uses: aws-actions/configure-aws-credentials@254c19bd240aabef8777f48595e9d2d7b972184b # v6.2.1
+        with:
+          role-to-assume: ${{ vars.MICROVM_LAUNCH_ROLE_ARN }}
+          aws-region: ${{ vars.MICROVM_AWS_REGION }}
+      - uses: ./
+        id: start
+        with:
+          mode: start
+          github-token: ${{ secrets.RUNNER_E2E_TOKEN }}
+          image-id: ${{ vars.MICROVM_RUNNER_IMAGE_ARN }}
+          image-version: ${{ vars.MICROVM_RUNNER_IMAGE_VERSION }}
+          execution-role-arn: ${{ vars.MICROVM_EXECUTION_ROLE_ARN }}
+          cloudwatch-log-group: ${{ vars.MICROVM_RUNTIME_LOG_GROUP }}
+          runner-labels: lambda-microvm,docker,e2e
+          maximum-duration-seconds:
+            ${{ inputs.scenario == 'maximum-duration' && '60' || '900' }}
+
+  target:
+    if: inputs.scenario != 'maximum-duration'
+    needs: start-runner
+    runs-on: ${{ needs.start-runner.outputs.label }}
+    timeout-minutes: 15
+    services:
+      redis:
+        image: public.ecr.aws/docker/library/redis:7.4.2-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping" --health-interval 2s --health-timeout 2s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      - name: Verify host, service container, and egress
+        run: |
+          set -euo pipefail
+          test "$(uname -m)" = "aarch64"
+          docker info
+          docker buildx version
+          docker compose version
+          aws sts get-caller-identity >/dev/null
+          docker run --rm --network host \
+            public.ecr.aws/docker/library/busybox:1.37.0 \
+            sh -ec '
+              nc -z 127.0.0.1 6379
+              nslookup github.com
+              wget --spider https://github.com
+            '
+
+      - name: Build and run an ARM64 image with Buildx
+        run: |
+          set -euo pipefail
+          build_dir="$(mktemp -d)"
+          trap 'rm -rf "${build_dir}"' EXIT
+          cat >"${build_dir}/Dockerfile" <<'EOF'
+          FROM public.ecr.aws/docker/library/busybox:1.37.0@sha256:9532d8c39891ca2ecde4d30d7710e01fb739c87a8b9299685c63704296b16028
+          RUN printf 'buildx-ok\n' >/result
+          CMD ["cat", "/result"]
+          EOF
+          docker buildx build \
+            --platform linux/arm64 \
+            --load \
+            --tag lambda-microvm-buildx:e2e \
+            "${build_dir}"
+          test "$(docker run --rm lambda-microvm-buildx:e2e)" = "buildx-ok"
+
+      - name: Verify Compose bridge DNS and TCP
+        run: |
+          set -euo pipefail
+          compose_dir="$(mktemp -d)"
+          trap 'docker compose -f "${compose_dir}/compose.yml" down --volumes; rm -rf "${compose_dir}"' EXIT
+          cat >"${compose_dir}/compose.yml" <<'EOF'
+          services:
+            redis:
+              image: public.ecr.aws/docker/library/redis:7.4.2-alpine
+              healthcheck:
+                test: ["CMD", "redis-cli", "ping"]
+                interval: 2s
+                timeout: 2s
+                retries: 20
+            probe:
+              image: public.ecr.aws/docker/library/busybox:1.37.0
+              depends_on:
+                redis:
+                  condition: service_healthy
+              command: ["sh", "-ec", "nc -z redis 6379 && nslookup github.com"]
+          EOF
+          docker compose -f "${compose_dir}/compose.yml" up \
+            --abort-on-container-exit \
+            --exit-code-from probe
+
+      - name: Exercise failing-job cleanup
+        if: inputs.scenario == 'failure'
+        run: exit 1
+
+  duration-audit:
+    if: inputs.scenario == 'maximum-duration'
+    needs: start-runner
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - uses: aws-actions/configure-aws-credentials@254c19bd240aabef8777f48595e9d2d7b972184b # v6.2.1
+        with:
+          role-to-assume: ${{ vars.MICROVM_LAUNCH_ROLE_ARN }}
+          aws-region: ${{ needs.start-runner.outputs.region }}
+      - name: Verify platform-enforced termination
+        env:
+          MICROVM_ID: ${{ needs.start-runner.outputs.microvm-id }}
+        run: |
+          sleep 90
+          node --input-type=module <<'NODE'
+          import {
+            GetMicrovmCommand,
+            LambdaMicrovmsClient,
+          } from "@aws-sdk/client-lambda-microvms";
+
+          const client = new LambdaMicrovmsClient({
+            region: process.env.AWS_REGION,
+          });
+          try {
+            const result = await client.send(
+              new GetMicrovmCommand({
+                microvmIdentifier: process.env.MICROVM_ID,
+              }),
+            );
+            if (result.state !== "TERMINATED") {
+              throw new Error(`MicroVM remained in state ${result.state}`);
+            }
+          } catch (error) {
+            if (error?.name !== "ResourceNotFoundException") {
+              throw error;
+            }
+          }
+          NODE
+      - name: Remove the unused JIT runner
+        env:
+          GH_TOKEN: ${{ secrets.RUNNER_E2E_TOKEN }}
+          RUNNER_ID: ${{ needs.start-runner.outputs.runner-id }}
+        run:
+          gh api --method DELETE
+          "repos/${GITHUB_REPOSITORY}/actions/runners/${RUNNER_ID}"
+
+  stop-runner:
+    if: always() && needs.start-runner.outputs.microvm-id != ''
+    needs: [start-runner, target, duration-audit]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      - uses: aws-actions/configure-aws-credentials@254c19bd240aabef8777f48595e9d2d7b972184b # v6.2.1
+        with:
+          role-to-assume: ${{ vars.MICROVM_LAUNCH_ROLE_ARN }}
+          aws-region: ${{ needs.start-runner.outputs.region }}
+      - uses: ./
+        with:
+          mode: stop
+          microvm-id: ${{ needs.start-runner.outputs.microvm-id }}
