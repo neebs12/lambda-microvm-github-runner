@@ -8,10 +8,12 @@ documented baseline includes 5 `RunMicrovm` requests per second with burst 5, 10
 requests per second with burst 100.
 
 The Action uses bounded full-jitter launch and termination retries, a stable
-launch client token, randomized sequential polling, and immediate failure for
-capacity exhaustion. For sustained rates above the launch quota, request a quota
-increase or shape GitHub workflow concurrency. Do not add an internal queue to
-this product.
+launch client token, an initial polling spread of up to 5 seconds, randomized
+sequential polling at 2.5–5 second intervals, and immediate failure for capacity
+exhaustion. The defaults keep a simulated 200 simultaneous starts within the 100
+`GetMicrovm` requests-per-second baseline. For sustained rates above the launch
+quota, request a quota increase or shape GitHub workflow concurrency. Do not add
+an internal queue to this product.
 
 ## Logs
 

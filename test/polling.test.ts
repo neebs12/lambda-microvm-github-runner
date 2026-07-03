@@ -35,7 +35,51 @@ describe("quota-aware polling", () => {
 
     expect(result).toBe("RUNNING");
     expect(maximumActive).toBe(1);
-    expect(sleep.mock.calls).toEqual([[1_000], [1_500], [2_250]]);
+    expect(sleep.mock.calls).toEqual([[2_500], [1_875], [2_813]]);
+  });
+
+  it("keeps 200 simulated starters within the 100 TPS polling budget", async () => {
+    const observationTimes: number[] = [];
+
+    await Promise.all(
+      Array.from({ length: 200 }, async (_value, runnerIndex) => {
+        let time = 0;
+        let observations = 0;
+        let seed = Math.imul(runnerIndex + 1, 2_654_435_761) >>> 0;
+        const random = (): number => {
+          seed = (Math.imul(1_664_525, seed) + 1_013_904_223) >>> 0;
+          return seed / 2 ** 32;
+        };
+
+        await pollSequentially({
+          operation: "GetMicrovm",
+          deadline: 60_000,
+          observe: async () => {
+            observationTimes.push(time);
+            observations += 1;
+            return observations;
+          },
+          decide: (value) =>
+            value === 5
+              ? { status: "success", value: undefined }
+              : { status: "pending" },
+          random,
+          now: () => time,
+          sleep: async (milliseconds) => {
+            time += milliseconds;
+          },
+        });
+      }),
+    );
+
+    const callsPerSecond = new Map<number, number>();
+    for (const time of observationTimes) {
+      const second = Math.floor(time / 1_000);
+      callsPerSecond.set(second, (callsPerSecond.get(second) ?? 0) + 1);
+    }
+
+    expect(observationTimes).toHaveLength(1_000);
+    expect(Math.max(...callsPerSecond.values())).toBeLessThanOrEqual(100);
   });
 
   it("stops immediately on a terminal state and sanitizes its reason", async () => {

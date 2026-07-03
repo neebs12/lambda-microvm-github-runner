@@ -2,6 +2,12 @@ name: AWS runner target
 
 on:
   workflow_dispatch:
+    inputs:
+      fail_target:
+        description: Fail after all runtime checks to verify cleanup
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -77,3 +83,7 @@ jobs:
           docker compose -f "${compose_dir}/compose.yml" up \
             --abort-on-container-exit \
             --exit-code-from probe
+
+      - name: Exercise failing-job cleanup
+        if: inputs.fail_target
+        run: exit 1

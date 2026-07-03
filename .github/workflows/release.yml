@@ -18,6 +18,8 @@ jobs:
           node-version: "24"
           cache: npm
       - run: npm ci
+      - name: Audit Node dependencies
+        run: npm audit --audit-level=high
       - run: npm run check
       - name: Verify committed Action bundle
         run: git diff --exit-code -- dist
@@ -32,6 +34,13 @@ jobs:
           platforms: linux/arm64
           tags: lambda-microvm-github-runner:release
           load: true
+      - name: Scan runner image
+        uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2 # v7.4.0
+        with:
+          image: lambda-microvm-github-runner:release
+          fail-build: true
+          severity-cutoff: high
+          only-fixed: true
       - run: mkdir -p build
       - name: Generate runner image SBOM
         uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0
