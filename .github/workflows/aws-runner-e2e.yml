@@ -48,10 +48,7 @@ jobs:
             ${{ inputs.scenario == 'maximum-duration' && '60' || inputs.scenario
             == 'cancellation' && '180' || '900' }}
           startup-timeout-seconds:
-            ${{ inputs.scenario == 'startup-timeout' && '45' || '180' }}
-          egress-connectors:
-            ${{ inputs.scenario == 'startup-timeout' && '[]' ||
-            'INTERNET_EGRESS' }}
+            ${{ inputs.scenario == 'startup-timeout' && '1' || '180' }}
       - name: Verify expected startup outcome
         if: always()
         env:
