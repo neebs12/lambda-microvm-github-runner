@@ -11,7 +11,7 @@ npm run test:image
 npm audit --audit-level=high
 ```
 
-`npm run check` covers strict TypeScript, 56 Action tests, 17 supervisor tests,
+`npm run check` covers strict TypeScript, 57 Action tests, 17 supervisor tests,
 and the bundled Action. Supervisor tests also run successfully under the image's
 Python 3.9 runtime.
 

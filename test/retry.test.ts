@@ -74,6 +74,40 @@ describe("bounded full-jitter retry", () => {
     expect(observedTokens).toEqual([clientToken, clientToken, clientToken]);
   });
 
+  it("allows a five-launch burst without serializing independent starters", async () => {
+    let active = 0;
+    let releaseBurst: (() => void) | undefined;
+    const burstReady = new Promise<void>((resolve) => {
+      releaseBurst = resolve;
+    });
+    const observedTokens: string[] = [];
+
+    const results = await Promise.all(
+      Array.from({ length: 5 }, async (_value, index) => {
+        const clientToken = `stable-token-${String(index)}`;
+        return retryWithFullJitter(
+          async () => {
+            observedTokens.push(clientToken);
+            active += 1;
+            if (active === 5) {
+              releaseBurst?.();
+            }
+            await burstReady;
+            return `mvm-${String(index)}`;
+          },
+          {
+            operation: "RunMicrovm",
+            deadline: Date.now() + 10_000,
+          },
+        );
+      }),
+    );
+
+    expect(results).toEqual(["mvm-0", "mvm-1", "mvm-2", "mvm-3", "mvm-4"]);
+    expect(new Set(observedTokens).size).toBe(5);
+    expect(observedTokens).toHaveLength(5);
+  });
+
   it("does not retry capacity or fatal failures", async () => {
     const capacity = vi.fn(async () => {
       throw Object.assign(new Error("account details"), {
