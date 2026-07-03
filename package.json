@@ -26,6 +26,8 @@
     "@aws-sdk/client-lambda-microvms": "^3.1079.0"
   },
   "devDependencies": {
+    "@emnapi/core": "1.11.1",
+    "@emnapi/runtime": "1.11.1",
     "@eslint/js": "10.0.1",
     "@types/node": "24.13.2",
     "@vercel/ncc": "0.44.1",
