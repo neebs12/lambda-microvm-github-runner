@@ -1,0 +1,22 @@
+name: AWS runner target
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  target:
+    runs-on: [self-hosted, lambda-microvm, e2e]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      - name: Verify host and Docker
+        run: |
+          set -euo pipefail
+          test "$(uname -m)" = "aarch64"
+          docker info
+          docker buildx version
+          docker compose version
+          docker run --rm public.ecr.aws/docker/library/busybox:1.37.0 true

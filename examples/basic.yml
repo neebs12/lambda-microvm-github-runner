@@ -19,7 +19,7 @@ jobs:
       - uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ vars.MICROVM_LAUNCH_ROLE_ARN }}
-          aws-region: us-east-1
+          aws-region: ${{ vars.MICROVM_AWS_REGION }}
 
       - uses: actions/create-github-app-token@v3
         id: app-token
@@ -35,6 +35,7 @@ jobs:
           image-id: ${{ vars.MICROVM_RUNNER_IMAGE_ARN }}
           image-version: ${{ vars.MICROVM_RUNNER_IMAGE_VERSION }}
           execution-role-arn: ${{ vars.MICROVM_EXECUTION_ROLE_ARN }}
+          cloudwatch-log-group: ${{ vars.MICROVM_RUNTIME_LOG_GROUP }}
           maximum-duration-seconds: "3600"
 
   job:

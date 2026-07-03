@@ -169,6 +169,8 @@ class DockerManagerTests(unittest.TestCase):
                         command: list[str], **_kwargs: object
                     ) -> FakeDockerProcess:
                         nonlocal active_driver
+                        if command[0] == "containerd":
+                            return FakeDockerProcess(exited=False)
                         active_driver = next(
                             value.split("=", 1)[1]
                             for value in command
@@ -182,6 +184,8 @@ class DockerManagerTests(unittest.TestCase):
                     def run_command(
                         command: list[str], **_kwargs: object
                     ) -> subprocess.CompletedProcess[bytes]:
+                        if command[0] == "ctr":
+                            return subprocess.CompletedProcess(command, 0)
                         if "--format" in command:
                             return subprocess.CompletedProcess(
                                 command,

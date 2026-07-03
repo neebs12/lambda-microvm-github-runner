@@ -1,5 +1,6 @@
 node_modules/
 coverage/
+build/
 __pycache__/
 *.py[cod]
 *.log
