@@ -17,6 +17,8 @@ export type PollingOptions<TObserved, TResult> = {
 };
 
 export class PollingError extends Error {
+  public readonly reason: "deadline" | "terminal";
+
   public constructor(
     operation: string,
     reason: "deadline" | "terminal",
@@ -25,6 +27,7 @@ export class PollingError extends Error {
     const suffix = detail === undefined ? "" : ` (${detail})`;
     super(`${operation} polling failed: ${reason}${suffix}`);
     this.name = "PollingError";
+    this.reason = reason;
   }
 }
 
@@ -44,8 +47,10 @@ export async function pollSequentially<TObserved, TResult>(
     initialDelayMaxMs,
     baseIntervalMs,
     maxIntervalMs,
-    now,
   );
+  if (now() >= options.deadline) {
+    throw new PollingError(options.operation, "deadline");
+  }
 
   const initialDelay = Math.floor(
     assertRandom(random()) * (initialDelayMaxMs + 1),
@@ -101,12 +106,10 @@ function validateOptions(
   initialDelayMaxMs: number,
   baseIntervalMs: number,
   maxIntervalMs: number,
-  now: () => number,
 ): void {
   if (
     operation.trim().length === 0 ||
     !Number.isSafeInteger(deadline) ||
-    deadline <= now() ||
     !Number.isSafeInteger(initialDelayMaxMs) ||
     initialDelayMaxMs < 0 ||
     !Number.isSafeInteger(baseIntervalMs) ||

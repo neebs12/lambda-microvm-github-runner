@@ -5,7 +5,6 @@ import { describe, expect, it, vi } from "vitest";
 import type { StartConfig, StopConfig } from "../src/config.js";
 import { decodeJitPayload } from "../src/payload.js";
 import {
-  ActionExecutionError,
   startRunner,
   stopRunner,
   type ActionReporter,
@@ -167,7 +166,7 @@ describe("Action orchestration", () => {
         createReporter().api,
         runtime.api,
       ),
-    ).rejects.toEqual(expect.any(ActionExecutionError));
+    ).rejects.toThrow("GitHub runner readiness timed out in us-east-1");
 
     expect(microvms.terminateRequests).toEqual(["mvm-1"]);
     expect(github.deleteRequests).toEqual([42]);
