@@ -15,9 +15,28 @@ The Action implements and tests:
 - idempotent Lambda MicroVM launch, readiness, cleanup, and termination;
 - typed GitHub and AWS adapters with mocked-boundary integration tests.
 
-The production AL2023 runner image is implemented and locally validated,
-including nested Docker with the documented local `vfs` fallback. AWS image
-build and private-repository end-to-end validation remain release gates.
+The production AL2023 runner image is implemented and validated locally and
+through the AWS image build hooks with production `overlay2`. Private-repository
+end-to-end validation remains a release gate.
+
+## Minimal setup
+
+The setup is two direct scripts. It does not require an infrastructure
+framework:
+
+```bash
+export AWS_REGION=us-east-1
+export GITHUB_REPOSITORY=OWNER/PRIVATE_REPOSITORY
+
+scripts/bootstrap-aws.sh
+scripts/build-microvm-image.sh
+```
+
+The first command idempotently creates the private S3 artifact bucket,
+CloudWatch log groups, GitHub OIDC provider, and three least-privilege IAM
+roles. It saves the discovered resource values to `build/aws-setup.json`. The
+second command consumes that file automatically and saves the active image
+details to `build/microvm-image.json`.
 
 ## Usage
 
@@ -51,6 +70,14 @@ Version 1 is ARM64, JIT-only, repository-scoped, and intended for private
 repositories with trusted workflow changes. It has no webhook, queue,
 dispatcher, warm pool, shell ingress, persistent runner, or boot-time package
 installation.
+
+Detailed guides:
+
+- [installation](docs/installation.md)
+- [security model](docs/security.md)
+- [operations and quotas](docs/operations.md)
+- [testing and release gates](docs/testing.md)
+- [runner image](runner-image/README.md)
 
 ## License
 

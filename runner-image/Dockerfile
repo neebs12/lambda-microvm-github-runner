@@ -77,8 +77,8 @@ RUN chmod 0755 /opt/runner-supervisor/supervisor.py
 ENV HOOK_PORT=9000 \
     DOCKER_DNS=169.254.169.253 \
     DOCKER_STORAGE_DRIVER=overlay2 \
-    DOCKERD_START_ATTEMPTS=2 \
-    DOCKERD_START_TIMEOUT=20 \
+    DOCKERD_START_ATTEMPTS=1 \
+    DOCKERD_START_TIMEOUT=50 \
     ALLOW_VFS_FALLBACK=false \
     RUNNER_ROOT=/opt/actions-runner \
     RUNNER_USER=runner

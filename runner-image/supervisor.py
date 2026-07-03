@@ -27,6 +27,7 @@ HOOK_PREFIX = "/aws/lambda-microvms/runtime/v1"
 MAX_HOOK_BODY_BYTES = 8_192
 MAX_RUN_HOOK_PAYLOAD_BYTES = 4_096
 MAX_JIT_CONFIG_BYTES = 1024 * 1024
+CONTAINERD_SOCKET = "/run/containerd/containerd.sock"
 
 
 def log(message: str) -> None:
@@ -38,8 +39,8 @@ class Settings:
     hook_port: int = 9000
     docker_dns: str = "169.254.169.253"
     docker_storage_driver: str = "overlay2"
-    docker_start_attempts: int = 2
-    docker_start_timeout: int = 20
+    docker_start_attempts: int = 1
+    docker_start_timeout: int = 50
     allow_vfs_fallback: bool = False
     docker_log: Path = Path("/tmp/dockerd.log")
     runner_root: Path = Path("/opt/actions-runner")
@@ -58,10 +59,10 @@ class Settings:
                 "DOCKER_STORAGE_DRIVER", "overlay2"
             ),
             docker_start_attempts=_integer_environment(
-                "DOCKERD_START_ATTEMPTS", 2, 1, 10
+                "DOCKERD_START_ATTEMPTS", 1, 1, 10
             ),
             docker_start_timeout=_integer_environment(
-                "DOCKERD_START_TIMEOUT", 20, 1, 300
+                "DOCKERD_START_TIMEOUT", 50, 1, 300
             ),
             allow_vfs_fallback=_boolean_environment(
                 "ALLOW_VFS_FALLBACK", False
@@ -102,6 +103,7 @@ class DockerManager:
         self.clock = clock
         self.sleeper = sleeper
         self.process: subprocess.Popen[bytes] | None = None
+        self.containerd_process: subprocess.Popen[bytes] | None = None
         self.lock = threading.RLock()
 
     def is_ready(self) -> bool:
@@ -150,14 +152,26 @@ class DockerManager:
                 for driver in drivers:
                     self._stop_process()
                     Path("/var/run").mkdir(parents=True, exist_ok=True)
+                    Path("/run/containerd").mkdir(
+                        parents=True, exist_ok=True
+                    )
                     Path("/var/lib/docker").mkdir(
                         parents=True, exist_ok=True
                     )
                     Path("/var/run/docker.sock").unlink(missing_ok=True)
+                    Path(CONTAINERD_SOCKET).unlink(missing_ok=True)
+
+                    deadline = (
+                        self.clock() + self.settings.docker_start_timeout
+                    )
+                    if not self._start_containerd(deadline):
+                        self._log_tail()
+                        continue
 
                     command = [
                         "dockerd",
                         "--host=unix:///var/run/docker.sock",
+                        f"--containerd={CONTAINERD_SOCKET}",
                         f"--storage-driver={driver}",
                         "--exec-opt",
                         "native.cgroupdriver=cgroupfs",
@@ -178,9 +192,6 @@ class DockerManager:
                             stderr=subprocess.STDOUT,
                         )
 
-                    deadline = (
-                        self.clock() + self.settings.docker_start_timeout
-                    )
                     while self.clock() < deadline:
                         if self.is_ready():
                             if self._driver_is_accepted():
@@ -192,7 +203,10 @@ class DockerManager:
                             self.process is not None
                             and self.process.poll() is not None
                         ):
-                            log("dockerd exited before becoming ready")
+                            log(
+                                "dockerd exited before becoming ready "
+                                f"(status={self.process.poll()})"
+                            )
                             self._log_tail()
                             break
                         self.sleeper(1)
@@ -210,6 +224,49 @@ class DockerManager:
         with self.lock:
             self._stop_process()
 
+    def _start_containerd(self, deadline: float) -> bool:
+        command = [
+            "containerd",
+            "--address",
+            CONTAINERD_SOCKET,
+            "--log-level",
+            "warn",
+        ]
+        log("starting containerd")
+        with self.settings.docker_log.open("ab") as output:
+            self.containerd_process = self.popen(
+                command,
+                stdout=output,
+                stderr=subprocess.STDOUT,
+            )
+
+        while self.clock() < deadline:
+            try:
+                result = self.run_command(
+                    ["ctr", "--address", CONTAINERD_SOCKET, "version"],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    timeout=5,
+                    check=False,
+                )
+                if result.returncode == 0:
+                    log("containerd ready")
+                    return True
+            except (OSError, subprocess.TimeoutExpired):
+                pass
+            if (
+                self.containerd_process is not None
+                and self.containerd_process.poll() is not None
+            ):
+                log(
+                    "containerd exited before becoming ready "
+                    f"(status={self.containerd_process.poll()})"
+                )
+                return False
+            self.sleeper(1)
+        log("containerd readiness timed out")
+        return False
+
     def _driver_is_accepted(self) -> bool:
         driver = self.storage_driver()
         return driver == self.settings.docker_storage_driver or (
@@ -225,6 +282,17 @@ class DockerManager:
                 self.process.kill()
                 self.process.wait(timeout=5)
         self.process = None
+        if (
+            self.containerd_process is not None
+            and self.containerd_process.poll() is None
+        ):
+            self.containerd_process.terminate()
+            try:
+                self.containerd_process.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                self.containerd_process.kill()
+                self.containerd_process.wait(timeout=5)
+        self.containerd_process = None
 
     def _log_tail(self, lines: int = 40) -> None:
         try:
