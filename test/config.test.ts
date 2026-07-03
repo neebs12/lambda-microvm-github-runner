@@ -30,8 +30,12 @@ describe("parseActionConfig", () => {
       runnerLabels: ["lambda-microvm", "docker"],
       maximumDurationSeconds: 3_600,
       startupTimeoutSeconds: 180,
-      egressConnectors: ["INTERNET_EGRESS"],
-      ingressConnectors: ["NO_INGRESS"],
+      egressConnectors: [
+        "arn:aws:lambda:us-east-1:aws:network-connector:aws-network-connector:INTERNET_EGRESS",
+      ],
+      ingressConnectors: [
+        "arn:aws:lambda:us-east-1:aws:network-connector:aws-network-connector:NO_INGRESS",
+      ],
     });
   });
 
@@ -139,6 +143,30 @@ describe("parseActionConfig", () => {
       expect(config.egressConnectors).toEqual(["connector-a", "connector-b"]);
       expect(config.ingressConnectors).toEqual(["connector-c", "connector-d"]);
     }
+  });
+
+  it("expands managed connector names using the image partition", () => {
+    const config = parseActionConfig(
+      {
+        ...validStartInputs,
+        region: "us-gov-west-1",
+        imageId:
+          "arn:aws-us-gov:lambda:us-gov-west-1:123456789012:microvm-image:runner",
+        egressConnectors: "INTERNET_EGRESS,connector-a",
+        ingressConnectors: '["NO_INGRESS"]',
+      },
+      {},
+    );
+
+    expect(config).toMatchObject({
+      egressConnectors: [
+        "arn:aws-us-gov:lambda:us-gov-west-1:aws:network-connector:aws-network-connector:INTERNET_EGRESS",
+        "connector-a",
+      ],
+      ingressConnectors: [
+        "arn:aws-us-gov:lambda:us-gov-west-1:aws:network-connector:aws-network-connector:NO_INGRESS",
+      ],
+    });
   });
 
   it("does not include secret input values in validation errors", () => {
