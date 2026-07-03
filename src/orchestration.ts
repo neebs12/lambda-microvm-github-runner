@@ -12,7 +12,7 @@ import {
   type WorkflowIdentity,
 } from "./identity.js";
 import { encodeRunHookPayload } from "./payload.js";
-import { pollSequentially } from "./polling.js";
+import { PollingError, pollSequentially } from "./polling.js";
 import {
   getSafeErrorName,
   OperationRetryError,
@@ -348,6 +348,12 @@ function userFacingFailure(
     return new ActionExecutionError(
       `${stage} exhausted Lambda MicroVM capacity in ${region}; review AWS Service Quotas for this account and Region`,
     );
+  }
+  if (
+    (error instanceof PollingError && error.reason === "deadline") ||
+    (error instanceof OperationRetryError && error.reason === "deadline")
+  ) {
+    return new ActionExecutionError(`${stage} timed out in ${region}`);
   }
   return new ActionExecutionError(
     `${stage} failed (${getSafeErrorName(error)})`,

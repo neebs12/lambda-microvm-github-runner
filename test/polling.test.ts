@@ -114,4 +114,16 @@ describe("quota-aware polling", () => {
       }),
     ).rejects.toThrow("deadline");
   });
+
+  it("classifies an already-expired deadline as a timeout", async () => {
+    await expect(
+      pollSequentially({
+        operation: "GetMicrovm",
+        deadline: 1_000,
+        observe: async () => "PENDING",
+        decide: () => ({ status: "pending" }),
+        now: () => 1_000,
+      }),
+    ).rejects.toThrow("polling failed: deadline");
+  });
 });
