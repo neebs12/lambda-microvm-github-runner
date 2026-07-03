@@ -57,6 +57,7 @@ jobs:
           fail-build: true
           severity-cutoff: high
           only-fixed: true
+          output-format: table
       - name: Verify immutable image contents
         run: |
           docker run --rm --platform linux/arm64 \
