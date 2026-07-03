@@ -59,6 +59,8 @@ concurrent workflows, five concurrent starts, simulated throttling, capacity
 failure, and denied self-termination fallback.
 
 Do not tag `v1` until logs have been checked for plaintext secrets and the full
-private-repository matrix passes. CI and release builds also fail on high or
-critical fixable image vulnerabilities; every release publishes Action and
-runner-image SBOMs with checksums.
+private-repository matrix passes. CI and release builds print all image findings
+and fail on fixable critical vulnerabilities. High findings remain visible and
+must be reviewed when advancing the pinned upstream runner, Docker, Buildx,
+Compose, and AWS CLI versions. Every release publishes Action and runner-image
+SBOMs with checksums.

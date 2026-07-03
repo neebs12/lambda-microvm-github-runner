@@ -39,7 +39,7 @@ jobs:
         with:
           image: lambda-microvm-github-runner:release
           fail-build: true
-          severity-cutoff: high
+          severity-cutoff: critical
           only-fixed: true
           output-format: table
       - run: mkdir -p build

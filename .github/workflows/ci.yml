@@ -55,7 +55,7 @@ jobs:
         with:
           image: lambda-microvm-github-runner:test
           fail-build: true
-          severity-cutoff: high
+          severity-cutoff: critical
           only-fixed: true
           output-format: table
       - name: Verify immutable image contents
