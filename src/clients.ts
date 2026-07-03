@@ -15,7 +15,7 @@ export type JitRunner = {
 export type GitHubRunner = {
   runnerId: number;
   runnerName: string;
-  status: "online" | "offline";
+  status: string;
   busy: boolean;
 };
 
@@ -47,6 +47,7 @@ export type Microvm = {
   microvmId: string;
   state: string;
   stateReason?: string;
+  imageVersion?: string;
 };
 
 export type MicrovmClient = {

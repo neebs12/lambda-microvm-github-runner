@@ -1,33 +1,44 @@
 import * as core from "@actions/core";
 
 import { parseActionConfig, type RawActionInputs } from "./config.js";
+import { createGitHubJitClient } from "./github.js";
+import { workflowIdentityFromEnvironment } from "./identity.js";
+import { createAwsMicrovmClient } from "./microvms.js";
 import {
-  createRunnerIdentity,
-  workflowIdentityFromEnvironment,
-} from "./identity.js";
+  startRunner,
+  stopRunner,
+  type ActionReporter,
+  type RepositoryContext,
+} from "./orchestration.js";
 
-export function run(): void {
+export class ActionEnvironmentError extends Error {
+  public constructor(field: string) {
+    super(`GitHub Actions environment '${field}' is missing or invalid`);
+    this.name = "ActionEnvironmentError";
+  }
+}
+
+export async function run(): Promise<void> {
   const raw = readActionInputs();
   if (raw.githubToken !== undefined && raw.githubToken.length > 0) {
     core.setSecret(raw.githubToken);
   }
 
   const config = parseActionConfig(raw);
-  if (config.mode === "start") {
-    const identity = createRunnerIdentity(
-      workflowIdentityFromEnvironment(),
-      config.idempotencyKey,
-    );
-    core.debug(
-      `Validated start request for runner '${identity.runnerName}' in ${config.region}`,
-    );
-  } else {
-    core.debug(`Validated stop request in ${config.region}`);
-  }
+  const microvms = createAwsMicrovmClient(config.region);
+  const reporter = actionReporter();
 
-  throw new Error(
-    "External GitHub and AWS orchestration is not implemented in this scaffold",
-  );
+  if (config.mode === "start") {
+    const context = repositoryContextFromEnvironment();
+    const github = createGitHubJitClient(
+      config.githubToken,
+      context.owner,
+      context.repository,
+    );
+    await startRunner(config, context, github, microvms, reporter);
+  } else {
+    await stopRunner(config, microvms, reporter);
+  }
 }
 
 function readActionInputs(): RawActionInputs {
@@ -48,5 +59,36 @@ function readActionInputs(): RawActionInputs {
     idempotencyKey: core.getInput("idempotency-key"),
     microvmId: core.getInput("microvm-id"),
     debug: core.getInput("debug"),
+  };
+}
+
+function repositoryContextFromEnvironment(
+  environment: NodeJS.ProcessEnv = process.env,
+): RepositoryContext {
+  const repository = environment.GITHUB_REPOSITORY;
+  if (
+    repository === undefined ||
+    !/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repository)
+  ) {
+    throw new ActionEnvironmentError("GITHUB_REPOSITORY");
+  }
+  const [owner, name] = repository.split("/", 2);
+  if (owner === undefined || name === undefined) {
+    throw new ActionEnvironmentError("GITHUB_REPOSITORY");
+  }
+  return {
+    owner,
+    repository: name,
+    workflow: workflowIdentityFromEnvironment(environment),
+  };
+}
+
+function actionReporter(): ActionReporter {
+  return {
+    setSecret: core.setSecret,
+    setOutput: core.setOutput,
+    info: core.info,
+    debug: core.debug,
+    warning: core.warning,
   };
 }
