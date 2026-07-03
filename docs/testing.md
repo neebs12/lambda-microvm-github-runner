@@ -44,10 +44,12 @@ Every candidate version must prove in AWS:
 The manual `.github/workflows/aws-runner-e2e.yml` workflow exercises the
 production three-job pattern through the GitHub OIDC role. Set a temporary
 `RUNNER_E2E_TOKEN` repository secret with Administration read/write permission,
-then run its `success`, `failure`, and `maximum-duration` scenarios. Remove the
+then run its `success`, `failure`, `startup-timeout`, and `maximum-duration`
+scenarios. For `cancellation`, cancel the run while its target waits. Remove the
 secret after testing. The workflow verifies checkout, the ARM64 host, Docker,
-Buildx, Compose, service containers, DNS, egress, failure cleanup, idempotent
-stop, and the platform duration backstop.
+Buildx, Compose, service containers, DNS, egress, partial-start cleanup, job
+failure and cancellation cleanup, idempotent stop, and the platform duration
+backstop.
 
 The lower-level `.github/workflows/aws-runner-target.yml` job remains available
 for a runner launched outside GitHub Actions. It waits for a runner with the
