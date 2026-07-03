@@ -31,8 +31,8 @@ export class PollingError extends Error {
 export async function pollSequentially<TObserved, TResult>(
   options: PollingOptions<TObserved, TResult>,
 ): Promise<TResult> {
-  const initialDelayMaxMs = options.initialDelayMaxMs ?? 2_000;
-  const baseIntervalMs = options.baseIntervalMs ?? 2_000;
+  const initialDelayMaxMs = options.initialDelayMaxMs ?? 5_000;
+  const baseIntervalMs = options.baseIntervalMs ?? 2_500;
   const maxIntervalMs = options.maxIntervalMs ?? 5_000;
   const random = options.random ?? Math.random;
   const now = options.now ?? Date.now;

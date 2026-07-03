@@ -18,6 +18,8 @@ jobs:
           node-version: "24"
           cache: npm
       - run: npm ci
+      - name: Audit Node dependencies
+        run: npm audit --audit-level=high
       - run: npm run check
       - name: Verify committed Action bundle
         run: git diff --exit-code -- dist
@@ -48,6 +50,14 @@ jobs:
           load: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
+      - name: Scan runner image
+        uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2 # v7.4.0
+        with:
+          image: lambda-microvm-github-runner:test
+          fail-build: true
+          severity-cutoff: critical
+          only-fixed: true
+          output-format: table
       - name: Verify immutable image contents
         run: |
           docker run --rm --platform linux/arm64 \
