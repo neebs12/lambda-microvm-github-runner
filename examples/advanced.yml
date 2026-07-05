@@ -1,0 +1,63 @@
+name: Lambda MicroVM runner
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  start-runner:
+    runs-on: ubuntu-latest
+    outputs:
+      label: ${{ steps.start.outputs.label }}
+      microvm-id: ${{ steps.start.outputs.microvm-id }}
+      region: ${{ steps.start.outputs.region }}
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.MICROVM_LAUNCH_ROLE_ARN }}
+          aws-region: ${{ vars.MICROVM_AWS_REGION }}
+
+      - uses: actions/create-github-app-token@v3
+        id: app-token
+        with:
+          app-id: ${{ vars.RUNNER_APP_ID }}
+          private-key: ${{ secrets.RUNNER_APP_PRIVATE_KEY }}
+
+      - uses: neebs12/lambda-microvm-github-runner@v1
+        id: start
+        with:
+          mode: start
+          github-token: ${{ steps.app-token.outputs.token }}
+          image-id: ${{ vars.MICROVM_RUNNER_IMAGE_ARN }}
+          image-version: ${{ vars.MICROVM_RUNNER_IMAGE_VERSION }}
+          execution-role-arn: ${{ vars.MICROVM_EXECUTION_ROLE_ARN }}
+          cloudwatch-log-group: ${{ vars.MICROVM_RUNTIME_LOG_GROUP }}
+          maximum-duration-seconds: "3600"
+
+  job:
+    needs: start-runner
+    runs-on: ${{ needs.start-runner.outputs.label }}
+    steps:
+      - uses: actions/checkout@v6
+      - run: uname -a
+      - run: docker info
+      - run: docker buildx version
+      - run: docker compose version
+
+  stop-runner:
+    if: ${{ always() }}
+    needs: [start-runner, job]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.MICROVM_LAUNCH_ROLE_ARN }}
+          aws-region: ${{ needs.start-runner.outputs.region }}
+
+      - uses: neebs12/lambda-microvm-github-runner@v1
+        with:
+          mode: stop
+          microvm-id: ${{ needs.start-runner.outputs.microvm-id }}

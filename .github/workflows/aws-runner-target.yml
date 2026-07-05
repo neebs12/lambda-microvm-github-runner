@@ -1,0 +1,89 @@
+name: AWS runner target
+
+on:
+  workflow_dispatch:
+    inputs:
+      fail_target:
+        description: Fail after all runtime checks to verify cleanup
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  target:
+    runs-on: [self-hosted, lambda-microvm, e2e]
+    timeout-minutes: 15
+    services:
+      redis:
+        image: public.ecr.aws/docker/library/redis:7.4.2-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping" --health-interval 2s --health-timeout 2s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      - name: Verify host, service container, and egress
+        run: |
+          set -euo pipefail
+          test "$(uname -m)" = "aarch64"
+          docker info
+          docker buildx version
+          docker compose version
+          aws sts get-caller-identity >/dev/null
+          docker run --rm --network host \
+            public.ecr.aws/docker/library/busybox:1.37.0 \
+            sh -ec '
+              nc -z 127.0.0.1 6379
+              nslookup github.com
+              wget --spider https://github.com
+            '
+
+      - name: Build and run an ARM64 image with Buildx
+        run: |
+          set -euo pipefail
+          build_dir="$(mktemp -d)"
+          trap 'rm -rf "${build_dir}"' EXIT
+          cat >"${build_dir}/Dockerfile" <<'EOF'
+          FROM public.ecr.aws/docker/library/busybox:1.37.0@sha256:9532d8c39891ca2ecde4d30d7710e01fb739c87a8b9299685c63704296b16028
+          RUN printf 'buildx-ok\n' >/result
+          CMD ["cat", "/result"]
+          EOF
+          docker buildx build \
+            --platform linux/arm64 \
+            --load \
+            --tag lambda-microvm-buildx:e2e \
+            "${build_dir}"
+          test "$(docker run --rm lambda-microvm-buildx:e2e)" = "buildx-ok"
+
+      - name: Verify Compose bridge DNS and TCP
+        run: |
+          set -euo pipefail
+          compose_dir="$(mktemp -d)"
+          trap 'docker compose -f "${compose_dir}/compose.yml" down --volumes; rm -rf "${compose_dir}"' EXIT
+          cat >"${compose_dir}/compose.yml" <<'EOF'
+          services:
+            redis:
+              image: public.ecr.aws/docker/library/redis:7.4.2-alpine
+              healthcheck:
+                test: ["CMD", "redis-cli", "ping"]
+                interval: 2s
+                timeout: 2s
+                retries: 20
+            probe:
+              image: public.ecr.aws/docker/library/busybox:1.37.0
+              depends_on:
+                redis:
+                  condition: service_healthy
+              command: ["sh", "-ec", "nc -z redis 6379 && nslookup github.com"]
+          EOF
+          docker compose -f "${compose_dir}/compose.yml" up \
+            --abort-on-container-exit \
+            --exit-code-from probe
+
+      - name: Exercise failing-job cleanup
+        if: inputs.fail_target
+        run: exit 1

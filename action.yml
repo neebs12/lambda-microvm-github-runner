@@ -1,0 +1,88 @@
+name: Lambda MicroVM GitHub Runner
+description:
+  Launch and terminate single-use GitHub Actions runners on AWS Lambda MicroVMs
+author: lambda-microvm-github-runner contributors
+
+inputs:
+  mode:
+    description: Operation to perform (`start` or `stop`)
+    required: true
+  github-token:
+    description:
+      Classic PAT with repo scope, compatible fine-grained PAT, or GitHub App
+      installation token used to create a repository JIT runner
+    required: false
+  image-id:
+    description: Lambda MicroVM image ARN or identifier
+    required: false
+  image-version:
+    description:
+      Active image version to launch; omit to resolve the latest active version
+    required: false
+  execution-role-arn:
+    description: IAM execution role assumed by the launched MicroVM
+    required: false
+  region:
+    description: AWS Region; defaults to AWS_REGION
+    required: false
+  runner-group-id:
+    description: GitHub runner group ID
+    required: false
+    default: "1"
+  runner-labels:
+    description: Comma-separated additional runner labels
+    required: false
+    default: lambda-microvm,docker
+  maximum-duration-seconds:
+    description:
+      Platform-enforced MicroVM lifetime from 1 through 28,800 seconds
+    required: false
+    default: "3600"
+  startup-timeout-seconds:
+    description: Overall AWS and GitHub runner readiness timeout
+    required: false
+    default: "180"
+  egress-connectors:
+    description: JSON array or comma-separated egress connector identifiers
+    required: false
+    default: INTERNET_EGRESS
+  ingress-connectors:
+    description: JSON array or comma-separated ingress connector identifiers
+    required: false
+    default: NO_INGRESS
+  cloudwatch-log-group:
+    description: Optional CloudWatch log group for MicroVM runtime logs
+    required: false
+  idempotency-key:
+    description:
+      Stable suffix required when one job invokes multiple start actions
+    required: false
+  microvm-id:
+    description: MicroVM identifier returned by start mode
+    required: false
+  debug:
+    description: Enable non-secret diagnostic metadata
+    required: false
+    default: "false"
+
+outputs:
+  label:
+    description: Unique runner label for runs-on
+  runner-name:
+    description: Exact JIT runner name
+  runner-id:
+    description: GitHub runner ID
+  microvm-id:
+    description: AWS Lambda MicroVM ID
+  region:
+    description: Launch Region
+  image-version:
+    description: Resolved MicroVM image version
+
+runs:
+  using: node24
+  main: dist/index.js
+
+branding:
+  icon: box
+  color: orange
