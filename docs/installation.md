@@ -1,103 +1,73 @@
 # Installation
 
 Version 1 is for private repositories with trusted workflow changes. It requires
-an ARM64-capable Lambda MicroVM Region and an AWS account with enough MicroVM
-memory quota for at least one 4 GiB runner.
+an ARM64-capable Lambda MicroVM Region and enough regional MicroVM memory quota
+for at least one 4 GiB runner.
 
-## 1. Create the AWS resources
+## Quickstart
 
-Use local AWS credentials that can create IAM roles, an IAM OIDC provider, an S3
-bucket, and CloudWatch log groups:
+Install these local prerequisites:
+
+- AWS CLI with credentials allowed to create IAM, S3, CloudWatch Logs, and
+  Lambda MicroVM resources;
+- GitHub CLI authenticated to the target repository;
+- `jq`, Docker, and Node.js 24.
+
+Create a classic GitHub personal access token with the `repo` scope. Then clone
+this repository and run:
 
 ```bash
 export AWS_REGION=us-east-1
 export GITHUB_REPOSITORY=OWNER/PRIVATE_REPOSITORY
 
-scripts/bootstrap-aws.sh
+scripts/setup-quickstart.sh
 ```
 
-This direct, idempotent script creates:
-
-- one private, encrypted, versioned S3 artifact bucket;
-- build and runtime CloudWatch log groups with 30-day retention;
-- the account-level GitHub Actions OIDC provider if it is absent;
-- an image build role;
-- a restricted MicroVM runtime role;
-- a GitHub OIDC launch role trusted only for the repository's `main` branch.
-
-It writes the resulting values to `build/aws-setup.json`. Run it again to
-reconcile the same resources.
-
-For a different default branch, set `GITHUB_DEFAULT_BRANCH`. For a GitHub
-Environment or another exact OIDC subject, set `GITHUB_OIDC_SUBJECT` explicitly.
-Do not use a wildcard subject for untrusted pull-request refs.
-
-No IAM user or stored AWS access key is needed by GitHub.
-
-## 2. Build the MicroVM image
-
-The build command reads `build/aws-setup.json` automatically:
+Paste the classic PAT when prompted. Alternatively, provide it for unattended
+setup:
 
 ```bash
-scripts/build-microvm-image.sh
+GH_PERSONAL_ACCESS_TOKEN=TOKEN scripts/setup-quickstart.sh
 ```
 
-It packages and uploads a content-addressed artifact, creates or updates the
-image, waits for validation, activates the successful version, and keeps a
-bounded rollback set. The active ARN and version are written to
-`build/microvm-image.json`.
+The script:
 
-## 3. Create a GitHub App
+1. creates or reconciles the S3 bucket, CloudWatch log groups, and image build
+   and runtime IAM roles;
+2. packages, uploads, validates, and activates the runner image;
+3. configures the repository variables;
+4. creates a dedicated `lambda-microvm-github-runner-quickstart` IAM user;
+5. grants that user bootstrap, image build, and runner lifecycle permissions;
+6. rotates its access key directly into the `AWS_ACCESS_KEY_ID` and
+   `AWS_SECRET_ACCESS_KEY` GitHub Actions secrets;
+7. sets the PAT as `GH_PERSONAL_ACCESS_TOKEN`.
 
-Create and install a GitHub App only on the runner repository. Grant repository
-Administration read/write permission so it can create, inspect, and delete JIT
-runners.
+The secret access key is never written to the setup output or printed.
+Re-running the script reconciles resources, builds a new image version, and
+rotates the dedicated access key.
 
-Record its App ID and download its private key. A compatible fine-grained PAT
-can be passed directly, but short-lived installation tokens are preferred.
-
-## 4. Configure the GitHub repository
-
-With `gh auth status` working, set the generated AWS and image values:
-
-```bash
-scripts/configure-github.sh
-```
-
-Then set the GitHub App credentials:
-
-```bash
-gh variable set RUNNER_APP_ID --body APP_ID
-gh secret set RUNNER_APP_PRIVATE_KEY < path/to/app.private-key.pem
-```
-
-Alternatively, configure everything in the helper invocation:
-
-```bash
-RUNNER_APP_ID=APP_ID \
-RUNNER_APP_PRIVATE_KEY_FILE=path/to/app.private-key.pem \
-scripts/configure-github.sh
-```
-
-The helper creates these repository variables:
-
-- `MICROVM_AWS_REGION`;
-- `MICROVM_LAUNCH_ROLE_ARN`;
-- `MICROVM_EXECUTION_ROLE_ARN`;
-- `MICROVM_RUNTIME_LOG_GROUP`;
-- `MICROVM_RUNNER_IMAGE_ARN`;
-- `MICROVM_RUNNER_IMAGE_VERSION`.
+> **Quickstart security boundary:** These are long-lived credentials with broad
+> product permissions. Use them only in private repositories where workflow
+> changes are trusted. Never expose them to untrusted `pull_request_target`
+> workflows.
 
 Copy [the basic workflow](../examples/basic.yml) into
-`.github/workflows/microvm-runner.yml`. Pin every third-party Action and this
-Action to reviewed immutable commits before production use.
+`.github/workflows/microvm-runner.yml`. Pin Actions to reviewed immutable
+versions before production use.
 
-## 5. Verify
+## Verify
 
 Run the workflow manually and confirm:
 
 1. start emits a unique label and MicroVM ID;
-2. the target runs on ARM64 and `docker info`, Buildx, and Compose succeed;
+2. the target runs on ARM64 and Docker, Buildx, and Compose succeed;
 3. the JIT runner processes only that job;
 4. the MicroVM reaches `TERMINATED`;
-5. no GitHub token or JIT payload appears in Actions or CloudWatch logs.
+5. no GitHub token, AWS credential, or JIT payload appears in logs.
+
+## Advanced credentials
+
+For short-lived credentials, use GitHub OIDC for AWS and a GitHub App
+installation token instead. The standalone bootstrap enables the OIDC provider
+and launch role by default. See [advanced credentials](advanced-credentials.md)
+and [the advanced workflow](../examples/advanced.yml).

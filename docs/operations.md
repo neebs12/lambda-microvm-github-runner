@@ -1,5 +1,24 @@
 # Operations
 
+## Quickstart credential rotation
+
+Re-run the credential helper to rotate the dedicated IAM user's access key and
+replace both GitHub Actions secrets:
+
+```bash
+export GITHUB_REPOSITORY=OWNER/REPOSITORY
+scripts/configure-quickstart-credentials.sh
+```
+
+The helper installs the new secret pair before deleting the previous key. Rotate
+the classic PAT separately with:
+
+```bash
+gh secret set GH_PERSONAL_ACCESS_TOKEN --repo "${GITHUB_REPOSITORY}"
+```
+
+Delete the dedicated IAM user and PAT when the integration is no longer used.
+
 ## Quotas
 
 MicroVM API and memory quotas are shared per AWS account and Region. The

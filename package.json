@@ -16,9 +16,10 @@
     "lint": "eslint src test",
     "test": "vitest run",
     "test:image": "scripts/test-runner-image.sh",
+    "test:scripts": "bash test/scripts/quickstart-credentials.test.sh",
     "test:supervisor": "python3 -m unittest discover -s runner-image/test -p 'test_*.py'",
     "typecheck": "tsc --noEmit",
-    "check": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run test:supervisor && npm run build"
+    "check": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run test:scripts && npm run test:supervisor && npm run build"
   },
   "dependencies": {
     "@actions/core": "3.0.1",

@@ -42,9 +42,11 @@ set_variable() {
 set_variable \
   MICROVM_AWS_REGION \
   "$(jq -r '.region // empty' "${SETUP_FILE}")"
-set_variable \
-  MICROVM_LAUNCH_ROLE_ARN \
-  "$(jq -r '.githubLaunchRoleArn // empty' "${SETUP_FILE}")"
+if [[ "$(jq -r '.githubOidcEnabled // true' "${SETUP_FILE}")" == "true" ]]; then
+  set_variable \
+    MICROVM_LAUNCH_ROLE_ARN \
+    "$(jq -r '.githubLaunchRoleArn // empty' "${SETUP_FILE}")"
+fi
 set_variable \
   MICROVM_EXECUTION_ROLE_ARN \
   "$(jq -r '.executionRoleArn // empty' "${SETUP_FILE}")"

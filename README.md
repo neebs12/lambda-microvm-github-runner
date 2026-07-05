@@ -16,37 +16,37 @@ The Action implements and tests:
 - typed GitHub and AWS adapters with mocked-boundary integration tests.
 
 The production AL2023 runner image is implemented and validated locally and
-through the AWS image build hooks with production `overlay2`. Private-repository
-end-to-end validation remains a release gate.
+through the AWS image build hooks with production `overlay2`. The complete
+private-repository workflow is validated for success, job failure, cancellation,
+startup timeout, service containers, and the maximum-duration backstop.
 
-## Minimal setup
+## Quickstart
 
-The setup is two direct scripts. It does not require an infrastructure
-framework:
+Install the AWS CLI, GitHub CLI, `jq`, Docker, and Node.js 24. Authenticate both
+CLIs, create a classic GitHub PAT with the `repo` scope, then run:
 
 ```bash
 export AWS_REGION=us-east-1
 export GITHUB_REPOSITORY=OWNER/PRIVATE_REPOSITORY
 
-scripts/bootstrap-aws.sh
-scripts/build-microvm-image.sh
+scripts/setup-quickstart.sh
 ```
 
-The first command idempotently creates the private S3 artifact bucket,
-CloudWatch log groups, GitHub OIDC provider, and three least-privilege IAM
-roles. It saves the discovered resource values to `build/aws-setup.json`. The
-second command consumes that file automatically and saves the active image
-details to `build/microvm-image.json`.
+The script creates the AWS resources and runner image, configures the
+repository, creates a dedicated IAM user, rotates its static access key directly
+into GitHub Actions secrets, and prompts for the classic PAT. It does not use an
+infrastructure framework or write the AWS secret access key to disk.
+
+The Quickstart IAM user deliberately includes bootstrap, image build, and runner
+lifecycle permissions. Use it only with private repositories and trusted
+workflow changes. See [advanced credentials](docs/advanced-credentials.md) to
+replace both long-lived credentials with GitHub OIDC and a GitHub App.
 
 ## Usage
 
-The workflow needs an existing active MicroVM image, a least-privilege MicroVM
-execution role, AWS credentials obtained through GitHub OIDC, and a short-lived
-GitHub App installation token with repository Administration write access.
-
-Copy [examples/basic.yml](examples/basic.yml) into a private repository's
-`.github/workflows/` directory, configure the referenced variables and secret,
-then pin this Action and its dependencies to reviewed immutable commits.
+Copy [examples/basic.yml](examples/basic.yml) into the private repository's
+`.github/workflows/` directory. The Quickstart script configures every variable
+and secret referenced by this workflow.
 
 The start job emits a unique label for one target job. The runner is JIT-only
 and single-use. Its supervisor self-terminates after that job; the explicit stop
@@ -74,6 +74,7 @@ installation.
 Detailed guides:
 
 - [installation](docs/installation.md)
+- [advanced credentials](docs/advanced-credentials.md)
 - [security model](docs/security.md)
 - [operations and quotas](docs/operations.md)
 - [testing and release gates](docs/testing.md)

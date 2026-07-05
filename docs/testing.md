@@ -5,15 +5,16 @@
 ```bash
 npm ci
 npm run check
-shellcheck scripts/*.sh
+shellcheck scripts/*.sh test/scripts/*.sh
 scripts/package-runner-image.sh
 npm run test:image
 npm audit --audit-level=high
 ```
 
-`npm run check` covers strict TypeScript, 58 Action tests, 17 supervisor tests,
-and the bundled Action. Supervisor tests also run successfully under the image's
-Python 3.9 runtime.
+`npm run check` covers strict TypeScript, 58 Action tests, Quickstart IAM
+credential creation and rotation tests, 17 supervisor tests, and the bundled
+Action. Supervisor tests also run successfully under the image's Python 3.9
+runtime.
 
 `npm run test:image` requires an ARM64 Docker host. It verifies:
 
