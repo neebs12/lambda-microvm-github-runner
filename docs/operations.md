@@ -10,6 +10,10 @@ export GITHUB_REPOSITORY=OWNER/REPOSITORY
 scripts/configure-quickstart-credentials.sh
 ```
 
+Run it with local AWS credentials allowed to manage that IAM user, its inline
+policy, and its access keys. The stored Quickstart credentials intentionally
+cannot rotate themselves or change IAM policy.
+
 The helper installs the new secret pair before deleting the previous key. Rotate
 the classic PAT separately with:
 

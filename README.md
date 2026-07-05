@@ -32,15 +32,18 @@ export GITHUB_REPOSITORY=OWNER/PRIVATE_REPOSITORY
 scripts/setup-quickstart.sh
 ```
 
-The script creates the AWS resources and runner image, configures the
-repository, creates a dedicated IAM user, rotates its static access key directly
-into GitHub Actions secrets, and prompts for the classic PAT. It does not use an
-infrastructure framework or write the AWS secret access key to disk.
+The script uses your existing local AWS credentials to create the AWS resources,
+runner image, roles, and a dedicated IAM user. It rotates that user's static
+access key directly into GitHub Actions secrets and prompts for the classic PAT.
+It does not use an infrastructure framework or write the AWS secret access key
+to disk.
 
-The Quickstart IAM user deliberately includes bootstrap, image build, and runner
-lifecycle permissions. Use it only with private repositories and trusted
-workflow changes. See [advanced credentials](docs/advanced-credentials.md) to
-replace both long-lived credentials with GitHub OIDC and a GitHub App.
+The stored IAM user is restricted to image building and runner lifecycle
+operations. It cannot create or modify IAM identities, roles, policies, OIDC
+providers, buckets, or log groups. Use it only with private repositories and
+trusted workflow changes. See
+[advanced credentials](docs/advanced-credentials.md) to replace both long-lived
+credentials with GitHub OIDC and a GitHub App.
 
 ## Usage
 

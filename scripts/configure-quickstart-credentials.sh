@@ -46,12 +46,6 @@ BUILD_ROLE_ARN="$(jq -er '.buildRoleArn' "${SETUP_FILE}")"
 readonly BUILD_ROLE_ARN
 EXECUTION_ROLE_ARN="$(jq -er '.executionRoleArn' "${SETUP_FILE}")"
 readonly EXECUTION_ROLE_ARN
-GITHUB_ROLE_ARN="$(jq -er '.githubLaunchRoleArn' "${SETUP_FILE}")"
-readonly GITHUB_ROLE_ARN
-BUILD_LOG_GROUP="$(jq -er '.buildLogGroup' "${SETUP_FILE}")"
-readonly BUILD_LOG_GROUP
-RUNTIME_LOG_GROUP="$(jq -er '.runtimeLogGroup' "${SETUP_FILE}")"
-readonly RUNTIME_LOG_GROUP
 
 export AWS_MAX_ATTEMPTS=6
 export AWS_RETRY_MODE=standard
@@ -68,12 +62,7 @@ partition="${partition%%:*}"
 readonly partition
 
 readonly USER_ARN="arn:${partition}:iam::${account_id}:user/${USER_NAME}"
-readonly OIDC_PROVIDER_ARN="arn:${partition}:iam::${account_id}:oidc-provider/token.actions.githubusercontent.com"
 readonly BUCKET_ARN="arn:${partition}:s3:::${ARTIFACT_BUCKET}"
-readonly BUILD_LOG_ARN="arn:${partition}:logs:${REGION}:${account_id}:log-group:${BUILD_LOG_GROUP}:*"
-readonly RUNTIME_LOG_ARN="arn:${partition}:logs:${REGION}:${account_id}:log-group:${RUNTIME_LOG_GROUP}:*"
-readonly BUILD_LOG_GROUP_ARN="arn:${partition}:logs:${REGION}:${account_id}:log-group:${BUILD_LOG_GROUP}"
-readonly RUNTIME_LOG_GROUP_ARN="arn:${partition}:logs:${REGION}:${account_id}:log-group:${RUNTIME_LOG_GROUP}"
 readonly INTERNET_EGRESS_ARN="arn:${partition}:lambda:${REGION}:aws:network-connector:aws-network-connector:INTERNET_EGRESS"
 readonly NO_INGRESS_ARN="arn:${partition}:lambda:${REGION}:aws:network-connector:aws-network-connector:NO_INGRESS"
 
@@ -84,16 +73,9 @@ cleanup() {
 trap cleanup EXIT
 
 jq -n \
-  --arg userArn "${USER_ARN}" \
   --arg bucketArn "${BUCKET_ARN}" \
   --arg buildRoleArn "${BUILD_ROLE_ARN}" \
   --arg executionRoleArn "${EXECUTION_ROLE_ARN}" \
-  --arg githubRoleArn "${GITHUB_ROLE_ARN}" \
-  --arg oidcProviderArn "${OIDC_PROVIDER_ARN}" \
-  --arg buildLogArn "${BUILD_LOG_ARN}" \
-  --arg runtimeLogArn "${RUNTIME_LOG_ARN}" \
-  --arg buildLogGroupArn "${BUILD_LOG_GROUP_ARN}" \
-  --arg runtimeLogGroupArn "${RUNTIME_LOG_GROUP_ARN}" \
   --arg internetEgressArn "${INTERNET_EGRESS_ARN}" \
   --arg noIngressArn "${NO_INGRESS_ARN}" \
   '{
@@ -106,16 +88,11 @@ jq -n \
         Resource: "*"
       },
       {
-        Sid: "ManageArtifactBucket",
+        Sid: "UseArtifactBucket",
         Effect: "Allow",
         Action: [
-          "s3:CreateBucket",
           "s3:GetBucketLocation",
-          "s3:ListBucket",
-          "s3:PutBucketEncryption",
-          "s3:PutBucketPublicAccessBlock",
-          "s3:PutBucketTagging",
-          "s3:PutBucketVersioning"
+          "s3:ListBucket"
         ],
         Resource: $bucketArn
       },
@@ -131,70 +108,10 @@ jq -n \
         Resource: ($bucketArn + "/*")
       },
       {
-        Sid: "DiscoverLogGroups",
-        Effect: "Allow",
-        Action: "logs:DescribeLogGroups",
-        Resource: "*"
-      },
-      {
-        Sid: "ManageProjectLogs",
-        Effect: "Allow",
-        Action: [
-          "logs:CreateLogGroup",
-          "logs:CreateLogStream",
-          "logs:PutLogEvents",
-          "logs:PutRetentionPolicy",
-          "logs:TagResource"
-        ],
-        Resource: [
-          $buildLogGroupArn,
-          $runtimeLogGroupArn,
-          $buildLogArn,
-          $runtimeLogArn
-        ]
-      },
-      {
-        Sid: "ManageProjectRoles",
-        Effect: "Allow",
-        Action: [
-          "iam:CreateRole",
-          "iam:GetRole",
-          "iam:PutRolePolicy",
-          "iam:TagRole",
-          "iam:UpdateAssumeRolePolicy"
-        ],
-        Resource: [$buildRoleArn, $executionRoleArn, $githubRoleArn]
-      },
-      {
         Sid: "PassProjectRoles",
         Effect: "Allow",
         Action: "iam:PassRole",
         Resource: [$buildRoleArn, $executionRoleArn]
-      },
-      {
-        Sid: "ManageGitHubOidcProvider",
-        Effect: "Allow",
-        Action: [
-          "iam:AddClientIDToOpenIDConnectProvider",
-          "iam:CreateOpenIDConnectProvider",
-          "iam:GetOpenIDConnectProvider",
-          "iam:TagOpenIDConnectProvider"
-        ],
-        Resource: $oidcProviderArn
-      },
-      {
-        Sid: "ManageOwnQuickstartCredentials",
-        Effect: "Allow",
-        Action: [
-          "iam:CreateAccessKey",
-          "iam:CreateUser",
-          "iam:DeleteAccessKey",
-          "iam:GetUser",
-          "iam:ListAccessKeys",
-          "iam:PutUserPolicy",
-          "iam:TagUser"
-        ],
-        Resource: $userArn
       },
       {
         Sid: "ManageLambdaMicrovms",

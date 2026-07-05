@@ -118,18 +118,17 @@ run_case() {
       "arn:aws:iam::123456789012:user/runner-quickstart"
   ' "${case_directory}/setup.json" >/dev/null
   jq -e '
-    any(.Statement[];
-      (.Action | type) == "array" and
-      (.Action | index("lambda:*Microvm*")) != null
-    ) and
-    any(.Statement[];
-      (.Action | type) == "array" and
-      (.Action | index("iam:CreateRole")) != null
-    ) and
-    any(.Statement[];
-      (.Action | type) == "array" and
-      (.Action | index("s3:PutObject")) != null
-    )
+    [.Statement[].Action] | flatten | . as $actions |
+    ($actions | index("lambda:*Microvm*")) != null and
+    ($actions | index("iam:PassRole")) != null and
+    ($actions | index("s3:PutObject")) != null and
+    ($actions | index("iam:CreateRole")) == null and
+    ($actions | index("iam:PutRolePolicy")) == null and
+    ($actions | index("iam:CreateUser")) == null and
+    ($actions | index("iam:CreateAccessKey")) == null and
+    ($actions | index("iam:CreateOpenIDConnectProvider")) == null and
+    ($actions | index("s3:CreateBucket")) == null and
+    ([$actions[] | select(startswith("logs:"))] | length) == 0
   ' "${case_directory}/policy.json" >/dev/null
   grep -q "secret set.*--env-file -" \
     "${case_directory}/gh.log"

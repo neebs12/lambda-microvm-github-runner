@@ -32,12 +32,12 @@ GH_PERSONAL_ACCESS_TOKEN=TOKEN scripts/setup-quickstart.sh
 
 The script:
 
-1. creates or reconciles the S3 bucket, CloudWatch log groups, and image build
-   and runtime IAM roles;
+1. uses the active local AWS credentials to create or reconcile the S3 bucket,
+   CloudWatch log groups, and image build and runtime IAM roles;
 2. packages, uploads, validates, and activates the runner image;
 3. configures the repository variables;
 4. creates a dedicated `lambda-microvm-github-runner-quickstart` IAM user;
-5. grants that user bootstrap, image build, and runner lifecycle permissions;
+5. grants that user only image build and runner lifecycle permissions;
 6. rotates its access key directly into the `AWS_ACCESS_KEY_ID` and
    `AWS_SECRET_ACCESS_KEY` GitHub Actions secrets;
 7. sets the PAT as `GH_PERSONAL_ACCESS_TOKEN`.
@@ -46,8 +46,10 @@ The secret access key is never written to the setup output or printed.
 Re-running the script reconciles resources, builds a new image version, and
 rotates the dedicated access key.
 
-> **Quickstart security boundary:** These are long-lived credentials with broad
-> product permissions. Use them only in private repositories where workflow
+> **Quickstart security boundary:** The local credentials perform privileged
+> setup. The stored long-lived credentials cannot mutate IAM resources and are
+> limited to the configured image artifacts, exact build/runtime roles, and
+> Lambda MicroVM lifecycle. Use them only in private repositories where workflow
 > changes are trusted. Never expose them to untrusted `pull_request_target`
 > workflows.
 
