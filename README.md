@@ -31,8 +31,10 @@ credentials with GitHub OIDC and a GitHub App.
 ## Usage
 
 Copy [examples/basic.yml](examples/basic.yml) into the private repository's
-`.github/workflows/` directory. The Quickstart script configures every variable
-and secret referenced by this workflow.
+`.github/workflows/` directory. 
+
+> [!TIP]
+> The Quickstart script configures every variable and secret referenced by this workflow.
 
 ```yaml
 name: Lambda MicroVM runner
