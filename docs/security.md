@@ -8,20 +8,26 @@ and trusted workflow changes only. Public fork pull requests are unsupported.
 
 ## Credentials
 
-- Start uses a short-lived GitHub App installation token. The token is masked
-  before validation or external work.
+- Quickstart stores a classic PAT with `repo` scope and a dedicated IAM user's
+  access key as GitHub Actions secrets. The IAM user can reconcile this
+  product's bootstrap resources, build images, and manage runner MicroVMs.
+- Quickstart is limited to private repositories with trusted workflow changes.
+  Rotate or delete both credentials when they are no longer needed.
+- Advanced setup uses a short-lived GitHub App installation token and obtains
+  AWS credentials through GitHub OIDC.
+- GitHub tokens are masked before validation or external work.
 - The encoded JIT configuration and compressed payload are masked and never
   included in errors, outputs, or supervisor logs.
-- GitHub-hosted start and stop jobs obtain AWS credentials through OIDC.
 - The default MicroVM execution role can write its logs and terminate runner
   MicroVMs. It has no application deployment permissions.
 - The runtime role's only unscoped resource permission is
   `lambda:TerminateMicrovm`, because that API does not expose a per-instance IAM
   resource ARN. No other Lambda or application action is granted by it.
-- Deployment jobs should assume a separate role through GitHub OIDC.
+- Deployment jobs should use a separate identity and must not inherit the
+  Quickstart IAM user's bootstrap permissions.
 
-The GitHub App private key never enters the MicroVM. No long-lived AWS key is
-required or documented.
+The classic PAT, AWS secret access key, and GitHub App private key never enter
+the MicroVM.
 
 ## Network
 

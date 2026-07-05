@@ -9,8 +9,8 @@ inputs:
     required: true
   github-token:
     description:
-      GitHub App installation token or compatible fine-grained PAT used to
-      create a repository JIT runner
+      Classic PAT with repo scope, compatible fine-grained PAT, or GitHub App
+      installation token used to create a repository JIT runner
     required: false
   image-id:
     description: Lambda MicroVM image ARN or identifier

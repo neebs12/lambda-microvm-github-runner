@@ -11,6 +11,7 @@ readonly GITHUB_REPOSITORY="${GITHUB_REPOSITORY:-}"
 readonly PROJECT_NAME="${PROJECT_NAME:-lambda-microvm-github-runner}"
 readonly GITHUB_DEFAULT_BRANCH="${GITHUB_DEFAULT_BRANCH:-main}"
 readonly GITHUB_OIDC_SUBJECT="${GITHUB_OIDC_SUBJECT:-repo:${GITHUB_REPOSITORY}:ref:refs/heads/${GITHUB_DEFAULT_BRANCH}}"
+readonly ENABLE_GITHUB_OIDC="${ENABLE_GITHUB_OIDC:-true}"
 readonly LOG_RETENTION_DAYS="${LOG_RETENTION_DAYS:-30}"
 readonly OUTPUT_FILE="${OUTPUT_FILE:-${REPOSITORY_ROOT}/build/aws-setup.json}"
 
@@ -34,6 +35,9 @@ fail() {
   fail "LOG_RETENTION_DAYS must be a positive integer"
 ((LOG_RETENTION_DAYS > 0)) ||
   fail "LOG_RETENTION_DAYS must be a positive integer"
+[[ "${ENABLE_GITHUB_OIDC}" == "true" ||
+  "${ENABLE_GITHUB_OIDC}" == "false" ]] ||
+  fail "ENABLE_GITHUB_OIDC must be true or false"
 
 for command in aws jq mktemp sed tr; do
   command -v "${command}" >/dev/null 2>&1 ||
@@ -183,27 +187,29 @@ aws s3api put-bucket-tagging \
 create_log_group "${BUILD_LOG_GROUP}"
 create_log_group "${RUNTIME_LOG_GROUP}"
 
-if oidc_json="$(
-  aws iam get-open-id-connect-provider \
-    --open-id-connect-provider-arn "${OIDC_PROVIDER_ARN}" \
-    --output json 2>/dev/null
-)"; then
-  log "Using GitHub Actions OIDC provider ${OIDC_PROVIDER_ARN}"
-  if ! jq -e '.ClientIDList | index("sts.amazonaws.com")' \
-    <<<"${oidc_json}" >/dev/null; then
-    aws iam add-client-id-to-open-id-connect-provider \
+if [[ "${ENABLE_GITHUB_OIDC}" == "true" ]]; then
+  if oidc_json="$(
+    aws iam get-open-id-connect-provider \
       --open-id-connect-provider-arn "${OIDC_PROVIDER_ARN}" \
-      --client-id sts.amazonaws.com
+      --output json 2>/dev/null
+  )"; then
+    log "Using GitHub Actions OIDC provider ${OIDC_PROVIDER_ARN}"
+    if ! jq -e '.ClientIDList | index("sts.amazonaws.com")' \
+      <<<"${oidc_json}" >/dev/null; then
+      aws iam add-client-id-to-open-id-connect-provider \
+        --open-id-connect-provider-arn "${OIDC_PROVIDER_ARN}" \
+        --client-id sts.amazonaws.com
+    fi
+  else
+    log "Creating GitHub Actions OIDC provider"
+    aws iam create-open-id-connect-provider \
+      --url "https://token.actions.githubusercontent.com" \
+      --client-id-list sts.amazonaws.com \
+      --tags \
+      "Key=Project,Value=${PROJECT_NAME}" \
+      "Key=ManagedBy,Value=lambda-microvm-github-runner" \
+      >/dev/null
   fi
-else
-  log "Creating GitHub Actions OIDC provider"
-  aws iam create-open-id-connect-provider \
-    --url "https://token.actions.githubusercontent.com" \
-    --client-id-list sts.amazonaws.com \
-    --tags \
-    "Key=Project,Value=${PROJECT_NAME}" \
-    "Key=ManagedBy,Value=lambda-microvm-github-runner" \
-    >/dev/null
 fi
 
 jq -n '{
@@ -319,11 +325,13 @@ upsert_role \
   "${temporary_directory}/lambda-trust.json" \
   "${temporary_directory}/runtime-permissions.json" \
   "Runtime permissions for single-use Lambda MicroVM GitHub runners"
-upsert_role \
-  "${GITHUB_ROLE_NAME}" \
-  "${temporary_directory}/github-trust.json" \
-  "${temporary_directory}/github-permissions.json" \
-  "GitHub OIDC role for launching and terminating runner MicroVMs"
+if [[ "${ENABLE_GITHUB_OIDC}" == "true" ]]; then
+  upsert_role \
+    "${GITHUB_ROLE_NAME}" \
+    "${temporary_directory}/github-trust.json" \
+    "${temporary_directory}/github-permissions.json" \
+    "GitHub OIDC role for launching and terminating runner MicroVMs"
+fi
 
 mkdir -p "$(dirname -- "${OUTPUT_FILE}")"
 jq -n \
@@ -335,6 +343,7 @@ jq -n \
   --arg buildLogGroup "${BUILD_LOG_GROUP}" \
   --arg runtimeLogGroup "${RUNTIME_LOG_GROUP}" \
   --arg githubOidcSubject "${GITHUB_OIDC_SUBJECT}" \
+  --argjson githubOidcEnabled "${ENABLE_GITHUB_OIDC}" \
   '{
     region: $region,
     artifactBucket: $artifactBucket,
@@ -343,7 +352,8 @@ jq -n \
     githubLaunchRoleArn: $githubLaunchRoleArn,
     buildLogGroup: $buildLogGroup,
     runtimeLogGroup: $runtimeLogGroup,
-    githubOidcSubject: $githubOidcSubject
+    githubOidcSubject: $githubOidcSubject,
+    githubOidcEnabled: $githubOidcEnabled
   }' | tee "${OUTPUT_FILE}"
 
 log "AWS setup saved to ${OUTPUT_FILE}"

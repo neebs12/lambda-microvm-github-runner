@@ -24,7 +24,7 @@ jobs:
       - name: Verify committed Action bundle
         run: git diff --exit-code -- dist
       - name: Check shell scripts
-        run: shellcheck scripts/*.sh
+        run: shellcheck scripts/*.sh test/scripts/*.sh
       - name: Verify reproducible image artifact
         run: |
           scripts/package-runner-image.sh

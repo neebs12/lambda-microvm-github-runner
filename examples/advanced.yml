@@ -5,6 +5,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 jobs:
   start-runner:
@@ -16,15 +17,20 @@ jobs:
     steps:
       - uses: aws-actions/configure-aws-credentials@v6
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ vars.MICROVM_LAUNCH_ROLE_ARN }}
           aws-region: ${{ vars.MICROVM_AWS_REGION }}
+
+      - uses: actions/create-github-app-token@v3
+        id: app-token
+        with:
+          app-id: ${{ vars.RUNNER_APP_ID }}
+          private-key: ${{ secrets.RUNNER_APP_PRIVATE_KEY }}
 
       - uses: neebs12/lambda-microvm-github-runner@v1
         id: start
         with:
           mode: start
-          github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
+          github-token: ${{ steps.app-token.outputs.token }}
           image-id: ${{ vars.MICROVM_RUNNER_IMAGE_ARN }}
           image-version: ${{ vars.MICROVM_RUNNER_IMAGE_VERSION }}
           execution-role-arn: ${{ vars.MICROVM_EXECUTION_ROLE_ARN }}
@@ -48,8 +54,7 @@ jobs:
     steps:
       - uses: aws-actions/configure-aws-credentials@v6
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ vars.MICROVM_LAUNCH_ROLE_ARN }}
           aws-region: ${{ needs.start-runner.outputs.region }}
 
       - uses: neebs12/lambda-microvm-github-runner@v1
