@@ -1,0 +1,41 @@
+{
+  "name": "lambda-microvm-github-runner",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Launch single-use GitHub Actions runners on AWS Lambda MicroVMs.",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "ncc build src/index.ts -o dist --minify --source-map",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint src test",
+    "test": "vitest run",
+    "test:image": "scripts/test-runner-image.sh",
+    "test:scripts": "bash test/scripts/quickstart-credentials.test.sh",
+    "test:supervisor": "python3 -m unittest discover -s runner-image/test -p 'test_*.py'",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run test:scripts && npm run test:supervisor && npm run build"
+  },
+  "dependencies": {
+    "@actions/core": "3.0.1",
+    "@actions/github": "9.1.1",
+    "@aws-sdk/client-lambda-microvms": "^3.1079.0"
+  },
+  "devDependencies": {
+    "@emnapi/core": "1.11.1",
+    "@emnapi/runtime": "1.11.1",
+    "@eslint/js": "10.0.1",
+    "@types/node": "24.13.2",
+    "@vercel/ncc": "0.44.1",
+    "eslint": "10.6.0",
+    "prettier": "3.9.4",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.62.1",
+    "vitest": "4.1.9"
+  }
+}
