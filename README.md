@@ -31,10 +31,10 @@ credentials with GitHub OIDC and a GitHub App.
 ## Usage
 
 Copy [examples/basic.yml](examples/basic.yml) into the private repository's
-`.github/workflows/` directory. 
+`.github/workflows/` directory.
 
-> [!TIP]
-> The Quickstart script configures every variable and secret referenced by this workflow.
+> [!TIP] The Quickstart script configures every variable and secret referenced
+> by this workflow.
 
 ```yaml
 name: Lambda MicroVM runner
@@ -114,9 +114,10 @@ The Action implements and tests:
 - typed GitHub and AWS adapters with mocked-boundary integration tests.
 
 The production AL2023 runner image is implemented and validated locally and
-through the AWS image build hooks with production `overlay2`. The complete
-private-repository workflow is validated for success, job failure, cancellation,
-startup timeout, service containers, and the maximum-duration backstop.
+through the AWS image build hooks. Docker prefers `overlay2` and always falls
+back to `vfs` if needed. The complete private-repository workflow is validated
+for success, job failure, cancellation, startup timeout, service containers, and
+the maximum-duration backstop.
 
 ## Development
 

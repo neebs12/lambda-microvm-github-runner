@@ -25,15 +25,15 @@ Nested Docker validation requires an ARM64 Docker host:
 
 ```bash
 docker run --rm --privileged \
-  -e ALLOW_VFS_FALLBACK=true \
   -p 9000:9000 \
   lambda-microvm-github-runner:test
 ```
 
 Call `/aws/lambda-microvms/runtime/v1/validate` until it returns 200. The local
-fallback permits `vfs` because nested `overlay2` is commonly unavailable.
-Production keeps `ALLOW_VFS_FALLBACK=false`; AWS image validation fails unless
-`overlay2` works.
+and production supervisors always try `overlay2` first and then fall back to
+`vfs`. Validation succeeds only after the selected driver can run a container
+and resolve external registry DNS. The supervisor log records which driver
+started; `vfs` is supported but slower and more storage-intensive.
 
 ## Required AWS image settings
 

@@ -72,7 +72,7 @@ start_container
 docker exec "${container_id}" test ! -S /var/run/docker.sock
 stop_container
 
-start_container --privileged --env ALLOW_VFS_FALLBACK=true
+start_container --privileged
 [[ "$(hook validate '{}')" == "503" ]]
 for _attempt in $(seq 1 120); do
   validation_status="$(hook validate '{}')"
@@ -90,7 +90,6 @@ stop_container
 
 start_container \
   --privileged \
-  --env ALLOW_VFS_FALLBACK=true \
   --env RUNNER_ROOT=/opt/fake-runner \
   --volume "${FIXTURE_DIR}:/opt/fake-runner:ro"
 payload="$(

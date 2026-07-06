@@ -42,7 +42,6 @@ class Settings:
     docker_storage_driver: str = "overlay2"
     docker_start_attempts: int = 1
     docker_start_timeout: int = 50
-    allow_vfs_fallback: bool = False
     docker_log: Path = Path("/tmp/dockerd.log")
     runner_root: Path = Path("/opt/actions-runner")
     runner_user: str = "runner"
@@ -64,9 +63,6 @@ class Settings:
             ),
             docker_start_timeout=_integer_environment(
                 "DOCKERD_START_TIMEOUT", 50, 1, 300
-            ),
-            allow_vfs_fallback=_boolean_environment(
-                "ALLOW_VFS_FALLBACK", False
             ),
             docker_log=Path(
                 os.environ.get("DOCKER_LOG", "/tmp/dockerd.log")
@@ -143,10 +139,7 @@ class DockerManager:
                 return self._driver_is_accepted()
 
             drivers = [self.settings.docker_storage_driver]
-            if (
-                self.settings.allow_vfs_fallback
-                and self.settings.docker_storage_driver != "vfs"
-            ):
+            if self.settings.docker_storage_driver != "vfs":
                 drivers.append("vfs")
 
             for attempt in range(1, self.settings.docker_start_attempts + 1):
@@ -270,9 +263,7 @@ class DockerManager:
 
     def _driver_is_accepted(self) -> bool:
         driver = self.storage_driver()
-        return driver == self.settings.docker_storage_driver or (
-            self.settings.allow_vfs_fallback and driver == "vfs"
-        )
+        return driver in (self.settings.docker_storage_driver, "vfs")
 
     def _stop_process(self) -> None:
         if self.process is not None and self.process.poll() is None:
@@ -642,12 +633,6 @@ class HookApplication:
     def validate_image(self) -> bool:
         if not self.docker.start():
             return False
-        if (
-            not self.settings.allow_vfs_fallback
-            and self.docker.storage_driver()
-            != self.settings.docker_storage_driver
-        ):
-            return False
         commands = [
             ["getent", "hosts", "registry-1.docker.io"],
             ["docker", "run", "--rm", self.settings.validation_image, "true"],
@@ -879,17 +864,6 @@ def _integer_environment(
     if parsed < minimum or parsed > maximum:
         raise SystemExit(f"{name} is outside the accepted range")
     return parsed
-
-
-def _boolean_environment(name: str, default: bool) -> bool:
-    value = os.environ.get(name)
-    if value is None:
-        return default
-    if value == "true":
-        return True
-    if value == "false":
-        return False
-    raise SystemExit(f"{name} must be 'true' or 'false'")
 
 
 def main() -> None:

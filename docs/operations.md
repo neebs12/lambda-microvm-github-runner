@@ -86,7 +86,7 @@ version is active.
   status.
 - runner remains offline: inspect `/run`, Docker, DNS, and GitHub egress logs;
   start cleanup should terminate the VM.
-- Docker validation failure: production must use `overlay2`; never enable the
-  local `vfs` fallback in AWS.
+- Docker validation failure: inspect the supervisor log for both `overlay2` and
+  `vfs` startup failures. `vfs` is the automatic production fallback.
 - self-termination denied: correct the runtime role; the explicit stop job and
   maximum duration remain active.

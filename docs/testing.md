@@ -12,7 +12,7 @@ npm audit --audit-level=high
 ```
 
 `npm run check` covers strict TypeScript, 58 Action tests, Quickstart IAM
-credential creation and rotation tests, 17 supervisor tests, and the bundled
+credential creation and rotation tests, 18 supervisor tests, and the bundled
 Action. Supervisor tests also run successfully under the image's Python 3.9
 runtime.
 
@@ -21,19 +21,21 @@ runtime.
 - the image snapshot has no Docker socket;
 - immutable runner, Buildx, Compose, and AWS CLI tools;
 - asynchronous `/validate` with nested Docker and external registry DNS;
-- local-only `vfs` fallback;
+- automatic `vfs` fallback when `overlay2` cannot start;
 - `/run`, `/resume`, `/suspend`, and `/terminate`;
 - runner process-group and Docker teardown;
 - absence of the JIT fixture from logs.
 
-Local `vfs` success does not replace AWS `overlay2` validation.
+Both `overlay2` and `vfs` are supported in AWS. `overlay2` remains the preferred
+driver because it is faster and more storage-efficient.
 
 ## AWS image gate
 
 Every candidate version must prove in AWS:
 
 - `/ready` snapshots without Docker or registered runner state;
-- `/validate` starts Docker with `overlay2`;
+- `/validate` starts Docker with `overlay2`, or automatically falls back to
+  `vfs`;
 - Lambda link-local DNS works in containers and BuildKit;
 - Buildx builds ARM64;
 - Compose Node/Redis bridge DNS and TCP work;

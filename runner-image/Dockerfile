@@ -91,7 +91,6 @@ ENV HOOK_PORT=9000 \
     DOCKER_STORAGE_DRIVER=overlay2 \
     DOCKERD_START_ATTEMPTS=1 \
     DOCKERD_START_TIMEOUT=50 \
-    ALLOW_VFS_FALLBACK=false \
     RUNNER_ROOT=/opt/actions-runner \
     RUNNER_USER=runner
 
