@@ -169,6 +169,38 @@ Detailed guides:
 - [testing and release gates](docs/testing.md)
 - [runner image](runner-image/README.md)
 
+## Credits and inspirations
+
+This project is a small, purpose-built variation on existing runner and Lambda
+MicroVM work:
+
+- [mkdev-me/terraform-aws-github-runner-lambda-microvms](https://github.com/mkdev-me/terraform-aws-github-runner-lambda-microvms/tree/main)
+  for the Terraform-centric Lambda MicroVM runner approach using webhooks,
+  GitHub Apps, and dispatcher-style orchestration.
+- [machulav/ec2-github-runner](https://github.com/machulav/ec2-github-runner)
+  for the start/stop Action shape and general ephemeral runner lifecycle. This
+  Action follows that simple workflow model, but uses Lambda MicroVMs instead of
+  EC2 as the runtime.
+- [Some notes on Lambda MicroVMs](https://awsteele.com/blog/2026/06/23/some-notes-on-lambda-microvms.html)
+  by Aidan Steele for practical observations on Lambda MicroVM snapshots,
+  lifecycle hooks, and Docker behavior inside MicroVMs.
+
+The implementation also leans on the primary platform documentation:
+
+- [AWS Lambda MicroVMs](https://docs.aws.amazon.com/lambda/latest/dg/lambda-microvms-guide.html)
+  and
+  [MicroVM images](https://docs.aws.amazon.com/lambda/latest/dg/microvms-images.html)
+  for the image-build, snapshot, hook, and launch model.
+- [GitHub self-hosted runner REST API](https://docs.github.com/en/rest/actions/self-hosted-runners)
+  and
+  [secure use of just-in-time runners](https://docs.github.com/en/actions/reference/security/secure-use#using-just-in-time-runners)
+  for repository-scoped JIT runner registration and lifecycle behavior.
+- GitHub Actions docs for
+  [running jobs in a container](https://docs.github.com/actions/using-jobs/running-jobs-in-a-container)
+  and
+  [service containers](https://docs.github.com/actions/using-containerized-services)
+  for the container and Redis service example.
+
 ## License
 
 MIT
