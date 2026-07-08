@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/logo.jpeg" alt="Lambda MicroVM GitHub Runner logo" width="160" />
+</p>
+
 # Lambda MicroVM GitHub Runner
 
 A repository-scoped JavaScript Action for launching one single-use GitHub
