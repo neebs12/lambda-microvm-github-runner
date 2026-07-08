@@ -7,6 +7,10 @@
 A repository-scoped JavaScript Action for launching one single-use GitHub
 Actions runner on an AWS Lambda MicroVM.
 
+<p align="center">
+  <img src="assets/screenshot-sample.png" alt="Lambda MicroVM GitHub Runner logo" />
+</p>
+
 ## Quickstart
 
 Install the AWS CLI, GitHub CLI, `jq`, Docker, and Node.js 24. Authenticate both
