@@ -2,7 +2,7 @@
 
 Version 1 is for private repositories with trusted workflow changes. It requires
 an ARM64-capable Lambda MicroVM Region and enough regional MicroVM memory quota
-for at least one 4 GiB runner.
+for at least one 2 GiB runner.
 
 ## Quickstart
 
@@ -74,6 +74,11 @@ rotates the dedicated access key.
 Copy [the basic workflow](../examples/basic.yml) into
 `.github/workflows/microvm-runner.yml`. Pin Actions to reviewed immutable
 versions before production use.
+
+For GitHub Actions job containers and service containers, copy
+[the container services example](../examples/container-services.yml). It runs
+steps inside a Node 24 container and verifies access to a Redis service
+container from that job container.
 
 ## Verify
 

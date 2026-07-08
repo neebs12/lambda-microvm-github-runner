@@ -46,6 +46,10 @@ Copy [examples/basic.yml](examples/basic.yml) into the private repository's
 > [!TIP] The Quickstart script configures every variable and secret referenced
 > by this workflow.
 
+For a job that runs inside a Node 24 container and talks to a Redis service
+container, see
+[examples/container-services.yml](examples/container-services.yml).
+
 ```yaml
 name: Lambda MicroVM runner
 

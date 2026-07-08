@@ -4,6 +4,8 @@
 
 - Guarded Quickstart teardown script that previews by default and deletes
   generated GitHub repository config plus AWS resources with `--yes`.
+- Default runner image memory reduced to 2 GiB, plus a container-job and Redis
+  service-container example.
 - Node.js 24 start/stop Action with strict validation.
 - Repository-scoped, single-use JIT runners.
 - Deterministic launch idempotency and quota-aware retries/polling.

@@ -1,0 +1,108 @@
+name: Lambda MicroVM container and services
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  start-runner:
+    runs-on: ubuntu-latest
+    outputs:
+      label: ${{ steps.start.outputs.label }}
+      microvm-id: ${{ steps.start.outputs.microvm-id }}
+      region: ${{ steps.start.outputs.region }}
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.MICROVM_AWS_REGION }}
+
+      - uses: neebs12/lambda-microvm-github-runner@v1
+        id: start
+        with:
+          mode: start
+          github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
+          image-id: ${{ vars.MICROVM_RUNNER_IMAGE_ARN }}
+          image-version: ${{ vars.MICROVM_RUNNER_IMAGE_VERSION }}
+          execution-role-arn: ${{ vars.MICROVM_EXECUTION_ROLE_ARN }}
+          cloudwatch-log-group: ${{ vars.MICROVM_RUNTIME_LOG_GROUP }}
+          maximum-duration-seconds: "900"
+
+  container-job:
+    needs: start-runner
+    runs-on: ${{ needs.start-runner.outputs.label }}
+    timeout-minutes: 10
+    container:
+      image: public.ecr.aws/docker/library/node:24-bookworm
+    services:
+      redis:
+        image: public.ecr.aws/docker/library/redis:7.4.2-alpine
+        options: >-
+          --health-cmd "redis-cli ping" --health-interval 2s --health-timeout 2s
+          --health-retries 20
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Verify Node 24 container
+        run: |
+          set -euo pipefail
+          node --version
+          test "$(node -p 'process.versions.node.split(".")[0]')" = "24"
+          test "$(uname -m)" = "aarch64"
+          echo "Node 24 job container is running on $(uname -m)."
+
+      - name: Verify Redis service from the job container
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const net = require("node:net");
+
+          const socket = net.createConnection(6379, "redis");
+          socket.setEncoding("utf8");
+          socket.setTimeout(10_000);
+
+          socket.on("connect", () => {
+            socket.write("*1\r\n$4\r\nPING\r\n");
+          });
+
+          socket.on("data", (data) => {
+            if (!data.includes("PONG")) {
+              throw new Error(`Unexpected Redis response: ${data}`);
+            }
+            console.log("Redis service responded with PONG from the job container.");
+            socket.end();
+          });
+
+          socket.on("timeout", () => {
+            socket.destroy(new Error("Timed out waiting for Redis"));
+          });
+
+          socket.on("error", (error) => {
+            console.error(error);
+            process.exit(1);
+          });
+
+          socket.on("close", (hadError) => {
+            process.exit(hadError ? 1 : 0);
+          });
+          NODE
+
+  stop-runner:
+    if: ${{ always() && needs.start-runner.outputs.microvm-id != '' }}
+    needs: [start-runner, container-job]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ needs.start-runner.outputs.region }}
+
+      - uses: neebs12/lambda-microvm-github-runner@v1
+        with:
+          mode: stop
+          microvm-id: ${{ needs.start-runner.outputs.microvm-id }}
