@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Guarded Quickstart teardown script that previews by default and deletes
+  generated GitHub repository config plus AWS resources with `--yes`.
 - Node.js 24 start/stop Action with strict validation.
 - Repository-scoped, single-use JIT runners.
 - Deterministic launch idempotency and quota-aware retries/polling.

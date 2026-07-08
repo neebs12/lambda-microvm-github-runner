@@ -335,6 +335,7 @@ fi
 
 mkdir -p "$(dirname -- "${OUTPUT_FILE}")"
 jq -n \
+  --arg projectName "${PROJECT_NAME}" \
   --arg region "${REGION}" \
   --arg artifactBucket "${ARTIFACT_BUCKET}" \
   --arg buildRoleArn "${BUILD_ROLE_ARN}" \
@@ -345,6 +346,7 @@ jq -n \
   --arg githubOidcSubject "${GITHUB_OIDC_SUBJECT}" \
   --argjson githubOidcEnabled "${ENABLE_GITHUB_OIDC}" \
   '{
+    projectName: $projectName,
     region: $region,
     artifactBucket: $artifactBucket,
     buildRoleArn: $buildRoleArn,

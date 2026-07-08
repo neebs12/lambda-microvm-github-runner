@@ -1,5 +1,26 @@
 # Operations
 
+## Quickstart teardown
+
+Preview the resources that would be deleted:
+
+```bash
+export GITHUB_REPOSITORY=OWNER/REPOSITORY
+scripts/teardown-quickstart.sh
+```
+
+Delete them:
+
+```bash
+scripts/teardown-quickstart.sh --yes
+```
+
+The script requires the generated `build/aws-setup.json` file and uses
+`build/microvm-image.json` when present. It deletes only the resource names and
+ARNs recorded there: repository secrets and variables, the dedicated Quickstart
+IAM user, project IAM roles, the MicroVM image, the versioned artifact bucket,
+and build/runtime log groups.
+
 ## Quickstart credential rotation
 
 Re-run the credential helper to rotate the dedicated IAM user's access key and

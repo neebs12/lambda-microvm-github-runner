@@ -30,6 +30,24 @@ setup:
 GH_PERSONAL_ACCESS_TOKEN=TOKEN scripts/setup-quickstart.sh
 ```
 
+Preview the matching teardown before deleting anything:
+
+```bash
+export GITHUB_REPOSITORY=OWNER/PRIVATE_REPOSITORY
+scripts/teardown-quickstart.sh
+```
+
+Apply it with:
+
+```bash
+scripts/teardown-quickstart.sh --yes
+```
+
+The teardown reads `build/aws-setup.json` and `build/microvm-image.json`,
+removes the Quickstart repository secrets and variables when `GITHUB_REPOSITORY`
+is set, then deletes the dedicated IAM user, image, roles, artifact bucket, and
+log groups. Keep those generated files until teardown is complete.
+
 The script:
 
 1. uses the active local AWS credentials to create or reconcile the S3 bucket,

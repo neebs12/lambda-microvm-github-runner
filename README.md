@@ -28,6 +28,16 @@ trusted workflow changes. See
 [advanced credentials](docs/advanced-credentials.md) to replace both long-lived
 credentials with GitHub OIDC and a GitHub App.
 
+To preview cleanup of the Quickstart resources:
+
+```bash
+export GITHUB_REPOSITORY=OWNER/PRIVATE_REPOSITORY
+scripts/teardown-quickstart.sh
+```
+
+Re-run with `--yes` to delete the generated repository secrets/variables, IAM
+user, IAM roles, MicroVM image, artifact bucket, and CloudWatch log groups.
+
 ## Usage
 
 Copy [examples/basic.yml](examples/basic.yml) into the private repository's
