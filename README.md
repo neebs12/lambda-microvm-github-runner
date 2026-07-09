@@ -4,7 +4,7 @@
 
 # Lambda MicroVM GitHub Runner
 
-Run GitHub Actions jobs on fast, ephemeral AWS Lambda MicroVM-backed compute. 
+Run GitHub Actions jobs on fast, ephemeral AWS Lambda MicroVM-backed compute.
 
 <p align="center">
   <img src="assets/screenshot-sample.png" alt="Lambda MicroVM GitHub Runner logo" />
