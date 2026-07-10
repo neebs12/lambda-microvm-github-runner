@@ -4,7 +4,7 @@
 
 # Lambda MicroVM GitHub Runner
 
-Run GitHub Actions jobs on fast, ephemeral AWS Lambda MicroVM-backed compute.
+Lambdas can run for 8 hours now via MicroVMs. This runs GitHub Action jobs on it!
 
 <p align="center">
   <img src="assets/screenshot-sample.png" alt="Lambda MicroVM GitHub Runner logo" />
