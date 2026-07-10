@@ -4,7 +4,7 @@
 
 # Lambda MicroVM GitHub Runner
 
-Lambdas can run for 8 hours now via MicroVMs. This runs GitHub Action jobs on it!
+Lambdas can run for 8 hours using MicroVMs. This runs GitHub Action jobs on top of it.
 
 <p align="center">
   <img src="assets/screenshot-sample.png" alt="Lambda MicroVM GitHub Runner logo" />
