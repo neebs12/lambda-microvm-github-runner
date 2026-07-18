@@ -23,6 +23,7 @@ import {
   hashServerKey,
 } from "../src/server-handle.js";
 import type {
+  AcquiredWarmMember,
   AcquireWarmPoolRequest,
   CreatedWarmMember,
   WarmPoolMember,
@@ -504,6 +505,68 @@ describe("Action orchestration", () => {
     });
   });
 
+  it("retires a claimed terminated member and continues with a replacement", async () => {
+    const github = onlineGitHub();
+    const microvms = new MockMicrovmClient({
+      run: async () => ({
+        microvmId: "mvm-replacement",
+        imageVersion: "7",
+        endpoint: "replacement.example",
+        startedAt: 2_000,
+        maximumDurationSeconds: 3_600,
+      }),
+      get: async (microvmId) =>
+        microvmId === "mvm-stale"
+          ? { microvmId, state: "TERMINATED" }
+          : { microvmId, state: "RUNNING" },
+      createAuthToken: async () => ({ token: "auth-secret" }),
+    });
+    const store = new MockWarmPoolStore();
+    store.queuedAcquisitions.push({
+      needsCreation: false,
+      member: {
+        poolKey: "replaced-from-request",
+        memberId: "b".repeat(64),
+        state: "LEASED",
+        leaseId: "c".repeat(64),
+        leaseGeneration: 4,
+        acquisitionId: "previous-acquisition",
+        leaseOwner: "previous-owner",
+        leaseExpiresAt: 10_000,
+        microvmId: "mvm-stale",
+        endpoint: "stale.example",
+        imageVersion: "7",
+        startedAt: 1_000,
+        maxLifetimeSeconds: 3_600,
+        expiresAt: 3_601_000,
+        reuseDeadline: 1_801_000,
+      },
+    });
+
+    const result = await startRunner(
+      {
+        ...startConfig,
+        server: "docker-builds",
+        stateTable: "warm-state",
+        serverCapacity: 1,
+        ingressConnectors: ["ALL_INGRESS"],
+      },
+      context,
+      github,
+      microvms,
+      createReporter().api,
+      createRuntime().api,
+      new MockControlClient(),
+      () => store,
+    );
+
+    expect(result.microvmId).toBe("mvm-replacement");
+    expect(result.warmHit).toBe(false);
+    expect(store.acquireRequests).toHaveLength(2);
+    expect(store.dead.map((member) => member.microvmId)).toEqual(["mvm-stale"]);
+    expect(store.created).toHaveLength(1);
+  });
+
   it("rejects a stale pool stop before making a lifecycle call", async () => {
     const handle = encodePoolWarmHandle({
       version: 1,
@@ -543,6 +606,8 @@ describe("Action orchestration", () => {
 
 class MockWarmPoolStore implements WarmPoolStore {
   public readonly acquireRequests: AcquireWarmPoolRequest[] = [];
+  public readonly queuedAcquisitions: AcquiredWarmMember[] = [];
+  public readonly dead: WarmPoolMember[] = [];
   public readonly created: {
     member: WarmPoolMember;
     created: CreatedWarmMember;
@@ -552,6 +617,11 @@ class MockWarmPoolStore implements WarmPoolStore {
 
   public async acquire(request: AcquireWarmPoolRequest) {
     this.acquireRequests.push(structuredClone(request));
+    const queued = this.queuedAcquisitions.shift();
+    if (queued !== undefined) {
+      this.member = { ...queued.member, poolKey: request.poolKey };
+      return { ...queued, member: this.member };
+    }
     this.member = {
       poolKey: request.poolKey,
       memberId: "a".repeat(64),
@@ -587,7 +657,8 @@ class MockWarmPoolStore implements WarmPoolStore {
   public completeRelease(): Promise<void> {
     return Promise.resolve();
   }
-  public markDead(): Promise<void> {
+  public markDead(member: WarmPoolMember): Promise<void> {
+    this.dead.push(structuredClone(member));
     return Promise.resolve();
   }
   public abandonCreation(): Promise<void> {

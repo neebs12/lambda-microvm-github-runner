@@ -191,43 +191,49 @@ export async function startRunner(
         runtime,
       );
       stage = "warm pool acquisition";
-      const acquired = await poolStore.acquire({
-        poolKey,
-        acquisitionId: identity.clientToken,
-        leaseId: leaseId(identity.clientToken),
-        leaseOwner: `${context.workflow.runId}:${context.workflow.runAttempt}:${context.workflow.job}`,
-        now: runtime.now(),
-        leaseExpiresAt: runtime.now() + config.leaseTimeoutSeconds * 1_000,
-        ...(config.serverCapacity === undefined
-          ? {}
-          : { serverCapacity: config.serverCapacity }),
-      });
-      poolMember = acquired.member;
-      if (acquired.needsCreation) {
-        stage = "RunMicrovm";
-        launched = await launchMicrovm(
-          config,
-          resolvedImageVersion,
-          runHookPayload,
-          identity.clientToken,
-          microvms,
-          deadline,
-          runtime,
-        );
-        const expiresAt =
-          launched.startedAt + launched.maximumDurationSeconds * 1_000;
-        poolMember = await poolStore.markCreated(poolMember, {
-          microvmId: launched.microvmId,
-          endpoint: launched.endpoint,
-          imageVersion: launched.imageVersion,
-          startedAt: launched.startedAt,
-          maxLifetimeSeconds: launched.maximumDurationSeconds,
-          expiresAt,
-          reuseDeadline: expiresAt - config.reuseSafetyMarginSeconds * 1_000,
-          ttl: Math.floor(expiresAt / 1_000) + 86_400,
+      for (
+        let candidateAttempt = 0;
+        candidateAttempt < 1_000;
+        candidateAttempt += 1
+      ) {
+        const acquired = await poolStore.acquire({
+          poolKey,
+          acquisitionId: identity.clientToken,
+          leaseId: leaseId(identity.clientToken),
+          leaseOwner: `${context.workflow.runId}:${context.workflow.runAttempt}:${context.workflow.job}`,
+          now: runtime.now(),
+          leaseExpiresAt: runtime.now() + config.leaseTimeoutSeconds * 1_000,
+          ...(config.serverCapacity === undefined
+            ? {}
+            : { serverCapacity: config.serverCapacity }),
         });
-      } else {
-        warmHit = true;
+        poolMember = acquired.member;
+        if (acquired.needsCreation) {
+          stage = "RunMicrovm";
+          launched = await launchMicrovm(
+            config,
+            resolvedImageVersion,
+            runHookPayload,
+            identity.clientToken,
+            microvms,
+            deadline,
+            runtime,
+          );
+          const expiresAt =
+            launched.startedAt + launched.maximumDurationSeconds * 1_000;
+          poolMember = await poolStore.markCreated(poolMember, {
+            microvmId: launched.microvmId,
+            endpoint: launched.endpoint,
+            imageVersion: launched.imageVersion,
+            startedAt: launched.startedAt,
+            maxLifetimeSeconds: launched.maximumDurationSeconds,
+            expiresAt,
+            reuseDeadline: expiresAt - config.reuseSafetyMarginSeconds * 1_000,
+            ttl: Math.floor(expiresAt / 1_000) + 86_400,
+          });
+          break;
+        }
+
         stage = "GetMicrovm warm pool reuse";
         const memberMicrovmId = requiredMemberMicrovmId(poolMember);
         const existing = await getMicrovmWithRetry(
@@ -236,18 +242,47 @@ export async function startRunner(
           deadline,
           runtime,
         );
-        launched = reusableMicrovm(existing, config, runtime.now());
-        if (existing?.state === "SUSPENDED") {
+        try {
+          if (
+            existing === undefined ||
+            !["RUNNING", "SUSPENDED"].includes(existing.state)
+          ) {
+            throw new ActionExecutionError("Warm pool member is unavailable");
+          }
+          launched = reusableMicrovm(existing, config, runtime.now());
+        } catch (error: unknown) {
+          if (!(error instanceof ActionExecutionError)) {
+            throw error;
+          }
+          reporter.warning("Retiring an unusable warm pool member");
+          await retireClaimedPoolMember(
+            poolStore,
+            poolMember,
+            existing,
+            microvms,
+            deadline,
+            runtime,
+          );
+          poolMember = undefined;
+          launched = undefined;
+          stage = "warm pool acquisition";
+          continue;
+        }
+
+        warmHit = true;
+        if (existing.state === "SUSPENDED") {
           stage = "ResumeMicrovm";
           await retryWithFullJitter(
             async () => microvms.resume(memberMicrovmId),
             retryOptions("ResumeMicrovm", deadline, runtime),
           );
-        } else if (existing?.state !== "RUNNING") {
-          throw new ActionExecutionError(
-            "Warm pool member is not suspended or running",
-          );
         }
+        break;
+      }
+      if (poolMember === undefined || launched === undefined) {
+        throw new ActionExecutionError(
+          "Warm pool acquisition exhausted stale members",
+        );
       }
     } else if (explicitInputHandle?.kind === "explicit") {
       const explicitMicrovmId = explicitInputHandle.microvmId;
@@ -671,6 +706,21 @@ function reusableMicrovm(
     startedAt: microvm.startedAt,
     maximumDurationSeconds: microvm.maximumDurationSeconds,
   };
+}
+
+async function retireClaimedPoolMember(
+  store: WarmPoolStore,
+  member: WarmPoolMember,
+  microvm: Microvm | undefined,
+  microvms: MicrovmClient,
+  deadline: number,
+  runtime: ActionRuntime,
+): Promise<void> {
+  const destroying = await store.beginRelease(member, true);
+  if (microvm !== undefined && microvm.state !== "TERMINATED") {
+    await terminateMicrovm(microvms, microvm.microvmId, deadline, runtime);
+  }
+  await store.markDead(destroying);
 }
 
 async function waitForOnlineRunner(
