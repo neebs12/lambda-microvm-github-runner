@@ -363,7 +363,8 @@ describe("Action orchestration", () => {
       serverKeyHash: hashServerKey("docker-builds"),
     });
     expect(reporter.secrets).toContain("auth-secret");
-    expect(reporter.secrets).toContain(result.server);
+    expect(reporter.secrets).not.toContain(result.server);
+    expect(reporter.outputs.server).toBe(result.server);
     expect(reporter.outputs["warm-hit"]).toBe("false");
   });
 

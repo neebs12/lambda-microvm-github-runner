@@ -138,9 +138,10 @@ Proposed outputs:
 - `reuse-deadline`
 
 The opaque `server` value identifies one exact resource and lease generation. It
-must be masked and must not contain AWS credentials, GitHub tokens, or JIT
-configuration data. A stale warm handle fails its conditional release without
-making an AWS lifecycle call.
+intentionally contains no AWS credentials, GitHub tokens, endpoint auth tokens,
+or JIT configuration data, and must remain usable as a GitHub job output. A
+stale warm handle fails its conditional release without making an AWS lifecycle
+call; possession of a handle does not bypass AWS authorization.
 
 ### Request-local capacity semantics
 

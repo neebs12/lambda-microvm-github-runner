@@ -360,9 +360,6 @@ export async function startRunner(
               reuseDeadline,
             })
           : undefined;
-    if (server !== undefined) {
-      reporter.setSecret(server);
-    }
     const result: StartResult = {
       label: identity.label,
       runnerName: jitRunner.runnerName,
