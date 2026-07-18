@@ -21,24 +21,33 @@ bundled Action. Supervisor tests also run successfully under the image's Python
 - the image snapshot has no Docker socket;
 - immutable runner, Buildx, Compose, and AWS CLI tools;
 - asynchronous `/validate` with nested Docker and external registry DNS;
-- automatic `vfs` fallback when `overlay2` cannot start;
+- automatic `fuse-overlayfs` and final `vfs` fallback when `overlay2` cannot
+  start;
 - `/run`, `/resume`, `/suspend`, and `/terminate`;
 - runner process-group and Docker teardown;
 - absence of the JIT fixture from logs.
 
-Both `overlay2` and `vfs` are supported in AWS. `overlay2` remains the preferred
-driver because it is faster and more storage-efficient. The forced-`vfs` AWS
-gate uses a small Alpine build plus Redis to prove cache persistence within the
-2 GiB configuration; the full Node 24 image is intentionally exercised on
-`overlay2` because `vfs` layer copies can exhaust that filesystem.
+`overlay2`, `fuse-overlayfs`, and `vfs` are supported in AWS. `overlay2` remains
+the preferred driver, while `fuse-overlayfs` preserves copy-on-write behavior
+when kernel OverlayFS cannot be used. The forced-`vfs` AWS gate uses a small
+Alpine build plus Redis to prove final-fallback availability within the 2 GiB
+configuration; the full Node 24 image is intentionally avoided with `vfs`
+because its complete layer copies can exhaust that filesystem.
+
+The forced-`fuse-overlayfs` AWS gate uses the packaged 2 GiB image. It builds a
+Node 24 image with an npm dependency, runs Redis over a user-defined bridge,
+checks container DNS and egress, and then suspends and resumes the MicroVM. The
+unchanged rebuild must remain fully cached after resume. In the initial proof,
+the Docker data root occupied 1.3 GiB and the 7.8 GiB root filesystem retained
+4.0 GiB free after the Node, Redis, and BusyBox images were present.
 
 ## AWS image gate
 
 Every candidate version must prove in AWS:
 
 - `/ready` snapshots without Docker or registered runner state;
-- `/validate` starts Docker with `overlay2`, or automatically falls back to
-  `vfs`;
+- `/validate` starts Docker with `overlay2`, or automatically falls back through
+  `fuse-overlayfs` to `vfs`;
 - Lambda link-local DNS works in containers and BuildKit;
 - Buildx builds ARM64;
 - Compose Node/Redis bridge DNS and TCP work;

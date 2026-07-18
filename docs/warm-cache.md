@@ -28,7 +28,8 @@ The intended product description is:
 - Deliver the first working version without DynamoDB or another state service.
 - Add cross-workflow discovery and concurrency control only after local
   suspend/resume behavior is proven.
-- Continue supporting `overlay2` with the production `vfs` fallback.
+- Continue supporting `overlay2`, copy-on-write `fuse-overlayfs`, and the final
+  production `vfs` fallback.
 - Keep setup script-driven and avoid Terraform.
 
 ## Non-goals
@@ -227,8 +228,9 @@ references, records an idle result, and leaves suspension or termination to
 The `/suspend` hook must stop Docker and containerd cleanly, flush logs and
 filesystem writes, and reject suspension while a runner is busy. Stopping the
 daemons must preserve `/var/lib/docker`. The `/resume` hook restarts Docker,
-accepting either `overlay2` or the production `vfs` fallback, validates
-networking, and leaves the supervisor idle until a new JIT payload arrives.
+accepting `overlay2`, `fuse-overlayfs`, or the final production `vfs` fallback,
+validates networking, and leaves the supervisor idle until a new JIT payload
+arrives.
 
 ## Phase 1: warm runtime foundation
 
@@ -246,7 +248,8 @@ lifecycle and GitHub scheduling variables.
 - Make a warm runner exit return to `IDLE`; preserve ephemeral self-termination.
 - Stop Docker and containerd, call `sync`, and preserve `/var/lib/docker` before
   suspension. Restart and validate them after resume.
-- Prove both `overlay2` and the always-available production `vfs` fallback.
+- Prove `overlay2`, `fuse-overlayfs`, and the always-available production `vfs`
+  fallback.
 - Run Node 24 and Redis service-equivalent containers after a local
   suspend/resume hook cycle.
 
@@ -343,7 +346,8 @@ normal warm workflow cleanup uses the opaque `server` value.
 - The second job finds the first job's Docker image without pulling or
   rebuilding the unchanged layers.
 - Node 24 job containers and Redis service containers work after resume.
-- The proof passes with `overlay2` and with forced `vfs` fallback.
+- The proof passes with `overlay2`, forced `fuse-overlayfs`, and forced final
+  `vfs` fallback.
 - The existing ephemeral E2E matrix remains unchanged and green.
 - No JIT value, endpoint authentication token, PAT, or AWS secret appears in
   Action, supervisor, runner, or CloudWatch logs.
@@ -554,7 +558,8 @@ Extend the Python suite to prove:
 - JIT runner exit returns warm mode to `IDLE` without self-termination;
 - ephemeral mode still self-terminates after runner exit;
 - suspend refuses a busy runner and flushes/stops Docker cleanly when idle;
-- resume accepts working `overlay2` and the automatic `vfs` fallback;
+- resume accepts working `overlay2`, `fuse-overlayfs`, and the automatic `vfs`
+  fallback;
 - terminate stops runner, Docker, containerd, and the control server;
 - process arguments, exceptions, and logs never contain the JIT fixture;
 - concurrent control calls cannot create two runner processes.
@@ -568,8 +573,9 @@ The packaged ARM64 image test should:
 3. invoke the suspend hook and verify Docker/containerd stop successfully;
 4. invoke the resume hook and verify Docker restarts;
 5. verify the image and unchanged build layers still exist;
-6. repeat with forced `overlay2` failure and confirm `vfs` fallback preserves
-   functional cache state;
+6. repeat with forced `overlay2` failure and confirm `fuse-overlayfs` preserves
+   functional cache state, then force both copy-on-write drivers to confirm the
+   final `vfs` fallback starts;
 7. run a Node container and a Redis service-equivalent container after resume.
 
 Local hook calls do not prove AWS snapshot behavior. They are a fast gate before
@@ -599,7 +605,7 @@ Repeat with:
 - warm stop retry and terminating stop retry;
 - resume-hook failure and Docker startup failure;
 - expired MicroVM maximum duration;
-- `overlay2` and forced `vfs` fallback;
+- `overlay2`, forced `fuse-overlayfs`, and forced final `vfs` fallback;
 - Node 24 job container plus Redis service container;
 - no-op build and changed-layer build to distinguish a real cache hit from a
   merely preserved image tag.
@@ -700,8 +706,8 @@ Before the feature is described as stable:
 - pass the full private-repository Phase 2 and Phase 4 matrices;
 - review logs manually for secrets;
 - publish Action and runner-image SBOMs and checksums;
-- keep warm mode experimental until cancellation, stale leases, forced `vfs`,
-  and adversarial concurrency tests pass.
+- keep warm mode experimental until cancellation, stale leases, forced
+  `fuse-overlayfs`, forced `vfs`, and adversarial concurrency tests pass.
 
 Do not move the stable major tag based only on the no-DynamoDB proof. Phase 2 is
 an implementation spike and evidence-gathering release; Phases 3 and 4 must

@@ -156,10 +156,11 @@ The Action implements and tests:
 - typed GitHub and AWS adapters with mocked-boundary integration tests.
 
 The production AL2023 runner image is implemented and validated locally and
-through the AWS image build hooks. Docker prefers `overlay2` and always falls
-back to `vfs` if needed. The complete private-repository workflow is validated
-for success, job failure, cancellation, startup timeout, service containers, and
-the maximum-duration backstop.
+through the AWS image build hooks. Docker prefers `overlay2`, falls back to the
+copy-on-write `fuse-overlayfs`, and retains `vfs` as the final compatibility
+fallback. The complete private-repository workflow is validated for success, job
+failure, cancellation, startup timeout, service containers, and the
+maximum-duration backstop.
 
 ## Development
 

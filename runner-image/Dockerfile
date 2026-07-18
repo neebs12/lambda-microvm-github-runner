@@ -6,6 +6,8 @@ ARG BUILDX_VERSION=0.35.0
 ARG BUILDX_SHA256=c4248d6cbc4a619a7e0b4609c11e509ad4ac0b475e1c64817c0ac20c5d90c766
 ARG COMPOSE_VERSION=5.3.0
 ARG COMPOSE_SHA256=ba0d9f5ce70086b3830448ce2f8a6405513c996065fe45d2f7c144a1f0d99398
+ARG FUSE_OVERLAYFS_VERSION=1.17
+ARG FUSE_OVERLAYFS_SHA256=34c9995c929dd52f45cca985858d7e58d9a9626104bc2610db218aaa11115c23
 ARG DOCKER_PACKAGE=docker-25.0.16-1.amzn2023.0.2.aarch64
 ARG AWSCLI_VERSION=2.35.13
 ARG AWSCLI_SHA256=c562b596fa9711f340c82307ca9eff576a4b96e75f1a003d1e6b2fec77820883
@@ -72,6 +74,15 @@ RUN set -eux; \
     chmod 0755 "${plugin_dir}/docker-buildx" "${plugin_dir}/docker-compose"; \
     docker buildx version; \
     docker compose version
+
+RUN set -eux; \
+    fuse_overlayfs="/usr/local/bin/fuse-overlayfs"; \
+    curl --fail --location --silent --show-error \
+      "https://github.com/containers/fuse-overlayfs/releases/download/v${FUSE_OVERLAYFS_VERSION}/fuse-overlayfs-aarch64" \
+      --output "${fuse_overlayfs}"; \
+    echo "${FUSE_OVERLAYFS_SHA256}  ${fuse_overlayfs}" | sha256sum --check --strict; \
+    chmod 0755 "${fuse_overlayfs}"; \
+    "${fuse_overlayfs}" --version
 
 RUN set -eux; \
     useradd --create-home --shell /bin/bash runner; \

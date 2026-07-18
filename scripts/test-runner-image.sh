@@ -70,9 +70,13 @@ readonly HOOK_PREFIX="/aws/lambda-microvms/runtime/v1"
 start_container
 [[ "$(hook ready '{}')" == "200" ]]
 docker exec "${container_id}" test ! -S /var/run/docker.sock
+docker exec "${container_id}" fuse-overlayfs --version >/dev/null
 stop_container
 
-start_container --privileged
+# Docker Desktop's nested cgroup environment cannot run a FUSE-backed child
+# container reliably. Force the final compatibility driver here; real Lambda
+# MicroVM validation covers fuse-overlayfs.
+start_container --privileged --env DOCKER_STORAGE_DRIVER=vfs
 [[ "$(hook validate '{}')" == "503" ]]
 for _attempt in $(seq 1 120); do
   validation_status="$(hook validate '{}')"

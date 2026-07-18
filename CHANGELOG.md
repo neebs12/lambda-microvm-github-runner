@@ -9,7 +9,8 @@
   scheduled garbage collector, `warm-hit` and deadline outputs, and a
   `max-lifetime-seconds` input defaulting to two hours and capped at eight.
 - Added authenticated warm supervisor control, snapshot-safe Docker suspension,
-  and production `overlay2` validation with the existing `vfs` fallback.
+  and production `overlay2` validation with a copy-on-write `fuse-overlayfs`
+  fallback before the existing final `vfs` fallback.
 - Accept AWS's bodyless suspend, resume, and terminate lifecycle hook requests
   while retaining strict request bodies for the run hook.
 - Quickstart now creates and configures an on-demand warm-state table and grants
@@ -23,8 +24,8 @@
 - Deterministic launch idempotency and quota-aware retries/polling.
 - Partial-failure and explicit cleanup.
 - Snapshot-safe AL2023 ARM64 runner image with Docker, Buildx, and Compose.
-- Lifecycle supervisor with fresh Docker startup, automatic production `vfs`
-  fallback, and self-termination.
+- Lifecycle supervisor with fresh Docker startup, automatic production
+  `fuse-overlayfs` and `vfs` fallbacks, and self-termination.
 - Direct AWS CLI bootstrap, image build tooling, CI, release SBOMs, and
   examples.
 - One-command Classic PAT and static IAM-user Quickstart, with OIDC and GitHub

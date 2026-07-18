@@ -146,6 +146,8 @@ class DockerManager:
 
             drivers = [self.settings.docker_storage_driver]
             if self.settings.docker_storage_driver != "vfs":
+                if self.settings.docker_storage_driver != "fuse-overlayfs":
+                    drivers.append("fuse-overlayfs")
                 drivers.append("vfs")
 
             for attempt in range(1, self.settings.docker_start_attempts + 1):
@@ -269,7 +271,11 @@ class DockerManager:
 
     def _driver_is_accepted(self) -> bool:
         driver = self.storage_driver()
-        return driver in (self.settings.docker_storage_driver, "vfs")
+        return driver in (
+            self.settings.docker_storage_driver,
+            "fuse-overlayfs",
+            "vfs",
+        )
 
     def _stop_process(self) -> None:
         if self.process is not None and self.process.poll() is None:

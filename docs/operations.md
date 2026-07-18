@@ -126,8 +126,9 @@ version is active.
   status.
 - runner remains offline: inspect `/run`, Docker, DNS, and GitHub egress logs;
   start cleanup should terminate the VM.
-- Docker validation failure: inspect the supervisor log for both `overlay2` and
-  `vfs` startup failures. `vfs` is the automatic production fallback.
+- Docker validation failure: inspect the supervisor log for `overlay2`,
+  `fuse-overlayfs`, and `vfs` startup failures. `vfs` remains the final
+  production fallback.
 - `vfs` out of space: the fallback copies complete filesystem layers and is
   substantially more storage-intensive than `overlay2`. On the 2 GiB runner,
   prefer smaller base images and bounded caches; a large Node image plus service

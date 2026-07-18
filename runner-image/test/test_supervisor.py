@@ -188,7 +188,58 @@ class PayloadTests(unittest.TestCase):
 
 
 class DockerManagerTests(unittest.TestCase):
-    def test_vfs_fallback_is_always_available(self) -> None:
+    def test_copy_on_write_fallback_precedes_vfs(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            active_driver: str | None = None
+            drivers: list[str] = []
+
+            def popen(
+                command: list[str], **_kwargs: object
+            ) -> FakeDockerProcess:
+                nonlocal active_driver
+                if command[0] == "containerd":
+                    return FakeDockerProcess(exited=False)
+                active_driver = next(
+                    value.split("=", 1)[1]
+                    for value in command
+                    if value.startswith("--storage-driver=")
+                )
+                drivers.append(active_driver)
+                return FakeDockerProcess(exited=active_driver == "overlay2")
+
+            def run_command(
+                command: list[str], **_kwargs: object
+            ) -> subprocess.CompletedProcess[bytes]:
+                if command[0] == "ctr":
+                    return subprocess.CompletedProcess(command, 0)
+                if "--format" in command:
+                    return subprocess.CompletedProcess(
+                        command,
+                        0,
+                        stdout=(active_driver or "").encode(),
+                    )
+                return subprocess.CompletedProcess(
+                    command,
+                    0 if active_driver == "fuse-overlayfs" else 1,
+                )
+
+            manager = supervisor.DockerManager(
+                supervisor.Settings(
+                    docker_start_attempts=1,
+                    docker_log=Path(directory) / "dockerd.log",
+                ),
+                run_command=run_command,
+                popen=popen,  # type: ignore[arg-type]
+                sleeper=lambda _seconds: None,
+            )
+            with (
+                patch.object(Path, "mkdir"),
+                patch.object(Path, "unlink"),
+            ):
+                self.assertTrue(manager.start())
+            self.assertEqual(drivers, ["overlay2", "fuse-overlayfs"])
+
+    def test_vfs_remains_the_final_fallback(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             active_driver: str | None = None
             drivers: list[str] = []
@@ -206,7 +257,7 @@ class DockerManagerTests(unittest.TestCase):
                 )
                 drivers.append(active_driver)
                 return FakeDockerProcess(
-                    exited=active_driver == "overlay2"
+                    exited=active_driver != "vfs"
                 )
 
             def run_command(
@@ -239,7 +290,55 @@ class DockerManagerTests(unittest.TestCase):
                 patch.object(Path, "unlink"),
             ):
                 self.assertTrue(manager.start())
-            self.assertEqual(drivers, ["overlay2", "vfs"])
+            self.assertEqual(
+                drivers, ["overlay2", "fuse-overlayfs", "vfs"]
+            )
+
+    def test_explicit_vfs_does_not_try_other_drivers(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            drivers: list[str] = []
+
+            def popen(
+                command: list[str], **_kwargs: object
+            ) -> FakeDockerProcess:
+                if command[0] == "containerd":
+                    return FakeDockerProcess(exited=False)
+                drivers.extend(
+                    value.split("=", 1)[1]
+                    for value in command
+                    if value.startswith("--storage-driver=")
+                )
+                return FakeDockerProcess(exited=False)
+
+            def run_command(
+                command: list[str], **_kwargs: object
+            ) -> subprocess.CompletedProcess[bytes]:
+                if command[0] == "ctr":
+                    return subprocess.CompletedProcess(command, 0)
+                if "--format" in command:
+                    return subprocess.CompletedProcess(
+                        command, 0, stdout=b"vfs"
+                    )
+                return subprocess.CompletedProcess(
+                    command, 0 if drivers else 1
+                )
+
+            manager = supervisor.DockerManager(
+                supervisor.Settings(
+                    docker_storage_driver="vfs",
+                    docker_start_attempts=1,
+                    docker_log=Path(directory) / "dockerd.log",
+                ),
+                run_command=run_command,
+                popen=popen,  # type: ignore[arg-type]
+                sleeper=lambda _seconds: None,
+            )
+            with (
+                patch.object(Path, "mkdir"),
+                patch.object(Path, "unlink"),
+            ):
+                self.assertTrue(manager.start())
+            self.assertEqual(drivers, ["vfs"])
 
     def test_log_tail_is_bounded(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -483,17 +582,19 @@ class ValidationTests(unittest.TestCase):
             manager.status(), supervisor.ValidationState.SUCCEEDED
         )
 
-    def test_image_validation_accepts_vfs_fallback(self) -> None:
-        application = supervisor.HookApplication(
-            supervisor.Settings(),
-            FakeDocker(driver="vfs"),  # type: ignore[arg-type]
-            object(),  # type: ignore[arg-type]
-            object(),  # type: ignore[arg-type]
-            run_command=lambda command, **_kwargs: subprocess.CompletedProcess(
-                command, 0
-            ),
-        )
-        self.assertTrue(application.validate_image())
+    def test_image_validation_accepts_fallback_drivers(self) -> None:
+        for driver in ("fuse-overlayfs", "vfs"):
+            with self.subTest(driver=driver):
+                application = supervisor.HookApplication(
+                    supervisor.Settings(),
+                    FakeDocker(driver=driver),  # type: ignore[arg-type]
+                    object(),  # type: ignore[arg-type]
+                    object(),  # type: ignore[arg-type]
+                    run_command=lambda command, **_kwargs: (
+                        subprocess.CompletedProcess(command, 0)
+                    ),
+                )
+                self.assertTrue(application.validate_image())
 
 
 class HookApplicationTests(unittest.TestCase):
