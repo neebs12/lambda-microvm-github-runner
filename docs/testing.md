@@ -27,7 +27,10 @@ bundled Action. Supervisor tests also run successfully under the image's Python
 - absence of the JIT fixture from logs.
 
 Both `overlay2` and `vfs` are supported in AWS. `overlay2` remains the preferred
-driver because it is faster and more storage-efficient.
+driver because it is faster and more storage-efficient. The forced-`vfs` AWS
+gate uses a small Alpine build plus Redis to prove cache persistence within the
+2 GiB configuration; the full Node 24 image is intentionally exercised on
+`overlay2` because `vfs` layer copies can exhaust that filesystem.
 
 ## AWS image gate
 

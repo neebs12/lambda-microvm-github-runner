@@ -128,5 +128,10 @@ version is active.
   start cleanup should terminate the VM.
 - Docker validation failure: inspect the supervisor log for both `overlay2` and
   `vfs` startup failures. `vfs` is the automatic production fallback.
+- `vfs` out of space: the fallback copies complete filesystem layers and is
+  substantially more storage-intensive than `overlay2`. On the 2 GiB runner,
+  prefer smaller base images and bounded caches; a large Node image plus service
+  images can exhaust the snapshot filesystem even though the same workload fits
+  with `overlay2`.
 - self-termination denied: correct the runtime role; the explicit stop job and
   maximum duration remain active.
