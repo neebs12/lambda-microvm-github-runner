@@ -11,10 +11,10 @@ npm run test:image
 npm audit --audit-level=high
 ```
 
-`npm run check` covers strict TypeScript, 58 Action tests, Quickstart IAM
-credential creation and rotation tests, 18 supervisor tests, and the bundled
-Action. Supervisor tests also run successfully under the image's Python 3.9
-runtime.
+`npm run check` covers strict TypeScript, Action and adversarial DynamoDB tests,
+Quickstart IAM credential creation and rotation tests, supervisor tests, and the
+bundled Action. Supervisor tests also run successfully under the image's Python
+3.9 runtime.
 
 `npm run test:image` requires an ARM64 Docker host. It verifies:
 
@@ -69,3 +69,10 @@ and fail on fixable critical vulnerabilities. High findings remain visible and
 must be reviewed when advancing the pinned upstream runner, Docker, Buildx,
 Compose, and AWS CLI versions. Every release publishes Action and runner-image
 SBOMs with checksums.
+
+Experimental warm-cache release gates additionally require the private
+repository matrix in [warm-cache.md](warm-cache.md): two distinct JIT runners on
+the same MicroVM across a real suspend/resume boundary, an actual Docker cache
+hit, Node 24 and Redis containers, forced `vfs`, fenced stale stops, expiry and
+on-access recovery, and concurrent request-local capacity tests. The private
+workflow must pin the feature's full commit SHA rather than a branch name.

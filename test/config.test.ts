@@ -110,6 +110,22 @@ describe("parseActionConfig", () => {
     });
   });
 
+  it("bounds human server names separately from opaque handles", () => {
+    expect(() =>
+      parseActionConfig(
+        { ...validStartInputs, server: "x".repeat(129) },
+        { AWS_REGION: "us-east-1" },
+      ),
+    ).toThrow("pool names must be at most 128");
+
+    expect(
+      parseActionConfig(
+        { ...validStartInputs, server: `lmvm1_${"x".repeat(500)}` },
+        { AWS_REGION: "us-east-1" },
+      ),
+    ).toMatchObject({ mode: "start" });
+  });
+
   it("keeps legacy microvm-id only for direct termination", () => {
     expect(() =>
       parseActionConfig(

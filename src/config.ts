@@ -472,10 +472,13 @@ function validateIdempotencyKey(value: string): void {
 }
 
 function validateServer(value: string): void {
-  if (value.length > 4_096 || containsControlCharacter(value)) {
+  const maximumLength = value.startsWith("lmvm1_") ? 4_096 : 128;
+  if (value.length > maximumLength || containsControlCharacter(value)) {
     throw new InputValidationError(
       "server",
-      "must be at most 4096 characters without control characters",
+      value.startsWith("lmvm1_")
+        ? "opaque values must be at most 4096 characters without control characters"
+        : "pool names must be at most 128 characters without control characters",
     );
   }
 }

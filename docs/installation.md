@@ -51,11 +51,13 @@ log groups. Keep those generated files until teardown is complete.
 The script:
 
 1. uses the active local AWS credentials to create or reconcile the S3 bucket,
-   CloudWatch log groups, and image build and runtime IAM roles;
+   CloudWatch log groups, the on-demand warm-state DynamoDB table, and image
+   build and runtime IAM roles;
 2. packages, uploads, validates, and activates the runner image;
 3. configures the repository variables;
 4. creates a dedicated `lambda-microvm-github-runner-quickstart` IAM user;
-5. grants that user only image build and runner lifecycle permissions;
+5. grants that user only image build, runner lifecycle, and exact-table
+   warm-state data-plane permissions;
 6. rotates its access key directly into the `AWS_ACCESS_KEY_ID` and
    `AWS_SECRET_ACCESS_KEY` GitHub Actions secrets;
 7. sets the PAT as `GH_PERSONAL_ACCESS_TOKEN`.
@@ -80,6 +82,12 @@ For GitHub Actions job containers and service containers, copy
 steps inside a Node 24 container and verifies access to a Redis service
 container from that job container.
 
+For experimental cache reuse, copy
+[the warm-cache example](../examples/warm-cache.yml). The setup script already
+sets `MICROVM_WARM_STATE_TABLE`. Warm mode is only for trusted workflows in the
+same private repository: jobs sharing a server name share root-equivalent
+machine state. It is not an isolation boundary.
+
 ## Verify
 
 Run the workflow manually and confirm:
@@ -89,6 +97,10 @@ Run the workflow manually and confirm:
 3. the JIT runner processes only that job;
 4. the MicroVM reaches `TERMINATED`;
 5. no GitHub token, AWS credential, or JIT payload appears in logs.
+
+For warm mode, additionally confirm that `stop` reaches `SUSPENDED`, a later
+`start` reports `warm-hit: true`, the MicroVM ID is unchanged, and the JIT
+runner ID is new.
 
 ## Advanced credentials
 

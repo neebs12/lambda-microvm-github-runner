@@ -1,0 +1,79 @@
+name: Experimental Lambda MicroVM warm cache
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A warm MicroVM preserves root-equivalent machine state between trusted jobs.
+# Use this only in a private repository with trusted workflow changes.
+jobs:
+  start-runner:
+    runs-on: ubuntu-latest
+    outputs:
+      label: ${{ steps.start.outputs.label }}
+      server: ${{ steps.start.outputs.server }}
+      warm-hit: ${{ steps.start.outputs.warm-hit }}
+      region: ${{ steps.start.outputs.region }}
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.MICROVM_AWS_REGION }}
+
+      - uses: neebs12/lambda-microvm-github-runner@v1
+        id: start
+        with:
+          mode: start
+          github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
+          image-id: ${{ vars.MICROVM_RUNNER_IMAGE_ARN }}
+          image-version: ${{ vars.MICROVM_RUNNER_IMAGE_VERSION }}
+          execution-role-arn: ${{ vars.MICROVM_EXECUTION_ROLE_ARN }}
+          cloudwatch-log-group: ${{ vars.MICROVM_RUNTIME_LOG_GROUP }}
+          server: docker-builds
+          server-capacity: "2"
+          state-table: ${{ vars.MICROVM_WARM_STATE_TABLE }}
+          max-lifetime-seconds: "7200"
+
+      - name: Report cache disposition
+        env:
+          WARM_HIT: ${{ steps.start.outputs.warm-hit }}
+        run: 'echo "Warm cache hit: ${WARM_HIT}"'
+
+  build:
+    needs: start-runner
+    runs-on: ${{ needs.start-runner.outputs.label }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+      - name: Populate and exercise the local Docker cache
+        run: |
+          set -euo pipefail
+          docker pull public.ecr.aws/docker/library/node:24-bookworm
+          docker run --rm public.ecr.aws/docker/library/node:24-bookworm node --version
+          docker pull public.ecr.aws/docker/library/redis:7.4.2-alpine
+          docker run -d --name warm-redis public.ecr.aws/docker/library/redis:7.4.2-alpine
+          trap 'docker rm -f warm-redis >/dev/null 2>&1 || true' EXIT
+          for attempt in $(seq 1 30); do
+            docker exec warm-redis redis-cli ping | grep -q PONG && exit 0
+            sleep 1
+          done
+          exit 1
+
+  stop-runner:
+    if: ${{ always() && needs.start-runner.outputs.server != '' }}
+    needs: [start-runner, build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ needs.start-runner.outputs.region }}
+
+      - uses: neebs12/lambda-microvm-github-runner@v1
+        with:
+          mode: stop
+          server: ${{ needs.start-runner.outputs.server }}

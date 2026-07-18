@@ -29,7 +29,7 @@ jobs:
           image-version: ${{ vars.MICROVM_RUNNER_IMAGE_VERSION }}
           execution-role-arn: ${{ vars.MICROVM_EXECUTION_ROLE_ARN }}
           cloudwatch-log-group: ${{ vars.MICROVM_RUNTIME_LOG_GROUP }}
-          maximum-duration-seconds: "900"
+          max-lifetime-seconds: "900"
 
   container-job:
     needs: start-runner
