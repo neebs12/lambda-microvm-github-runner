@@ -58,23 +58,22 @@ See GitHub's
 A workflow has root-equivalent access through Docker and can modify any cache
 that a later job consumes. A fresh JIT registration prevents accidental job
 assignment to an old runner identity, but it does not clean the filesystem or
-memory. Warm reuse is supported only when every job sharing a cache key is
+memory. Warm reuse is supported only when every job sharing a server key is
 equally trusted.
 
 ### Make ownership changes conditional
 
 Once DynamoDB is introduced, every lease mutation uses a conditional write and a
 monotonically increasing generation. An expired workflow must not be able to
-release, suspend, or destroy a MicroVM after another workflow has acquired it.
+stop or suspend a MicroVM after another workflow has acquired it.
 
 ### Keep cleanup layered
 
-Explicit release or destroy is the normal path. Workflow `always()` cleanup,
-on-access reconciliation, idle suspension, and Lambda's maximum duration are
-independent backstops. Warm-cache operations reconcile only the item they touch;
-there is no scheduled garbage collector or table scan. DynamoDB TTL eventually
-removes expired metadata and is never treated as a MicroVM termination
-mechanism.
+Explicit `stop` is the normal path. Workflow `always()` cleanup, on-access
+reconciliation, idle suspension, and Lambda's maximum duration are independent
+backstops. Warm-cache operations reconcile only the item they touch; there is no
+scheduled garbage collector or table scan. DynamoDB TTL eventually removes
+expired metadata and is never treated as a MicroVM termination mechanism.
 
 Record the real platform lifetime instead of adjusting the launch timestamp:
 
@@ -98,27 +97,27 @@ than the remaining lifetime.
 
 ## Target action contract
 
-The exact names can change during Phase 1, but the modes should remain distinct
-from today's `start` and `stop` behavior:
+The public lifecycle remains the existing two modes:
 
-- `acquire`: create or resume a warm MicroVM, inject a new JIT configuration,
-  wait for that exact runner to become online, and return its unique label.
-- `release`: verify that the JIT runner is no longer processing a job, suspend
-  the MicroVM when it has enough useful lifetime remaining, and make it
-  available for reuse. At or beyond its reuse deadline, terminate it instead.
-- `destroy`: terminate the MicroVM and remove its warm-cache state.
+- `start` without `server-key`: preserve today's ephemeral behavior.
+- `start` with `server-key`: lease an available member of that warm server pool,
+  or create a member when the request's capacity permits it.
+- `stop` with an ephemeral handle or legacy `microvm-id`: terminate the MicroVM.
+- `stop` with a warm `server-handle`: conditionally release that exact lease and
+  suspend the member. At or beyond its reuse deadline, terminate it instead.
 
-Every Phase 2 mode performs targeted reconciliation for its cache item. There is
-no `gc` mode.
+Every Phase 2 warm operation performs targeted reconciliation for its server
+pool. There are no additional lifecycle modes and no `gc` mode.
 
 Proposed inputs:
 
 | Input                         | Phase | Purpose                                                                   |
 | ----------------------------- | ----- | ------------------------------------------------------------------------- |
-| `microvm-id`                  | 1     | Explicit MicroVM to resume, release, or destroy                           |
-| `cache-key`                   | 2     | Repository-scoped logical cache identity                                  |
-| `state-table`                 | 2     | DynamoDB table used for discovery and leases                              |
-| `lease-id`                    | 2     | Opaque ownership token returned by `acquire`                              |
+| `microvm-id`                  | 1     | Explicit MicroVM used by the Phase 1 proof and legacy termination         |
+| `server-key`                  | 1/2   | Repository-scoped warm pool and trust-boundary identity                   |
+| `server-capacity`             | 2     | Optional ceiling for this request creating another pool member            |
+| `server-handle`               | 1/2   | Exact ephemeral resource or warm member lease returned by `start`         |
+| `state-table`                 | 2     | DynamoDB table used for pool discovery and leases                         |
 | `lease-timeout-seconds`       | 2     | Deadline for recovering an abandoned lease                                |
 | `warm-retention-seconds`      | 2     | Maximum desired suspended retention                                       |
 | `reuse-safety-margin-seconds` | 2     | Required lifetime remaining before another job; defaults to 1,800 seconds |
@@ -130,13 +129,35 @@ Proposed outputs:
 - `runner-id`
 - `microvm-id`
 - `image-version`
-- `lease-id` in Phase 2
+- `server-handle`
 - `warm-hit` in Phase 2
 - `warm-expires-at` in Phase 2
 - `reuse-deadline` in Phase 2
 
-The `lease-id` is an opaque fencing credential. It must be masked and must not
-contain AWS credentials, GitHub tokens, or JIT configuration data.
+The `server-handle` identifies one exact resource and lease generation. It must
+be masked and must not contain AWS credentials, GitHub tokens, or JIT
+configuration data. A stale warm handle fails its conditional release without
+making an AWS lifecycle call.
+
+### Request-local capacity semantics
+
+`server-capacity` is deliberately not durable pool configuration. It controls
+only whether the current `start` request may add another member when every
+existing member is busy:
+
+1. If any healthy member is available, lease it regardless of the supplied
+   capacity or current pool size.
+2. If none is available and `server-capacity` is omitted, reserve and create a
+   new member without an Action-level pool bound.
+3. If none is available and the active member count is below the supplied
+   capacity, reserve and create one member.
+4. Otherwise fail with a clear pool-at-capacity error.
+
+Capacity never shrinks or terminates existing members. If one workflow supplies
+`2` and another supplies `3`, the latter can grow the pool to three while the
+former can grow it only while fewer than two members exist. Omitting capacity
+allows growth to observed concurrency. Users are responsible for keeping
+workflow values consistent when they want a stable bound.
 
 ## Runtime architecture
 
@@ -196,8 +217,8 @@ any non-terminal state -> TERMINATING
 
 For an ephemeral launch, the existing behavior remains: runner exit triggers
 self-termination. For a warm launch, runner exit clears the process and secret
-references, records an idle result, and leaves termination to `release`,
-`destroy`, idle policy, or the platform duration limit.
+references, records an idle result, and leaves suspension or termination to
+`stop`, idle policy, or the platform duration limit.
 
 The `/suspend` hook must stop Docker and containerd cleanly, flush logs and
 filesystem writes, and reject suspension while a runner is busy. Stopping the
@@ -214,15 +235,16 @@ jobs use one MicroVM and observe the same Docker cache across a real AWS
 suspend/resume boundary.
 
 Workflow outputs carry `microvm-id` between control jobs. There is no automatic
-discovery, shared cache key, lease table, or cross-workflow reuse.
+discovery, shared server pool, lease table, or cross-workflow reuse.
 
 ### Implementation
 
 1. Extend the AWS client with `SuspendMicrovm`, `ResumeMicrovm`,
    `CreateMicrovmAuthToken`, and the MicroVM endpoint returned by `RunMicrovm`
    and `GetMicrovm`.
-2. Add parsing and validation for the experimental `acquire`, `release`, and
-   `destroy` modes. Existing `start` and `stop` parsing must remain unchanged.
+2. Extend the existing `start` and `stop` parsing with optional `server-key` and
+   `server-handle` inputs. Inputs without a server key or handle must preserve
+   today's behavior.
 3. Version the run-hook envelope so the image can distinguish `ephemeral` from
    `warm` launches.
 4. Add the dedicated authenticated control server to the runner image.
@@ -234,7 +256,8 @@ discovery, shared cache key, lease table, or cross-workflow reuse.
 8. Add the minimum IAM permissions for suspend, resume, and short-lived MicroVM
    endpoint tokens. Do not add DynamoDB permissions yet.
 9. Add an experimental workflow that explicitly passes the same `microvm-id`
-   through two acquire/target/release cycles and finally calls `destroy`.
+   through two start/target/stop cycles and finally terminates it with the
+   legacy `stop` plus `microvm-id` path.
 10. Document that cancellation can leave the experimental VM suspended or
     running until the existing maximum-duration backstop fires.
 
@@ -246,11 +269,13 @@ prepare-first:
   outputs:
     label: ${{ steps.runner.outputs.label }}
     microvm-id: ${{ steps.runner.outputs.microvm-id }}
+    server-handle: ${{ steps.runner.outputs.server-handle }}
   steps:
     - id: runner
       uses: neebs12/lambda-microvm-github-runner@ref
       with:
-        mode: acquire
+        mode: start
+        server-key: phase1-proof
         # The remaining image, role, token, and Region inputs are unchanged.
 
 first-job:
@@ -260,26 +285,28 @@ first-job:
     - run: docker pull public.ecr.aws/docker/library/node:24
     - run: docker build -t warm-cache-proof .
 
-release-first:
+stop-first:
   if: always()
   needs: [prepare-first, first-job]
   runs-on: ubuntu-latest
   steps:
     - uses: neebs12/lambda-microvm-github-runner@ref
       with:
-        mode: release
-        microvm-id: ${{ needs.prepare-first.outputs.microvm-id }}
+        mode: stop
+        server-handle: ${{ needs.prepare-first.outputs.server-handle }}
 
 prepare-second:
-  needs: [prepare-first, release-first]
+  needs: [prepare-first, stop-first]
   runs-on: ubuntu-latest
   outputs:
     label: ${{ steps.runner.outputs.label }}
+    server-handle: ${{ steps.runner.outputs.server-handle }}
   steps:
     - id: runner
       uses: neebs12/lambda-microvm-github-runner@ref
       with:
-        mode: acquire
+        mode: start
+        server-key: phase1-proof
         microvm-id: ${{ needs.prepare-first.outputs.microvm-id }}
 
 second-job:
@@ -289,8 +316,9 @@ second-job:
     - run: docker image inspect warm-cache-proof
 ```
 
-The complete test workflow must include a final `destroy` job with
-`if: always()`.
+The complete test workflow must include a final `stop` job with `if: always()`
+that passes the `microvm-id` without a warm handle, exercising the existing
+idempotent termination path.
 
 ### Phase 1 exit criteria
 
@@ -310,8 +338,8 @@ The complete test workflow must include a final `destroy` job with
 
 ### Purpose
 
-Allow an independent workflow run to request a repository-scoped cache key and
-reuse a healthy suspended MicroVM without knowing its ID.
+Allow independent workflow runs to request a repository-scoped server key and
+lease healthy suspended MicroVMs from its pool without knowing their IDs.
 
 ### Table and IAM setup
 
@@ -323,15 +351,23 @@ data-plane access to that exact table. It must not receive `CreateTable`,
 Suggested keys:
 
 ```text
-PK = REPOSITORY#<repository-id>
-SK = CACHE#<sha256(normalized-cache-key)>
+PK = REPOSITORY#<repository-id>#SERVER#<sha256(effective-server-key)>
+SK = CONTROL
+SK = MEMBER#<member-id>
 ```
+
+The effective server key includes the user value plus Region, architecture,
+image ID and version, execution role, and security-sensitive network
+configuration. The `CONTROL` item contains only the transactional member count
+and revision needed to reserve creation safely; it does not store an
+authoritative capacity. Each `MEMBER` item describes one MicroVM and lease.
 
 Suggested attributes:
 
 | Attribute                    | Purpose                                                              |
 | ---------------------------- | -------------------------------------------------------------------- |
-| `microvmId`                  | AWS resource selected for the cache                                  |
+| `memberId`                   | Stable pool member identity                                          |
+| `microvmId`                  | AWS resource backing the member                                      |
 | `imageId` and `imageVersion` | Prevent reuse after an image change                                  |
 | `region`                     | Prevent cross-Region lookup mistakes                                 |
 | `state`                      | `CREATING`, `READY`, `LEASED`, `SUSPENDING`, `DESTROYING`, or `DEAD` |
@@ -350,33 +386,32 @@ tokens, or workflow secrets in DynamoDB.
 
 ### Acquire algorithm
 
-1. Normalize and hash the user cache key together with repository ID, Region,
-   architecture, image ID, and exact image version.
-2. Use a strongly consistent read for the candidate item.
-3. If no item exists, conditionally create `CREATING` state with a new lease ID
-   and generation, then launch the MicroVM.
-4. If the item is `READY`, conditionally change it to `LEASED`, set a new lease
-   ID, and increment the generation. The condition must also require
-   `reuseDeadline > now` and the expected image identity.
-5. If the existing lease belongs to the same idempotency identity, return or
-   finish the previous acquisition instead of creating another VM.
-6. If another unexpired lease owns the item, fail clearly in the first DynamoDB
-   release. Users can serialize matching workflows with GitHub `concurrency`.
-   Waiting, overflow VMs, and pools are later design work.
-7. If the lease condition failed because `now >= reuseDeadline`, conditionally
-   retire the item, terminate the old MicroVM idempotently if it still exists,
-   and create a replacement.
-8. Confirm the MicroVM exists, is `SUSPENDED` or recoverably `RUNNING`, matches
-   the exact image version, and has at least the configured safety margin
-   remaining.
-9. Resume it when required, create a new JIT registration, deliver it through
-   the control endpoint, and wait for the exact runner identity.
-10. On any missing, terminal, incompatible, or otherwise unrecoverable
-    candidate, conditionally retire it and create a replacement.
+1. Normalize and hash the server key together with repository ID, Region,
+   architecture, image ID and version, execution role, and network fingerprint.
+2. Read that pool partition consistently and reconcile its expired members.
+3. Prefer the most recently used healthy `READY` member whose
+   `reuseDeadline > now`. Conditionally change it to `LEASED`, set a new lease
+   ID, and increment its generation.
+4. If the lease belongs to the same idempotency identity, return or finish the
+   previous acquisition instead of acquiring a second member.
+5. If no member is available, evaluate this request's `server-capacity`. Omitted
+   capacity permits creation; supplied capacity permits creation only when the
+   active count is lower.
+6. Reserve a `CREATING` member and increment the active count atomically. The
+   count check and reservation must be one DynamoDB transaction so simultaneous
+   starts cannot overshoot the requesting bound.
+7. Launch the reserved member using a client token derived from its identity and
+   generation.
+8. Resume a reused member when required, create a new JIT registration, deliver
+   it through the control endpoint, and wait for the exact runner identity.
+9. On any missing, terminal, incompatible, or otherwise unrecoverable member,
+   conditionally retire it, correct the active count, and continue through the
+   same selection rules.
 
 ### Release algorithm
 
-1. Require the repository identity, cache key, lease ID, and generation.
+1. Decode the `server-handle` and require the repository identity, server key
+   hash, member identity, lease ID, and generation.
 2. Verify the GitHub JIT runner is gone or unambiguously idle.
 3. Conditionally change `LEASED` to `SUSPENDING` only when the lease ID and
    generation match.
@@ -391,9 +426,9 @@ tokens, or workflow secrets in DynamoDB.
 
 ### On-access reconciliation and natural expiry
 
-There is no scheduled cleanup workflow. `acquire`, `release`, and `destroy`
-reconcile the one cache item named by their inputs. Ordinary ephemeral `start`
-and `stop` calls do not scan or mutate warm-cache state.
+There is no scheduled cleanup workflow. Warm `start` and `stop` calls reconcile
+only the server pool partition named by their inputs or handle. Ordinary
+ephemeral `start` and `stop` calls do not scan or mutate warm-cache state.
 
 On each access, the Action:
 
@@ -404,18 +439,18 @@ On each access, the Action:
 - terminates an expired MicroVM if AWS still reports it as present;
 - retires entries for incompatible or inactive image versions;
 - never mutates an unexpired lease owned by another workflow;
-- uses the same conditional generation checks as acquire and release.
+- uses the same conditional generation checks as warm `start` and `stop`.
 
-If no workflow touches the key again, Lambda terminates the MicroVM at its hard
-maximum duration. The table item can remain temporarily without causing a
-resource leak. Set its DynamoDB TTL after `microvmExpiresAt` with a metadata
-grace period. TTL deletion is deliberately eventual: a later acquire does not
-wait for it and instead rejects the item from its recorded deadline.
+If no workflow touches a member again, Lambda terminates it at its hard maximum
+duration. Its table item can remain temporarily without causing a resource leak.
+Set its DynamoDB TTL after `microvmExpiresAt` with a metadata grace period. TTL
+deletion is deliberately eventual: a later start does not wait for it and
+instead rejects the member from its recorded deadline.
 
 Create the `CREATING` item before calling `RunMicrovm` and derive the AWS client
 token from the item identity and generation. If the Action stops after the AWS
-call but before recording the returned MicroVM ID, a later acquire can repeat
-the idempotent launch and recover the same result. If the key is never touched
+call but before recording the returned MicroVM ID, a later start can repeat the
+idempotent launch and recover the same result. If the key is never touched
 again, the platform still terminates the unrecorded MicroVM at its maximum
 duration.
 
@@ -426,18 +461,23 @@ that window without adding a scheduler.
 
 ### Phase 2 exit criteria
 
-- A later workflow run using the same normalized cache key receives the same
-  healthy MicroVM and a new JIT runner identity.
+- A later workflow run using the same effective server key prefers a healthy
+  available pool member and receives a new JIT runner identity.
 - Different repositories, Regions, architectures, and image versions cannot
   collide.
-- Exactly one of many simultaneous acquisitions can own one cache item.
-- A stale owner cannot release, suspend, destroy, or rewrite a newer lease.
+- Exactly one workflow can own each member lease generation.
+- Concurrent starts can create distinct members up to their request-local
+  capacity without overshooting it.
+- A request with capacity `3` can grow a pool beyond the ceiling used by a
+  request with capacity `2`; the smaller request never shrinks the pool.
+- A request without capacity can grow the pool when every member is busy.
+- A stale owner cannot stop, suspend, or rewrite a newer lease.
 - Cancellation and expired leases recover on the next access without manual
   table edits.
 - A missing or terminated MicroVM is replaced without returning its stale label.
-- An acquire at or after `reuseDeadline` creates a replacement instead of
-  resuming the old MicroVM.
-- A release at or after `reuseDeadline` terminates instead of suspending.
+- A start at or after `reuseDeadline` creates a replacement instead of resuming
+  the old MicroVM.
+- A stop at or after `reuseDeadline` terminates instead of suspending.
 - The Quickstart setup and teardown scripts create and remove only their exact
   DynamoDB resources and policies.
 
@@ -455,8 +495,7 @@ Add deterministic tests for:
 - cleanup after JIT creation, resume, control delivery, and runner-readiness
   failures;
 - DynamoDB key normalization and repository scoping;
-- conditional acquire, idempotent retry, release, destroy, and on-access
-  reconciliation;
+- conditional start, idempotent retry, stop, and on-access reconciliation;
 - fencing behavior with stale lease IDs and generations;
 - timestamps at maximum duration, the 30-minute reuse margin, lease expiry, and
   clock boundaries;
@@ -506,19 +545,20 @@ version, storage driver, and relevant timestamps without recording secrets.
 
 The primary scenario must prove:
 
-1. first `acquire` launches one MicroVM and one JIT runner;
+1. first warm `start` launches one MicroVM and one JIT runner;
 2. the first target populates Docker pull, build, package, and tool caches;
-3. `release` reaches AWS `SUSPENDED`;
-4. second `acquire` resumes the same MicroVM and starts a different JIT runner;
+3. warm `stop` reaches AWS `SUSPENDED`;
+4. second warm `start` resumes the same MicroVM and starts a different JIT
+   runner;
 5. the second target proves cache presence and runs container/service-container
    jobs successfully;
-6. final `destroy` reaches `TERMINATED`;
+6. final legacy `stop` reaches `TERMINATED`;
 7. GitHub contains no leftover self-hosted runner registration.
 
 Repeat with:
 
 - target success, failure, timeout, and workflow cancellation;
-- release retry and destroy retry;
+- warm stop retry and terminating stop retry;
 - resume-hook failure and Docker startup failure;
 - expired MicroVM maximum duration;
 - `overlay2` and forced `vfs` fallback;
@@ -530,20 +570,27 @@ Repeat with:
 
 Use a temporary table and repository-scoped IAM policy. Test:
 
-- 20 concurrent acquisitions of one cache key: exactly one lease succeeds;
-- an idempotent rerun of the winning acquire returns the same lease;
-- two different cache keys can proceed independently;
-- stale release after a newer generation is acquired: the release is rejected
-  and the newer MicroVM remains running;
+- 20 concurrent starts with capacity `5`: no more than five members are created
+  and each successful start owns a different member lease;
+- an idempotent rerun of a winning start returns the same lease;
+- two different server keys can proceed independently;
+- mixed capacity `2` and `3`: the larger request can create the third member,
+  the smaller request never shrinks it, and both reuse any available member;
+- omitted capacity can create another member when all existing members are busy;
+- supplied capacity at or below the active busy-member count fails clearly;
+- concurrent count-and-create transactions do not overshoot the requesting
+  bound;
+- stale stop after a newer generation is acquired: the stop is rejected and the
+  newer MicroVM remains running;
 - cancellation before JIT delivery, during the target, and during suspend;
 - table item exists but MicroVM does not;
 - MicroVM exists but table state is stale;
-- image version changes between release and acquire;
-- lease expiration followed by on-access reconciliation and reacquisition;
-- acquire one second before, exactly at, and one second after `reuseDeadline`;
-- release before and after `reuseDeadline`;
+- image version changes between stop and the next start;
+- lease expiration followed by on-access reconciliation and another start;
+- start one second before, exactly at, and one second after `reuseDeadline`;
+- stop before and after `reuseDeadline`;
 - allow an untouched suspended MicroVM to reach its platform deadline, then
-  verify the next acquire replaces its stale item;
+  verify the next start replaces its stale member;
 - expired DynamoDB TTL that has not yet been physically deleted;
 - denied suspend/resume/auth-token/DynamoDB permissions with sanitized errors;
 - Quickstart teardown with running and suspended test VMs.
@@ -593,11 +640,11 @@ hit. A faster wall-clock result alone is insufficient evidence.
 | Resume fails                | Delete unused JIT runner and preserve or destroy VM according to observed state         |
 | Control delivery fails      | Delete unused JIT runner; retry only with the same idempotency identity                 |
 | Runner never becomes online | Delete JIT runner and suspend or destroy the VM                                         |
-| Target job fails            | `release` still suspends through `always()`                                             |
+| Target job fails            | Warm `stop` still suspends through `always()`                                           |
 | Workflow is cancelled       | Lease expires; next access reconciles it and platform duration is the resource backstop |
 | Suspend fails               | Do not mark the item `READY`                                                            |
-| Stale release arrives       | Conditional write fails and no AWS lifecycle call is made                               |
-| VM is already terminated    | Mark state `DEAD` and replace on the next acquire                                       |
+| Stale stop arrives          | Conditional write fails and no AWS lifecycle call is made                               |
+| VM is already terminated    | Mark state `DEAD` and replace on the next start                                         |
 | Image version changes       | Never resume the old VM for the new key                                                 |
 
 ## Documentation and release gates
@@ -607,7 +654,8 @@ Before the feature is described as stable:
 - add a warm-cache example with an explicit warning about the trust boundary;
 - update installation, IAM, security, operations, teardown, and quota docs;
 - document snapshot charges and the eight-hour hard lifetime;
-- document GitHub `concurrency` as the initial contention strategy;
+- document request-local `server-capacity`, unbounded omission, and
+  pool-at-capacity errors;
 - preserve the ordinary ephemeral example as the recommended default;
 - pass all existing Action and image gates without modifying their expected
   lifecycle;
