@@ -4,6 +4,7 @@ import base64
 import gzip
 import http.client
 import json
+import socket
 import subprocess
 import sys
 import tempfile
@@ -647,6 +648,22 @@ class HookHttpTests(unittest.TestCase):
         self.assertEqual(response.status, 400)
         self.assertNotIn(secret, body)
         self.assertEqual(self.calls, [])
+
+    def test_bodyless_lifecycle_hook_without_content_length_is_accepted(
+        self,
+    ) -> None:
+        with socket.create_connection(("127.0.0.1", self.port), timeout=2) as client:
+            client.sendall(
+                (
+                    f"POST {supervisor.HOOK_PREFIX}/suspend HTTP/1.0\r\n"
+                    "Host: 127.0.0.1\r\n"
+                    "\r\n"
+                ).encode("ascii")
+            )
+            response = client.recv(4096)
+
+        self.assertIn(b" 200 ", response)
+        self.assertEqual(self.calls, [("suspend", {})])
 
 
 class ReadyHookTests(unittest.TestCase):

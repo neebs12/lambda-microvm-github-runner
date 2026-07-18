@@ -10,6 +10,8 @@
   `max-lifetime-seconds` input defaulting to two hours and capped at eight.
 - Added authenticated warm supervisor control, snapshot-safe Docker suspension,
   and production `overlay2` validation with the existing `vfs` fallback.
+- Accept AWS's bodyless suspend, resume, and terminate lifecycle hook requests
+  while retaining strict request bodies for the run hook.
 - Quickstart now creates and configures an on-demand warm-state table and grants
   its exact data-plane and MicroVM lifecycle permissions; teardown removes it.
 - Guarded Quickstart teardown script that previews by default and deletes

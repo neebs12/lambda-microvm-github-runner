@@ -811,7 +811,7 @@ class Hooks(BaseHTTPRequestHandler):
             return
         hook = path.removeprefix(HOOK_PREFIX).strip("/")
         try:
-            payload = self._read_payload()
+            payload = self._read_payload(allow_missing=hook != "run")
         except ValueError:
             self._send_result(400, "invalid request")
             return
@@ -819,8 +819,10 @@ class Hooks(BaseHTTPRequestHandler):
         status, message = self.application.handle(hook, payload)
         self._send_result(status, message)
 
-    def _read_payload(self) -> dict[str, Any]:
+    def _read_payload(self, *, allow_missing: bool = False) -> dict[str, Any]:
         content_length_text = self.headers.get("Content-Length")
+        if content_length_text is None and allow_missing:
+            return {}
         if content_length_text is None or not content_length_text.isdigit():
             raise ValueError("invalid content length")
         content_length = int(content_length_text)
