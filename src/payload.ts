@@ -72,6 +72,18 @@ export function encodeRunHookPayload(
   );
 }
 
+export function encodeWarmRunHookPayload(
+  region: string,
+  maskSecret: SecretMasker,
+  maximumBytes = MAX_RUN_HOOK_PAYLOAD_BYTES,
+): string {
+  return encodeJitPayload(
+    JSON.stringify({ version: 2, mode: "warm", region }),
+    maskSecret,
+    maximumBytes,
+  );
+}
+
 export function decodeJitPayload(payload: string): string {
   if (
     payload.length === 0 ||

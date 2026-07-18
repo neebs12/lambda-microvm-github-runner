@@ -138,7 +138,7 @@ class PayloadTests(unittest.TestCase):
                     "runHookPayload": encoded_payload(secret),
                 }
             ),
-            ("mvm-123", secret, None),
+            ("mvm-123", secret, None, False),
         )
 
     def test_versioned_payload_includes_termination_region(self) -> None:
@@ -147,7 +147,21 @@ class PayloadTests(unittest.TestCase):
         )
         self.assertEqual(
             supervisor.decode_run_hook_payload(encoded_payload(envelope)),
-            ("jit-secret", "us-east-1"),
+            ("jit-secret", "us-east-1", False),
+        )
+
+    def test_warm_payload_starts_idle_without_jit(self) -> None:
+        envelope = json.dumps(
+            {"version": 2, "mode": "warm", "region": "us-east-1"}
+        )
+        self.assertEqual(
+            supervisor.parse_run_payload(
+                {
+                    "microvmId": "mvm-warm",
+                    "runHookPayload": encoded_payload(envelope),
+                }
+            ),
+            ("mvm-warm", None, "us-east-1", True),
         )
 
     def test_payload_rejects_invalid_and_oversized_values(self) -> None:
@@ -244,6 +258,96 @@ class DockerManagerTests(unittest.TestCase):
 
 
 class RunnerSupervisorTests(unittest.TestCase):
+    def test_warm_runner_returns_idle_and_survives_suspend_resume(self) -> None:
+        first_process = FakeRunnerProcess()
+        docker = FakeDocker(ready=False)
+        launcher = FakeLauncher(first_process)
+        terminator = FakeTerminator()
+        runner = supervisor.RunnerSupervisor(
+            docker, launcher, terminator
+        )
+        warm_envelope = json.dumps(
+            {"version": 2, "mode": "warm", "region": "us-east-1"}
+        )
+
+        self.assertTrue(
+            runner.run(
+                {
+                    "microvmId": "mvm-warm",
+                    "runHookPayload": encoded_payload(warm_envelope),
+                }
+            )
+        )
+        self.assertEqual(runner.state, supervisor.RunnerState.IDLE)
+        request = {
+            "version": 1,
+            "requestId": "request-1",
+            "microvmId": "mvm-warm",
+            "jit": "jit-first",
+        }
+        self.assertTrue(runner.start_runner(request))
+        self.assertTrue(runner.start_runner(request))
+        self.assertEqual(launcher.values, ["jit-first"])
+        self.assertFalse(runner.suspend())
+
+        first_process.finish(0)
+        for _attempt in range(100):
+            if runner.state == supervisor.RunnerState.IDLE:
+                break
+            time.sleep(0.01)
+        self.assertEqual(runner.state, supervisor.RunnerState.IDLE)
+        self.assertEqual(terminator.calls, [])
+        self.assertTrue(runner.suspend())
+        self.assertEqual(runner.state, supervisor.RunnerState.SUSPENDED)
+        self.assertTrue(runner.resume())
+        self.assertEqual(runner.state, supervisor.RunnerState.IDLE)
+
+        second_process = FakeRunnerProcess()
+        launcher.process = second_process
+        self.assertTrue(
+            runner.start_runner(
+                {
+                    "version": 1,
+                    "requestId": "request-2",
+                    "microvmId": "mvm-warm",
+                    "jit": "jit-second",
+                }
+            )
+        )
+        second_process.finish(0)
+        for _attempt in range(100):
+            if runner.state == supervisor.RunnerState.IDLE:
+                break
+            time.sleep(0.01)
+        self.assertEqual(launcher.values, ["jit-first", "jit-second"])
+        self.assertEqual(terminator.calls, [])
+
+    def test_warm_control_rejects_reused_request_with_new_jit(self) -> None:
+        process = FakeRunnerProcess()
+        runner = supervisor.RunnerSupervisor(
+            FakeDocker(), FakeLauncher(process), FakeTerminator()
+        )
+        envelope = json.dumps(
+            {"version": 2, "mode": "warm", "region": "us-east-1"}
+        )
+        self.assertTrue(
+            runner.run(
+                {
+                    "microvmId": "mvm-warm",
+                    "runHookPayload": encoded_payload(envelope),
+                }
+            )
+        )
+        first = {
+            "version": 1,
+            "requestId": "request-1",
+            "microvmId": "mvm-warm",
+            "jit": "jit-first",
+        }
+        self.assertTrue(runner.start_runner(first))
+        self.assertFalse(runner.start_runner({**first, "jit": "jit-other"}))
+        process.finish(0)
+
     def test_duplicate_run_starts_exactly_one_runner(self) -> None:
         process = FakeRunnerProcess()
         docker = FakeDocker()

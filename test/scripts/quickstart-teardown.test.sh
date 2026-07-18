@@ -90,6 +90,7 @@ make_files() {
     githubLaunchRoleArn: "arn:aws:iam::123456789012:role/runner-launch",
     buildLogGroup: "/lambda-microvms/runner/build",
     runtimeLogGroup: "/lambda-microvms/runner/runtime",
+    warmStateTable: "runner-warm-state",
     quickstartUserArn: "arn:aws:iam::123456789012:user/runner-quickstart"
   }' >"${directory}/setup.json"
   jq -n '{
@@ -131,6 +132,8 @@ run_teardown "apply" --yes
 grep -q "lambda-microvms terminate-microvm" \
   "${temporary_directory}/apply/aws.log"
 grep -q "lambda-microvms delete-microvm-image" \
+  "${temporary_directory}/apply/aws.log"
+grep -q "dynamodb delete-table.*runner-warm-state" \
   "${temporary_directory}/apply/aws.log"
 grep -q "iam delete-user.*runner-quickstart" \
   "${temporary_directory}/apply/aws.log"

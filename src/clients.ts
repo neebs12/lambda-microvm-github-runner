@@ -41,6 +41,9 @@ export type RunMicrovmRequest = {
 export type RunMicrovmResult = {
   microvmId: string;
   imageVersion: string;
+  endpoint: string;
+  startedAt: number;
+  maximumDurationSeconds: number;
 };
 
 export type Microvm = {
@@ -48,10 +51,38 @@ export type Microvm = {
   state: string;
   stateReason?: string;
   imageVersion?: string;
+  endpoint?: string;
+  startedAt?: number;
+  maximumDurationSeconds?: number;
+};
+
+export type MicrovmAuthToken = {
+  token: string;
 };
 
 export type MicrovmClient = {
+  resolveImageVersion(imageId: string): Promise<string>;
   run(request: RunMicrovmRequest): Promise<RunMicrovmResult>;
   get(microvmId: string): Promise<Microvm | undefined>;
+  suspend(microvmId: string): Promise<void>;
+  resume(microvmId: string): Promise<void>;
+  createAuthToken(
+    microvmId: string,
+    port: number,
+    expirationMinutes: number,
+  ): Promise<MicrovmAuthToken>;
   terminate(microvmId: string): Promise<void>;
+};
+
+export type StartControlledRunnerRequest = {
+  endpoint: string;
+  port: number;
+  authToken: string;
+  requestId: string;
+  microvmId: string;
+  encodedJitConfig: string;
+};
+
+export type MicrovmControlClient = {
+  startRunner(request: StartControlledRunnerRequest): Promise<void>;
 };

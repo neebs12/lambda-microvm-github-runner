@@ -72,14 +72,19 @@ readonly EXECUTION_ROLE_NAME="${EXECUTION_ROLE_NAME:-${PROJECT_NAME}-runtime}"
 readonly GITHUB_ROLE_NAME="${GITHUB_ROLE_NAME:-${PROJECT_NAME}-github-launch}"
 readonly BUILD_LOG_GROUP="${BUILD_LOG_GROUP:-/lambda-microvms/${PROJECT_NAME}/build}"
 readonly RUNTIME_LOG_GROUP="${RUNTIME_LOG_GROUP:-/lambda-microvms/${PROJECT_NAME}/runtime}"
+readonly WARM_STATE_TABLE="${WARM_STATE_TABLE:-${PROJECT_NAME}-warm-state}"
+[[ "${WARM_STATE_TABLE}" =~ ^[A-Za-z0-9_.-]{3,255}$ ]] ||
+  fail "WARM_STATE_TABLE is not a valid DynamoDB table name"
 readonly OIDC_PROVIDER_ARN="arn:${partition}:iam::${account_id}:oidc-provider/token.actions.githubusercontent.com"
 readonly BUILD_ROLE_ARN="arn:${partition}:iam::${account_id}:role/${BUILD_ROLE_NAME}"
 readonly EXECUTION_ROLE_ARN="arn:${partition}:iam::${account_id}:role/${EXECUTION_ROLE_NAME}"
 readonly GITHUB_ROLE_ARN="arn:${partition}:iam::${account_id}:role/${GITHUB_ROLE_NAME}"
 readonly IMAGE_RESOURCE_ARN="arn:${partition}:lambda:${REGION}:${account_id}:microvm-image:*"
 readonly MICROVM_RESOURCE_ARN="arn:${partition}:lambda:${REGION}:${account_id}:microvm:*"
+readonly WARM_STATE_TABLE_ARN="arn:${partition}:dynamodb:${REGION}:${account_id}:table/${WARM_STATE_TABLE}"
 readonly INTERNET_EGRESS_ARN="arn:${partition}:lambda:${REGION}:aws:network-connector:aws-network-connector:INTERNET_EGRESS"
 readonly NO_INGRESS_ARN="arn:${partition}:lambda:${REGION}:aws:network-connector:aws-network-connector:NO_INGRESS"
+readonly ALL_INGRESS_ARN="arn:${partition}:lambda:${REGION}:aws:network-connector:aws-network-connector:ALL_INGRESS"
 
 temporary_directory="$(mktemp -d)"
 cleanup() {
@@ -187,6 +192,42 @@ aws s3api put-bucket-tagging \
 create_log_group "${BUILD_LOG_GROUP}"
 create_log_group "${RUNTIME_LOG_GROUP}"
 
+if aws dynamodb describe-table \
+  --region "${REGION}" \
+  --table-name "${WARM_STATE_TABLE}" >/dev/null 2>&1; then
+  log "Using DynamoDB table ${WARM_STATE_TABLE}"
+else
+  log "Creating DynamoDB table ${WARM_STATE_TABLE}"
+  aws dynamodb create-table \
+    --region "${REGION}" \
+    --table-name "${WARM_STATE_TABLE}" \
+    --billing-mode PAY_PER_REQUEST \
+    --attribute-definitions AttributeName=PK,AttributeType=S AttributeName=SK,AttributeType=S \
+    --key-schema AttributeName=PK,KeyType=HASH AttributeName=SK,KeyType=RANGE \
+    --tags \
+    "Key=Project,Value=${PROJECT_NAME}" \
+    "Key=ManagedBy,Value=lambda-microvm-github-runner" \
+    >/dev/null
+  aws dynamodb wait table-exists \
+    --region "${REGION}" \
+    --table-name "${WARM_STATE_TABLE}"
+fi
+ttl_status="$(
+  aws dynamodb describe-time-to-live \
+    --region "${REGION}" \
+    --table-name "${WARM_STATE_TABLE}" \
+    --query 'TimeToLiveDescription.TimeToLiveStatus' \
+    --output text
+)"
+readonly ttl_status
+if [[ "${ttl_status}" != "ENABLED" && "${ttl_status}" != "ENABLING" ]]; then
+  aws dynamodb update-time-to-live \
+    --region "${REGION}" \
+    --table-name "${WARM_STATE_TABLE}" \
+    --time-to-live-specification Enabled=true,AttributeName=ttl \
+    >/dev/null
+fi
+
 if [[ "${ENABLE_GITHUB_OIDC}" == "true" ]]; then
   if oidc_json="$(
     aws iam get-open-id-connect-provider \
@@ -286,6 +327,8 @@ jq -n \
   --arg executionRoleArn "${EXECUTION_ROLE_ARN}" \
   --arg internetEgressArn "${INTERNET_EGRESS_ARN}" \
   --arg noIngressArn "${NO_INGRESS_ARN}" \
+  --arg allIngressArn "${ALL_INGRESS_ARN}" \
+  --arg stateTableArn "${WARM_STATE_TABLE_ARN}" \
   '{
     Version: "2012-10-17",
     Statement: [
@@ -295,6 +338,9 @@ jq -n \
         Action: [
           "lambda:RunMicrovm",
           "lambda:GetMicrovm",
+          "lambda:SuspendMicrovm",
+          "lambda:ResumeMicrovm",
+          "lambda:CreateMicrovmAuthToken",
           "lambda:TerminateMicrovm",
           "lambda:GetMicrovmImage"
         ],
@@ -310,7 +356,21 @@ jq -n \
         Sid: "PassManagedNetworkConnectors",
         Effect: "Allow",
         Action: "lambda:PassNetworkConnector",
-        Resource: [$internetEgressArn, $noIngressArn]
+        Resource: [$internetEgressArn, $noIngressArn, $allIngressArn]
+      },
+      {
+        Sid: "ManageWarmPoolState",
+        Effect: "Allow",
+        Action: [
+          "dynamodb:DescribeTable",
+          "dynamodb:Query",
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:UpdateItem",
+          "dynamodb:DeleteItem",
+          "dynamodb:TransactWriteItems"
+        ],
+        Resource: $stateTableArn
       }
     ]
   }' >"${temporary_directory}/github-permissions.json"
@@ -343,6 +403,7 @@ jq -n \
   --arg githubLaunchRoleArn "${GITHUB_ROLE_ARN}" \
   --arg buildLogGroup "${BUILD_LOG_GROUP}" \
   --arg runtimeLogGroup "${RUNTIME_LOG_GROUP}" \
+  --arg warmStateTable "${WARM_STATE_TABLE}" \
   --arg githubOidcSubject "${GITHUB_OIDC_SUBJECT}" \
   --argjson githubOidcEnabled "${ENABLE_GITHUB_OIDC}" \
   '{
@@ -354,6 +415,7 @@ jq -n \
     githubLaunchRoleArn: $githubLaunchRoleArn,
     buildLogGroup: $buildLogGroup,
     runtimeLogGroup: $runtimeLogGroup,
+    warmStateTable: $warmStateTable,
     githubOidcSubject: $githubOidcSubject,
     githubOidcEnabled: $githubOidcEnabled
   }' | tee "${OUTPUT_FILE}"

@@ -22,6 +22,7 @@ By default this prints the teardown plan only. Pass --yes to delete:
   - the MicroVM image from build/microvm-image.json
   - project IAM roles
   - artifact bucket objects, delete markers, and bucket
+  - DynamoDB warm-state table
   - build/runtime CloudWatch log groups
 
 Environment:
@@ -96,6 +97,8 @@ RUNTIME_LOG_GROUP="$(json_string '.runtimeLogGroup' "${SETUP_FILE}")"
 readonly RUNTIME_LOG_GROUP
 QUICKSTART_USER_ARN="$(json_string '.quickstartUserArn' "${SETUP_FILE}")"
 readonly QUICKSTART_USER_ARN
+WARM_STATE_TABLE="$(json_string '.warmStateTable' "${SETUP_FILE}")"
+readonly WARM_STATE_TABLE
 
 [[ -n "${REGION}" ]] || fail "Setup file is missing region"
 [[ -n "${ARTIFACT_BUCKET}" ]] || fail "Setup file is missing artifactBucket"
@@ -171,6 +174,7 @@ delete_github_config() {
     MICROVM_LAUNCH_ROLE_ARN \
     MICROVM_EXECUTION_ROLE_ARN \
     MICROVM_RUNTIME_LOG_GROUP \
+    MICROVM_WARM_STATE_TABLE \
     MICROVM_RUNNER_IMAGE_ARN \
     MICROVM_RUNNER_IMAGE_VERSION; do
     run gh variable delete "${variable}" \
@@ -333,6 +337,15 @@ delete_log_group() {
     true
 }
 
+delete_warm_state_table() {
+  [[ -n "${WARM_STATE_TABLE}" ]] || return
+  run aws dynamodb delete-table \
+    --region "${REGION}" \
+    --table-name "${WARM_STATE_TABLE}" \
+    >/dev/null 2>&1 ||
+    true
+}
+
 log "Quickstart teardown plan"
 log "  setup file: ${SETUP_FILE}"
 log "  image file: ${IMAGE_FILE}"
@@ -341,6 +354,7 @@ log "  repository: ${GITHUB_REPOSITORY:-<not set; repo config skipped>}"
 log "  quickstart user: ${quickstart_user_name}"
 log "  microvm image: ${image_arn:-<not found; image deletion skipped>}"
 log "  artifact bucket: ${ARTIFACT_BUCKET}"
+log "  warm state table: ${WARM_STATE_TABLE:-<none>}"
 log "  roles: ${build_role_name:-<none>} ${execution_role_name:-<none>} ${github_role_name:-<none>}"
 log "  log groups: ${BUILD_LOG_GROUP:-<none>} ${RUNTIME_LOG_GROUP:-<none>}"
 
@@ -351,6 +365,7 @@ fi
 delete_github_config
 terminate_project_microvms
 delete_image
+delete_warm_state_table
 delete_quickstart_user
 delete_role "${github_role_name}"
 delete_role "${build_role_name}"

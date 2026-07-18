@@ -46,6 +46,8 @@ BUILD_ROLE_ARN="$(jq -er '.buildRoleArn' "${SETUP_FILE}")"
 readonly BUILD_ROLE_ARN
 EXECUTION_ROLE_ARN="$(jq -er '.executionRoleArn' "${SETUP_FILE}")"
 readonly EXECUTION_ROLE_ARN
+WARM_STATE_TABLE="$(jq -er '.warmStateTable' "${SETUP_FILE}")"
+readonly WARM_STATE_TABLE
 
 export AWS_MAX_ATTEMPTS=6
 export AWS_RETRY_MODE=standard
@@ -65,6 +67,8 @@ readonly USER_ARN="arn:${partition}:iam::${account_id}:user/${USER_NAME}"
 readonly BUCKET_ARN="arn:${partition}:s3:::${ARTIFACT_BUCKET}"
 readonly INTERNET_EGRESS_ARN="arn:${partition}:lambda:${REGION}:aws:network-connector:aws-network-connector:INTERNET_EGRESS"
 readonly NO_INGRESS_ARN="arn:${partition}:lambda:${REGION}:aws:network-connector:aws-network-connector:NO_INGRESS"
+readonly ALL_INGRESS_ARN="arn:${partition}:lambda:${REGION}:aws:network-connector:aws-network-connector:ALL_INGRESS"
+readonly WARM_STATE_TABLE_ARN="arn:${partition}:dynamodb:${REGION}:${account_id}:table/${WARM_STATE_TABLE}"
 
 temporary_directory="$(mktemp -d)"
 cleanup() {
@@ -78,6 +82,8 @@ jq -n \
   --arg executionRoleArn "${EXECUTION_ROLE_ARN}" \
   --arg internetEgressArn "${INTERNET_EGRESS_ARN}" \
   --arg noIngressArn "${NO_INGRESS_ARN}" \
+  --arg allIngressArn "${ALL_INGRESS_ARN}" \
+  --arg stateTableArn "${WARM_STATE_TABLE_ARN}" \
   '{
     Version: "2012-10-17",
     Statement: [
@@ -128,7 +134,21 @@ jq -n \
         Sid: "PassManagedNetworkConnectors",
         Effect: "Allow",
         Action: "lambda:PassNetworkConnector",
-        Resource: [$internetEgressArn, $noIngressArn]
+        Resource: [$internetEgressArn, $noIngressArn, $allIngressArn]
+      },
+      {
+        Sid: "ManageWarmPoolState",
+        Effect: "Allow",
+        Action: [
+          "dynamodb:DescribeTable",
+          "dynamodb:Query",
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:UpdateItem",
+          "dynamodb:DeleteItem",
+          "dynamodb:TransactWriteItems"
+        ],
+        Resource: $stateTableArn
       }
     ]
   }' >"${temporary_directory}/quickstart-policy.json"

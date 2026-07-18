@@ -51,6 +51,7 @@ function readActionInputs(): RawActionInputs {
     region: core.getInput("region"),
     runnerGroupId: core.getInput("runner-group-id"),
     runnerLabels: core.getInput("runner-labels"),
+    maxLifetimeSeconds: core.getInput("max-lifetime-seconds"),
     maximumDurationSeconds: core.getInput("maximum-duration-seconds"),
     startupTimeoutSeconds: core.getInput("startup-timeout-seconds"),
     egressConnectors: core.getInput("egress-connectors"),
@@ -58,6 +59,11 @@ function readActionInputs(): RawActionInputs {
     cloudwatchLogGroup: core.getInput("cloudwatch-log-group"),
     idempotencyKey: core.getInput("idempotency-key"),
     microvmId: core.getInput("microvm-id"),
+    server: core.getInput("server"),
+    serverCapacity: core.getInput("server-capacity"),
+    stateTable: core.getInput("state-table"),
+    leaseTimeoutSeconds: core.getInput("lease-timeout-seconds"),
+    reuseSafetyMarginSeconds: core.getInput("reuse-safety-margin-seconds"),
     debug: core.getInput("debug"),
   };
 }
@@ -80,7 +86,45 @@ function repositoryContextFromEnvironment(
     owner,
     repository: name,
     workflow: workflowIdentityFromEnvironment(environment),
+    isForkPullRequest: forkPullRequestFromEnvironment(environment),
   };
+}
+
+function forkPullRequestFromEnvironment(
+  environment: NodeJS.ProcessEnv,
+): boolean {
+  if (
+    !["pull_request", "pull_request_target"].includes(
+      environment.GITHUB_EVENT_NAME ?? "",
+    ) ||
+    environment.GITHUB_EVENT_PATH === undefined
+  ) {
+    return false;
+  }
+  try {
+    const payload: unknown = JSON.parse(
+      readFileSync(environment.GITHUB_EVENT_PATH, "utf8"),
+    );
+    const pullRequest = objectField(payload, "pull_request");
+    const head = objectField(pullRequest, "head");
+    const repository = objectField(head, "repo");
+    return repository?.fork === true;
+  } catch {
+    return true;
+  }
+}
+
+function objectField(
+  value: unknown,
+  field: string,
+): Record<string, unknown> | undefined {
+  if (typeof value !== "object" || value === null) {
+    return undefined;
+  }
+  const child: unknown = Reflect.get(value, field) as unknown;
+  return typeof child === "object" && child !== null
+    ? (child as Record<string, unknown>)
+    : undefined;
 }
 
 function actionReporter(): ActionReporter {
@@ -92,3 +136,4 @@ function actionReporter(): ActionReporter {
     warning: core.warning,
   };
 }
+import { readFileSync } from "node:fs";

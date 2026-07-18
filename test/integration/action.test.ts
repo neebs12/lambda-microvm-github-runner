@@ -67,7 +67,14 @@ describe("Action integration across mocked HTTP and AWS boundaries", () => {
         const input = (command as RunMicrovmCommand).input;
         expect(input.clientToken).toMatch(/^lambda-mvm-[a-f0-9]{64}$/);
         expect(input.runHookPayload).not.toContain("integration-jit-secret");
-        return { microvmId: "mvm-1", state: "PENDING", imageVersion: "7" };
+        return {
+          microvmId: "mvm-1",
+          state: "PENDING",
+          imageVersion: "7",
+          endpoint: "mvm.example",
+          startedAt: new Date(1_000),
+          maximumDurationInSeconds: 3_600,
+        };
       }
       if (commandName === "GetMicrovmCommand") {
         expect((command as GetMicrovmCommand).input).toEqual({
@@ -144,6 +151,8 @@ const startConfig: StartConfig = {
   runnerGroupId: 1,
   runnerLabels: ["docker"],
   maximumDurationSeconds: 3_600,
+  leaseTimeoutSeconds: 1_800,
+  reuseSafetyMarginSeconds: 1_800,
   startupTimeoutSeconds: 180,
   egressConnectors: ["INTERNET_EGRESS"],
   ingressConnectors: ["NO_INGRESS"],

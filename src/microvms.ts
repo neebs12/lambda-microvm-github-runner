@@ -1,7 +1,11 @@
 import {
+  CreateMicrovmAuthTokenCommand,
   GetMicrovmCommand,
+  GetMicrovmImageCommand,
   LambdaMicrovmsClient,
+  ResumeMicrovmCommand,
   RunMicrovmCommand,
+  SuspendMicrovmCommand,
   TerminateMicrovmCommand,
 } from "@aws-sdk/client-lambda-microvms";
 
@@ -14,7 +18,13 @@ import type {
 import { getSafeErrorName } from "./retry.js";
 
 type MicrovmCommand =
-  GetMicrovmCommand | RunMicrovmCommand | TerminateMicrovmCommand;
+  | CreateMicrovmAuthTokenCommand
+  | GetMicrovmCommand
+  | GetMicrovmImageCommand
+  | ResumeMicrovmCommand
+  | RunMicrovmCommand
+  | SuspendMicrovmCommand
+  | TerminateMicrovmCommand;
 
 export type MicrovmCommandSender = (
   command: MicrovmCommand,
@@ -29,6 +39,17 @@ export class MicrovmResponseError extends Error {
 
 export class AwsMicrovmClient implements MicrovmClient {
   public constructor(private readonly send: MicrovmCommandSender) {}
+
+  public async resolveImageVersion(imageId: string): Promise<string> {
+    const response = asRecord(
+      await this.send(new GetMicrovmImageCommand({ imageIdentifier: imageId })),
+    );
+    const version = stringValue(response.latestActiveImageVersion);
+    if (version === undefined) {
+      throw new MicrovmResponseError("GetMicrovmImage");
+    }
+    return version;
+  }
 
   public async run(request: RunMicrovmRequest): Promise<RunMicrovmResult> {
     const response = asRecord(
@@ -58,10 +79,27 @@ export class AwsMicrovmClient implements MicrovmClient {
     );
     const microvmId = stringValue(response.microvmId);
     const imageVersion = stringValue(response.imageVersion);
-    if (microvmId === undefined || imageVersion === undefined) {
+    const endpoint = stringValue(response.endpoint);
+    const startedAt = dateMilliseconds(response.startedAt);
+    const maximumDurationSeconds = numberValue(
+      response.maximumDurationInSeconds,
+    );
+    if (
+      microvmId === undefined ||
+      imageVersion === undefined ||
+      endpoint === undefined ||
+      startedAt === undefined ||
+      maximumDurationSeconds === undefined
+    ) {
       throw new MicrovmResponseError("RunMicrovm");
     }
-    return { microvmId, imageVersion };
+    return {
+      microvmId,
+      imageVersion,
+      endpoint,
+      startedAt,
+      maximumDurationSeconds,
+    };
   }
 
   public async get(microvmId: string): Promise<Microvm | undefined> {
@@ -75,6 +113,11 @@ export class AwsMicrovmClient implements MicrovmClient {
       const state = stringValue(response.state);
       const stateReason = stringValue(response.stateReason);
       const imageVersion = stringValue(response.imageVersion);
+      const endpoint = stringValue(response.endpoint);
+      const startedAt = dateMilliseconds(response.startedAt);
+      const maximumDurationSeconds = numberValue(
+        response.maximumDurationInSeconds,
+      );
       if (responseId === undefined || state === undefined) {
         throw new MicrovmResponseError("GetMicrovm");
       }
@@ -83,6 +126,11 @@ export class AwsMicrovmClient implements MicrovmClient {
         state,
         ...(stateReason === undefined ? {} : { stateReason }),
         ...(imageVersion === undefined ? {} : { imageVersion }),
+        ...(endpoint === undefined ? {} : { endpoint }),
+        ...(startedAt === undefined ? {} : { startedAt }),
+        ...(maximumDurationSeconds === undefined
+          ? {}
+          : { maximumDurationSeconds }),
       };
     } catch (error: unknown) {
       if (getSafeErrorName(error) === "ResourceNotFoundException") {
@@ -90,6 +138,38 @@ export class AwsMicrovmClient implements MicrovmClient {
       }
       throw error;
     }
+  }
+
+  public async suspend(microvmId: string): Promise<void> {
+    await this.send(
+      new SuspendMicrovmCommand({ microvmIdentifier: microvmId }),
+    );
+  }
+
+  public async resume(microvmId: string): Promise<void> {
+    await this.send(new ResumeMicrovmCommand({ microvmIdentifier: microvmId }));
+  }
+
+  public async createAuthToken(
+    microvmId: string,
+    port: number,
+    expirationMinutes: number,
+  ): Promise<{ token: string }> {
+    const response = asRecord(
+      await this.send(
+        new CreateMicrovmAuthTokenCommand({
+          microvmIdentifier: microvmId,
+          expirationInMinutes: expirationMinutes,
+          allowedPorts: [{ port }],
+        }),
+      ),
+    );
+    const tokens = asRecord(response.authToken);
+    const token = stringValue(tokens["X-aws-proxy-auth"]);
+    if (token === undefined) {
+      throw new MicrovmResponseError("CreateMicrovmAuthToken");
+    }
+    return { token };
   }
 
   public async terminate(microvmId: string): Promise<void> {
@@ -122,4 +202,18 @@ function asRecord(value: unknown): Record<string, unknown> {
 
 function stringValue(value: unknown): string | undefined {
   return typeof value === "string" && value.length > 0 ? value : undefined;
+}
+
+function numberValue(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isSafeInteger(value) && value > 0
+    ? value
+    : undefined;
+}
+
+function dateMilliseconds(value: unknown): number | undefined {
+  if (!(value instanceof Date)) {
+    return undefined;
+  }
+  const milliseconds = value.getTime();
+  return Number.isFinite(milliseconds) ? milliseconds : undefined;
 }

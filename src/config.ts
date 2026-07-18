@@ -10,6 +10,7 @@ export type RawActionInputs = {
   region?: string;
   runnerGroupId?: string;
   runnerLabels?: string;
+  maxLifetimeSeconds?: string;
   maximumDurationSeconds?: string;
   startupTimeoutSeconds?: string;
   egressConnectors?: string;
@@ -17,6 +18,11 @@ export type RawActionInputs = {
   cloudwatchLogGroup?: string;
   idempotencyKey?: string;
   microvmId?: string;
+  server?: string;
+  serverCapacity?: string;
+  stateTable?: string;
+  leaseTimeoutSeconds?: string;
+  reuseSafetyMarginSeconds?: string;
   debug?: string;
 };
 
@@ -39,11 +45,18 @@ export type StartConfig = CommonConfig & {
   ingressConnectors: string[];
   cloudwatchLogGroup?: string;
   idempotencyKey?: string;
+  server?: string;
+  serverCapacity?: number;
+  stateTable?: string;
+  leaseTimeoutSeconds: number;
+  reuseSafetyMarginSeconds: number;
 };
 
 export type StopConfig = CommonConfig & {
   mode: "stop";
-  microvmId: string;
+  microvmId?: string;
+  server?: string;
+  stateTable?: string;
 };
 
 export type ActionConfig = StartConfig | StopConfig;
@@ -73,14 +86,33 @@ export function parseActionConfig(
   const debug = parseBoolean(optional(raw.debug) ?? "false", "debug");
 
   if (mode === "stop") {
+    const microvmId = optional(raw.microvmId);
+    const server = optional(raw.server);
+    if ((microvmId === undefined) === (server === undefined)) {
+      throw new InputValidationError(
+        "microvm-id",
+        "provide exactly one of legacy 'microvm-id' or 'server'",
+      );
+    }
+    const stateTable = optional(raw.stateTable);
+    if (stateTable !== undefined) {
+      validateTableName(stateTable);
+    }
     return {
       mode,
       region,
       debug,
-      microvmId: validateOpaqueIdentifier(
-        required(raw.microvmId, "microvm-id"),
-        "microvm-id",
-      ),
+      ...(microvmId === undefined
+        ? {}
+        : {
+            microvmId: validateOpaqueIdentifier(microvmId, "microvm-id"),
+          }),
+      ...(server === undefined
+        ? {}
+        : {
+            server: validateOpaqueIdentifier(server, "server"),
+          }),
+      ...(stateTable === undefined ? {} : { stateTable }),
     };
   }
 
@@ -91,6 +123,10 @@ export function parseActionConfig(
   const imageVersion = optional(raw.imageVersion);
   const cloudwatchLogGroup = optional(raw.cloudwatchLogGroup);
   const idempotencyKey = optional(raw.idempotencyKey);
+  const microvmId = optional(raw.microvmId);
+  const server = optional(raw.server);
+  const serverCapacity = optional(raw.serverCapacity);
+  const stateTable = optional(raw.stateTable);
 
   if (imageVersion !== undefined) {
     validateOpaqueIdentifier(imageVersion, "image-version");
@@ -101,10 +137,53 @@ export function parseActionConfig(
   if (idempotencyKey !== undefined) {
     validateIdempotencyKey(idempotencyKey);
   }
+  if (server !== undefined) {
+    validateServer(server);
+  }
+  if (stateTable !== undefined) {
+    validateTableName(stateTable);
+  }
+  if (microvmId !== undefined) {
+    throw new InputValidationError(
+      "microvm-id",
+      "is supported only by stop mode; pass the opaque 'server' value to resume a warm MicroVM",
+    );
+  }
+  if (serverCapacity !== undefined && server === undefined) {
+    throw new InputValidationError("server-capacity", "requires 'server'");
+  }
+  if (stateTable !== undefined && server === undefined) {
+    throw new InputValidationError("state-table", "requires 'server'");
+  }
+  if (serverCapacity !== undefined && stateTable === undefined) {
+    throw new InputValidationError(
+      "server-capacity",
+      "requires 'state-table' for shared pool coordination",
+    );
+  }
 
   const imageId = validateOpaqueIdentifier(
     required(raw.imageId, "image-id"),
     "image-id",
+  );
+  const maxLifetimeSeconds = optional(raw.maxLifetimeSeconds);
+  const legacyMaximumDurationSeconds = optional(raw.maximumDurationSeconds);
+  if (
+    maxLifetimeSeconds !== undefined &&
+    legacyMaximumDurationSeconds !== undefined
+  ) {
+    throw new InputValidationError(
+      "max-lifetime-seconds",
+      "cannot be combined with deprecated 'maximum-duration-seconds'",
+    );
+  }
+  const parsedMaximumDurationSeconds = parseIntegerInRange(
+    maxLifetimeSeconds ?? legacyMaximumDurationSeconds ?? "7200",
+    maxLifetimeSeconds === undefined
+      ? "maximum-duration-seconds"
+      : "max-lifetime-seconds",
+    1,
+    MAXIMUM_DURATION_SECONDS,
   );
   const config: StartConfig = {
     mode,
@@ -124,11 +203,18 @@ export function parseActionConfig(
     runnerLabels: parseRunnerLabels(
       optional(raw.runnerLabels) ?? "lambda-microvm,docker",
     ),
-    maximumDurationSeconds: parseIntegerInRange(
-      optional(raw.maximumDurationSeconds) ?? "3600",
-      "maximum-duration-seconds",
+    maximumDurationSeconds: parsedMaximumDurationSeconds,
+    leaseTimeoutSeconds: parseIntegerInRange(
+      optional(raw.leaseTimeoutSeconds) ?? String(parsedMaximumDurationSeconds),
+      "lease-timeout-seconds",
       1,
       MAXIMUM_DURATION_SECONDS,
+    ),
+    reuseSafetyMarginSeconds: parseIntegerInRange(
+      optional(raw.reuseSafetyMarginSeconds) ?? "1800",
+      "reuse-safety-margin-seconds",
+      1,
+      MAXIMUM_DURATION_SECONDS - 1,
     ),
     startupTimeoutSeconds: parseIntegerInRange(
       optional(raw.startupTimeoutSeconds) ?? "180",
@@ -146,7 +232,8 @@ export function parseActionConfig(
     ),
     ingressConnectors: expandManagedConnectors(
       parseConnectorList(
-        optional(raw.ingressConnectors) ?? "NO_INGRESS",
+        optional(raw.ingressConnectors) ??
+          (server === undefined ? "NO_INGRESS" : "ALL_INGRESS"),
         "ingress-connectors",
       ),
       region,
@@ -155,7 +242,38 @@ export function parseActionConfig(
     ...(imageVersion === undefined ? {} : { imageVersion }),
     ...(cloudwatchLogGroup === undefined ? {} : { cloudwatchLogGroup }),
     ...(idempotencyKey === undefined ? {} : { idempotencyKey }),
+    ...(server === undefined ? {} : { server }),
+    ...(serverCapacity === undefined
+      ? {}
+      : {
+          serverCapacity: parseIntegerInRange(
+            serverCapacity,
+            "server-capacity",
+            1,
+            1_000,
+          ),
+        }),
+    ...(stateTable === undefined ? {} : { stateTable }),
   };
+
+  if (
+    server !== undefined &&
+    config.reuseSafetyMarginSeconds >= config.maximumDurationSeconds
+  ) {
+    throw new InputValidationError(
+      "reuse-safety-margin-seconds",
+      "must be shorter than 'max-lifetime-seconds'",
+    );
+  }
+  if (
+    server !== undefined &&
+    config.leaseTimeoutSeconds > config.maximumDurationSeconds
+  ) {
+    throw new InputValidationError(
+      "lease-timeout-seconds",
+      "must not exceed 'max-lifetime-seconds'",
+    );
+  }
 
   return config;
 }
@@ -279,7 +397,9 @@ function expandManagedConnectors(
         : "aws");
 
   return connectors.map((connector) =>
-    connector === "INTERNET_EGRESS" || connector === "NO_INGRESS"
+    connector === "INTERNET_EGRESS" ||
+    connector === "NO_INGRESS" ||
+    connector === "ALL_INGRESS"
       ? `arn:${partition}:lambda:${region}:aws:network-connector:aws-network-connector:${connector}`
       : connector,
   );
@@ -347,6 +467,24 @@ function validateIdempotencyKey(value: string): void {
     throw new InputValidationError(
       "idempotency-key",
       "must be at most 256 characters without control characters",
+    );
+  }
+}
+
+function validateServer(value: string): void {
+  if (value.length > 4_096 || containsControlCharacter(value)) {
+    throw new InputValidationError(
+      "server",
+      "must be at most 4096 characters without control characters",
+    );
+  }
+}
+
+function validateTableName(value: string): void {
+  if (!/^[A-Za-z0-9_.-]{3,255}$/.test(value)) {
+    throw new InputValidationError(
+      "state-table",
+      "must be a valid DynamoDB table name",
     );
   }
 }

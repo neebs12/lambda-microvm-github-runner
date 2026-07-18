@@ -1,6 +1,10 @@
 import {
+  CreateMicrovmAuthTokenCommand,
   GetMicrovmCommand,
+  GetMicrovmImageCommand,
+  ResumeMicrovmCommand,
   RunMicrovmCommand,
+  SuspendMicrovmCommand,
   TerminateMicrovmCommand,
 } from "@aws-sdk/client-lambda-microvms";
 import { describe, expect, it, vi } from "vitest";
@@ -12,6 +16,17 @@ import {
 } from "../src/microvms.js";
 
 describe("AwsMicrovmClient", () => {
+  it("resolves the latest active image version for pool compatibility", async () => {
+    const send = vi.fn<MicrovmCommandSender>(async (command) => {
+      expect(command).toBeInstanceOf(GetMicrovmImageCommand);
+      expect(command.input).toEqual({ imageIdentifier: "image" });
+      return { latestActiveImageVersion: "7" };
+    });
+    await expect(
+      new AwsMicrovmClient(send).resolveImageVersion("image"),
+    ).resolves.toBe("7");
+  });
+
   it("maps the launch contract to RunMicrovm", async () => {
     const send = vi.fn<MicrovmCommandSender>(async (command) => {
       expect(command).toBeInstanceOf(RunMicrovmCommand);
@@ -33,7 +48,9 @@ describe("AwsMicrovmClient", () => {
       return {
         microvmId: "mvm-1",
         imageVersion: "7",
-        endpoint: "must-not-be-returned",
+        endpoint: "mvm.example",
+        startedAt: new Date(1_000),
+        maximumDurationInSeconds: 3_600,
       };
     });
     const client = new AwsMicrovmClient(send);
@@ -54,6 +71,9 @@ describe("AwsMicrovmClient", () => {
     ).resolves.toEqual({
       microvmId: "mvm-1",
       imageVersion: "7",
+      endpoint: "mvm.example",
+      startedAt: 1_000,
+      maximumDurationSeconds: 3_600,
     });
   });
 
@@ -68,6 +88,9 @@ describe("AwsMicrovmClient", () => {
           state: "RUNNING",
           stateReason: "ready",
           imageVersion: "7",
+          endpoint: "mvm.example",
+          startedAt: new Date(1_000),
+          maximumDurationInSeconds: 7_200,
         };
       })
       .mockImplementationOnce(async (command) => {
@@ -82,8 +105,42 @@ describe("AwsMicrovmClient", () => {
       state: "RUNNING",
       stateReason: "ready",
       imageVersion: "7",
+      endpoint: "mvm.example",
+      startedAt: 1_000,
+      maximumDurationSeconds: 7_200,
     });
     await expect(client.terminate("mvm-1")).resolves.toBeUndefined();
+  });
+
+  it("maps suspend, resume, and port-scoped auth-token commands", async () => {
+    const send = vi
+      .fn<MicrovmCommandSender>()
+      .mockImplementationOnce(async (command) => {
+        expect(command).toBeInstanceOf(SuspendMicrovmCommand);
+        expect(command.input).toEqual({ microvmIdentifier: "mvm-1" });
+        return {};
+      })
+      .mockImplementationOnce(async (command) => {
+        expect(command).toBeInstanceOf(ResumeMicrovmCommand);
+        expect(command.input).toEqual({ microvmIdentifier: "mvm-1" });
+        return {};
+      })
+      .mockImplementationOnce(async (command) => {
+        expect(command).toBeInstanceOf(CreateMicrovmAuthTokenCommand);
+        expect(command.input).toEqual({
+          microvmIdentifier: "mvm-1",
+          expirationInMinutes: 5,
+          allowedPorts: [{ port: 8080 }],
+        });
+        return { authToken: { "X-aws-proxy-auth": "jwe-secret" } };
+      });
+    const client = new AwsMicrovmClient(send);
+
+    await expect(client.suspend("mvm-1")).resolves.toBeUndefined();
+    await expect(client.resume("mvm-1")).resolves.toBeUndefined();
+    await expect(client.createAuthToken("mvm-1", 8080, 5)).resolves.toEqual({
+      token: "jwe-secret",
+    });
   });
 
   it("treats AWS not-found responses as idempotent absence", async () => {

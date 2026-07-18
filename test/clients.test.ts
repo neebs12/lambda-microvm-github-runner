@@ -29,6 +29,9 @@ describe("client test doubles", () => {
       run: async () => ({
         microvmId: "mvm-1",
         imageVersion: "7",
+        endpoint: "mvm.example",
+        startedAt: 1_000,
+        maximumDurationSeconds: 7_200,
       }),
     });
     const request = {

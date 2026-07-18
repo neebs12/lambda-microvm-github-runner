@@ -28,7 +28,9 @@ describe("parseActionConfig", () => {
       executionRoleArn: "arn:aws:iam::123456789012:role/microvm-runner",
       runnerGroupId: 1,
       runnerLabels: ["lambda-microvm", "docker"],
-      maximumDurationSeconds: 3_600,
+      maximumDurationSeconds: 7_200,
+      leaseTimeoutSeconds: 7_200,
+      reuseSafetyMarginSeconds: 1_800,
       startupTimeoutSeconds: 180,
       egressConnectors: [
         "arn:aws:lambda:us-east-1:aws:network-connector:aws-network-connector:INTERNET_EGRESS",
@@ -57,7 +59,7 @@ describe("parseActionConfig", () => {
     expect(config).toMatchObject({
       debug: false,
       runnerGroupId: 1,
-      maximumDurationSeconds: 3_600,
+      maximumDurationSeconds: 7_200,
       startupTimeoutSeconds: 180,
     });
   });
@@ -79,6 +81,53 @@ describe("parseActionConfig", () => {
       debug: false,
       microvmId: "mvm-123",
     });
+  });
+
+  it("uses the same server input for warm start and stop", () => {
+    const start = parseActionConfig(
+      { ...validStartInputs, server: "docker-builds" },
+      { AWS_REGION: "us-east-1" },
+    );
+    expect(start).toMatchObject({
+      mode: "start",
+      server: "docker-builds",
+      leaseTimeoutSeconds: 7_200,
+      ingressConnectors: [
+        "arn:aws:lambda:us-east-1:aws:network-connector:aws-network-connector:ALL_INGRESS",
+      ],
+    });
+
+    expect(
+      parseActionConfig(
+        { mode: "stop", region: "us-east-1", server: "lmvm1_handle" },
+        {},
+      ),
+    ).toEqual({
+      mode: "stop",
+      region: "us-east-1",
+      debug: false,
+      server: "lmvm1_handle",
+    });
+  });
+
+  it("keeps legacy microvm-id only for direct termination", () => {
+    expect(() =>
+      parseActionConfig(
+        { ...validStartInputs, microvmId: "mvm-1" },
+        { AWS_REGION: "us-east-1" },
+      ),
+    ).toThrow("supported only by stop mode");
+    expect(() =>
+      parseActionConfig(
+        {
+          mode: "stop",
+          region: "us-east-1",
+          microvmId: "mvm-1",
+          server: "lmvm1_handle",
+        },
+        {},
+      ),
+    ).toThrow("exactly one");
   });
 
   it.each(["githubToken", "imageId", "executionRoleArn"] as const)(
@@ -126,6 +175,34 @@ describe("parseActionConfig", () => {
       );
     },
   );
+
+  it("accepts max-lifetime-seconds through eight hours", () => {
+    expect(
+      parseActionConfig(
+        { ...validStartInputs, maxLifetimeSeconds: "28800" },
+        { AWS_REGION: "us-east-1" },
+      ),
+    ).toMatchObject({ maximumDurationSeconds: 28_800 });
+  });
+
+  it("rejects excessive or conflicting lifetime inputs", () => {
+    expect(() =>
+      parseActionConfig(
+        { ...validStartInputs, maxLifetimeSeconds: "28801" },
+        { AWS_REGION: "us-east-1" },
+      ),
+    ).toThrow("max-lifetime-seconds");
+    expect(() =>
+      parseActionConfig(
+        {
+          ...validStartInputs,
+          maxLifetimeSeconds: "7200",
+          maximumDurationSeconds: "3600",
+        },
+        { AWS_REGION: "us-east-1" },
+      ),
+    ).toThrow("cannot be combined");
+  });
 
   it("accepts JSON and comma-separated connector lists", () => {
     const config = parseActionConfig(
