@@ -1,5 +1,11 @@
 # Warm build-server benchmark
 
+The proposed [repeated suspend/resume methodology](METHODOLOGY.md) defines the
+next benchmark: every measured changed-image build happens immediately after a
+resume and before the following suspension, across multiple cycles on the same
+MicroVM. The current scripts and published run below use the earlier
+single-resume methodology.
+
 This benchmark measures whether a suspended Lambda MicroVM preserves useful
 build state. It runs the workload directly inside disposable MicroVMs so GitHub
 queueing and runner-registration time do not contaminate the cache timings.
