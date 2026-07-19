@@ -1,307 +1,302 @@
 # Repeated suspend/resume build-server benchmark methodology
 
-Status: proposed methodology for review. The existing benchmark implementation
-and the published 2026-07-19 results use an earlier, single-resume design. They
-must not be described as results from this methodology.
+Status: proposed for agreement before implementation or another AWS run.
 
-## Objective
+The existing benchmark and its 2026-07-19 results used one suspend/resume cycle.
+They are useful earlier evidence, but they are not results from this
+methodology.
 
-The benchmark should answer one primary question:
+## The experiment in one sentence
 
-> When the same Lambda MicroVM is reused as a build server across multiple job
-> boundaries, does its evolving on-machine build state make each new build
-> faster than building the same revision on a clean MicroVM?
+Seed a build cache on a MicroVM, then repeatedly **resume it, change the source,
+time one new-image build, and suspend it again**, comparing every warm build
+with the same revision built on a fresh MicroVM.
 
-A job boundary is represented by suspending the MicroVM after a build and
-resuming it before the next build. Every primary measurement therefore happens
-after a resume and before the following suspension.
+That repeated lifecycle is the benchmark. Exact rebuilds, package-manager tests,
+compiler-only tests, concurrent builds, and GitHub runner timing are different
+experiments and must not be mixed into the core run.
 
-The benchmark should also establish:
+## What we want to establish
 
-- whether Docker images, layers, BuildKit cache, npm cache, and compiler
-  artifacts remain correct and reusable across repeated cycles;
-- the first-build cost after every resume, without accidentally warming Docker
-  first;
-- whether performance or free disk space degrades over successive cycles;
-- suspend and resume control-plane latency; and
-- whether a resumed server is faster end to end than provisioning a clean server
-  for the same revision.
+The primary question is:
 
-This benchmark does not measure GitHub queueing or JIT runner-registration
-latency. Those belong in a separate Action-level E2E benchmark.
+> Across repeated job-like suspend/resume boundaries, does the same MicroVM
+> retain correct and useful Docker build state for the next new image?
 
-## Experimental unit and sample size
+The benchmark should separately report:
 
-The experimental unit is one MicroVM observed repeatedly, not each individual
-build as though all builds were independent.
+1. **Correctness:** every cycle produces the artifact for the new source
+   revision, never a stale cached artifact.
+2. **Build performance:** the first Docker build after each resume compared with
+   the same revision on a clean MicroVM.
+3. **Job-like latency:** resume-to-build-complete compared with fresh
+   provision-to-build-complete.
+4. **Durability:** whether correctness, speed, or free disk space degrades over
+   successive cycles.
 
-The default run should use:
+It does not measure GitHub queueing, JIT runner registration, or registry push
+time. Those require separate Action-level benchmarks.
 
-- nine persistent ARM64 MicroVMs;
-- one seed build per persistent server;
-- five measured suspend/resume/build/suspend cycles per server;
-- 45 warm changed-build samples in total; and
-- one matched clean-MicroVM build for every warm server and cycle, giving 45
-  clean-control samples.
+## Fixed test shape
 
-The nine persistent servers run as concurrent lanes. Clean controls may run at
-lower bounded concurrency to respect account quota, but should be interleaved
-with warm cycles rather than all being run at the beginning or end.
+The default run uses:
 
-If quota prevents the full design, reduce concurrency before reducing the number
-of repeated cycles. The report must state requested and actual counts.
+- nine persistent ARM64 MicroVMs running as concurrent lanes;
+- one seed build on each persistent MicroVM;
+- five measured cycles on each persistent MicroVM;
+- 45 warm new-image build samples; and
+- one fresh-MicroVM control for each lane and cycle, producing 45 matched clean
+  build samples.
+
+If AWS quota limits concurrency, reduce concurrent lanes before reducing the
+five repeated cycles. The report must show requested and actual counts.
+
+Each persistent lane keeps the same MicroVM ID for its entire run. A replacement
+MicroVM is not a continuation of that lane and must be reported as a failure or
+a new lane.
+
+## Core lifecycle
+
+```mermaid
+flowchart LR
+    A["Launch persistent MicroVM"] --> B["Build and verify seed revision"]
+    B --> C["Suspend"]
+    C --> D["Resume same MicroVM"]
+    D --> E["Create next source revision"]
+    E --> F["Time one new-image build"]
+    F --> G["Record result"]
+    G --> H["Suspend"]
+    H --> I{"Five cycles complete?"}
+    I -- No --> D
+    I -- Yes --> J["Terminate"]
+```
+
+Every measured cycle is exactly:
+
+```text
+resume
+create a deterministic new source revision
+time the first workload Docker command: one new-image build
+record its result
+suspend
+```
+
+There is no second build before suspension.
 
 ## Workload
 
 The primary workload is a multi-stage Node 24 Docker image that builds a
-500-module TypeScript project. All external inputs must be pinned:
+500-module TypeScript project.
+
+All external inputs are pinned:
 
 - base images by digest;
-- npm dependencies with a committed lockfile;
-- the TypeScript version; and
-- the benchmark source generator and runner-image artifact by commit or SHA-256.
+- npm dependencies by lockfile;
+- TypeScript and Node versions; and
+- benchmark code and the runner-image artifact by commit and SHA-256.
 
-Revision zero is the seed. Each measured cycle creates a deterministic,
-cumulative source revision using the server lane and cycle number. The mutation
-must change application source and expected output without changing dependency
-manifests. This invalidates the source-copy and compile layers while leaving
-dependency layers eligible for reuse.
+Revision zero seeds the persistent server. Cycle `n` adds a deterministic,
+cumulative source change containing the lane and cycle number. The change must:
 
-Each resulting image receives a cycle-specific tag and remains present until the
-server is terminated. This models a build server producing new images over time
-and makes disk growth observable.
+- alter application source and the expected compiled output;
+- leave dependency manifests unchanged; and
+- invalidate the source-copy and compilation portion of the image while leaving
+  dependency layers eligible for normal reuse.
 
-Secondary workloads use separate persisted paths so their caches do not
-overwrite one another:
+This is a genuinely new image build, not an unchanged-context cache hit. Each
+cycle gets a unique image tag and expected artifact value.
 
-- `npm ci` after deleting `node_modules`, using a persistent npm cache volume;
-- an incremental TypeScript build after changing one module, retaining
-  `tsbuildinfo` and prior output; and
-- an immediate exact Docker rebuild after the primary changed build.
+The Dockerfile must validate the compiled artifact during the build itself. A
+build exits non-zero unless the output contains the exact expected lane and
+cycle revision. This makes correctness part of the timed operation without
+needing an untimed `docker run` before the next suspension.
 
-The primary Docker build must remain the first Docker operation after every
-resume. Secondary workloads happen only after it.
+Dependency-changing revisions are valuable but answer a different question. They
+should be a separately labelled benchmark after this source-change design is
+established.
 
-## Lifecycle
+## Procedure
 
-```mermaid
-flowchart LR
-    A["Launch persistent MicroVM"] --> B["Create revision 0 and seed caches"]
-    B --> C["Verify seed artifacts"]
-    C --> D["Suspend"]
-    D --> E["Resume and wait for RUNNING"]
-    E --> F["Create next deterministic revision"]
-    F --> G["Time first changed Docker build"]
-    G --> H["Verify image and artifacts"]
-    H --> I["Time exact rebuild and secondary workloads"]
-    I --> J["Record cache and disk state"]
-    J --> K{"More cycles?"}
-    K -- Yes --> D
-    K -- No --> L["Terminate"]
-```
+### 1. Seed each persistent server
 
-### Seed phase
+1. Launch the MicroVM and time provision-to-`RUNNING`.
+2. Establish shell readiness with a no-op command that does not invoke Docker.
+3. Materialize revision zero and record its input-tree hash.
+4. Build the seed image and require its in-build artifact check to pass.
+5. Record the seed duration and image ID emitted by the build.
+6. Suspend the MicroVM and wait for `SUSPENDED`.
 
-For each persistent server:
+The seed build is setup data, not a warm-cycle sample.
 
-1. Launch a MicroVM and time the transition to `RUNNING`.
-2. Establish shell readiness without invoking Docker.
-3. Create revision zero of the benchmark context.
-4. Time the seed Docker build.
-5. Run the image and verify revision-zero output.
-6. Seed the npm and TypeScript incremental caches.
-7. Record Docker driver, image/layer metadata, cache usage, and disk usage.
-8. Suspend the MicroVM and wait for `SUSPENDED`.
-
-The seed build is reported separately. It is not included in the repeated warm
-percentiles.
-
-### Measured cycle
+### 2. Run five measured cycles
 
 For cycle `n` on each persistent server:
 
-1. Start the resume timer immediately before the resume API call.
+1. Start a host monotonic timer immediately before calling the resume API.
 2. Resume the same MicroVM and wait for `RUNNING`.
-3. Record resume-to-`RUNNING` latency.
-4. Establish shell readiness using a no-op command. Do not run `docker info`,
-   `docker image inspect`, `docker run`, a container health check, or any other
-   Docker command.
-5. Create deterministic source revision `n`. Do not include source-generation
-   time in the Docker-build-only measurement.
-6. Start a monotonic timer immediately before invoking `docker build`.
-7. Build a new cycle-specific image using the previous cycles' normal Docker and
-   BuildKit caches. Do not use `--no-cache`, prune, pull, or pre-inspect the
-   cache.
-8. Stop the build timer only after the Docker process exits. Record command
-   duration and resume-call-to-build-complete duration separately.
-9. Run the new image and verify its output contains the exact lane and cycle
-   revision. A fast build with incorrect or stale output is a failed sample.
-10. Time one immediate unchanged rebuild as a secondary exact-cache measurement.
-11. Time the npm and incremental TypeScript artifact workloads and verify their
-    outputs.
-12. Record the Docker storage driver, image and cache metadata, root free space,
-    Docker data-root usage, and workload hashes.
-13. Start the suspend timer immediately before the suspend API call, suspend the
-    MicroVM, and wait for `SUSPENDED`.
-14. Record suspend-to-`SUSPENDED` latency.
+3. Record resume-to-`RUNNING` duration.
+4. Establish shell readiness with a no-op command. Do not issue a benchmark
+   Docker command. The production supervisor's normal resume hook is allowed to
+   check and restart Docker; that behavior is part of the system under test and
+   must not be disabled for the benchmark.
+5. Materialize deterministic source revision `n` and record its input-tree hash.
+   Source-generation time is outside the build-only timer but remains inside
+   resume-to-build-complete.
+6. Start a guest monotonic timer immediately before the fixed build command,
+   using `DOCKER_BUILDKIT=1`, plain progress output, and an image-ID file.
+7. Build a new cycle-specific image with normal Docker and BuildKit caching. Do
+   not use `--no-cache`, prune, pull, inspect, run, or manually prewarm Docker.
+8. Require the Dockerfile's revision-specific artifact check to pass.
+9. Stop the build timer when `docker build` exits. Capture the image ID directly
+   from the build, without a follow-up Docker command.
+10. Record build-only and resume-call-to-build-complete durations.
+11. Record lightweight root-filesystem free space without scanning Docker's data
+    root.
+12. Immediately call suspend, wait for `SUSPENDED`, and record the duration.
+13. Record how long the server remains in `SUSPENDED` before its next resume.
 
-No build occurs while the server remains running between cycles. A successful
-cycle always ends suspended, so the next primary build necessarily follows a new
-resume.
+The benchmark issues no `docker info`, `docker image inspect`, `docker run`,
+exact rebuild, `docker system df`, cache export, or recursive disk scan between
+the measured build and suspension. Those operations could change or warm the
+state seen after the next resume. Docker commands required by the unmodified
+production suspend/resume hooks are recorded and allowed.
 
-### Matched clean control
+Record full Docker and disk metadata before the seed build. After the fifth
+measured cycle has reached `SUSPENDED`, a separate untimed diagnostic resume may
+collect final metadata before termination. That diagnostic resume is not a sixth
+cycle and contributes no performance sample. If per-cycle cache inspection is
+desired, run it in a separate diagnostic cohort.
 
-For every persistent lane and cycle, build the identical source revision on a
-fresh MicroVM created from the same runner image:
+### 3. Run the matched clean control
 
-1. Launch the clean MicroVM and record provision-to-`RUNNING` latency.
+For every persistent lane and cycle:
+
+1. Launch a fresh MicroVM from the identical runner image.
 2. Establish shell readiness without invoking Docker.
-3. Materialize the exact same source revision and verify its hash matches the
-   corresponding warm input.
-4. Time the first Docker build and verify the resulting output.
-5. Record resources, storage driver, disk state, and the same build metadata.
-6. Terminate the clean MicroVM; never reuse it as another clean control.
+3. Materialize the exact same source revision and confirm its input-tree hash
+   matches the warm sample.
+4. Time its first Docker command building the same image and require the same
+   in-build artifact check.
+5. Record build-only and provision-call-to-build-complete durations.
+6. Terminate the clean MicroVM. Never reuse it for another control.
 
-“Clean” means the MicroVM contains no benchmark-created state. Layers baked into
-the common runner image are allowed because both cohorts begin from that same
-image. The report must not call this a cold network pull unless the design
-explicitly guarantees one.
+Interleave clean controls with warm cycles to reduce time-of-day and service
+load bias. They may run at lower bounded concurrency to respect quota.
 
-## Measurements
+“Clean” means no benchmark-created state. Layers already present in the common
+runner image are allowed in both cohorts. Do not call this a cold network pull
+unless the run explicitly guarantees one.
 
-### Primary
+## Primary measurements
 
-- warm changed-image build duration for the first Docker command after resume;
-- matched clean changed-image build duration;
-- paired warm/clean speedup for the same lane and revision; and
-- resume-call-to-warm-build-complete versus
-  provision-call-to-clean-build-complete.
+For every lane and cycle, retain:
 
-### Secondary
-
-- seed Docker build duration;
-- exact rebuild duration immediately after each changed-image build;
-- npm install duration with a persisted cache and no `node_modules`;
-- incremental TypeScript artifact-build duration;
+- warm first-build-after-resume duration;
+- clean first-build-after-provision duration;
+- paired warm/clean build-time ratio;
+- resume-call-to-build-complete duration;
+- provision-call-to-build-complete duration;
 - resume-to-`RUNNING` and suspend-to-`SUSPENDED` duration;
-- image execution and artifact verification success;
-- Docker data-root and root-filesystem growth per cycle;
-- cache/layer reuse reported by BuildKit; and
-- failures, retries, unexpected MicroVM state transitions, and cleanup outcome.
+- suspended dwell duration before the next measured resume;
+- input-tree hash, expected revision, image ID, and artifact-check result; and
+- root free space and observed guest resources.
 
-All command durations use a monotonic clock inside the guest. Control-plane
-durations use a monotonic clock in the orchestrator. Store unrounded millisecond
-values in raw output and round only for presentation.
+Use monotonic clocks. Store unrounded milliseconds in raw output and round only
+for presentation.
 
-## Controls against misleading results
+## Analysis
 
-- Never invoke Docker between resume and the primary timed build.
-- Never perform an exact-cache build and present it as a new-image build.
-- Never compare a warm changed build only with an exact-cache build.
-- Use the same source revision, base-image digest, runner-image version,
-  architecture, Region, and requested resources for each matched pair.
-- Record the resources actually visible inside every guest; requested memory is
-  a minimum and must not be presented as the observed allocation.
-- Preserve normal caches between warm cycles. Do not prune or manually prewarm
-  them.
-- Interleave clean controls with warm measurements to expose time-of-day or
-  service-load effects.
-- Keep failed measurements in the raw data. Exclude a sample only under a
-  documented infrastructure-failure rule, and report every exclusion.
-- Publish raw per-server, per-cycle samples and exact source/artifact hashes.
-- Do not treat 45 repeated measurements as 45 independent servers. Report both
-  pooled distributions and per-server results.
+Publish:
 
-## Statistical reporting
+- raw per-lane, per-cycle samples;
+- count, minimum, p50, p90, p95, maximum, and mean;
+- paired warm/clean speedups;
+- the proportion of pairs in which the warm build is faster;
+- results broken out by cycle number;
+- each persistent server's median across its five cycles;
+- first-cycle versus fifth-cycle performance and free-space change; and
+- correctness, lifecycle, and cleanup success rates.
 
-Use nearest-rank percentiles and publish at least:
+The MicroVM is the replication unit. The five cycles on one server are repeated
+observations, not five independent servers. If confidence intervals are added,
+resample by server.
 
-- count, minimum, p50, p90, p95, maximum, and arithmetic mean;
-- primary metrics pooled across all warm cycles;
-- the same metrics separately for each cycle number;
-- each server's median across cycles;
-- paired warm/clean ratios for every lane and cycle;
-- the proportion of matched pairs in which the warm build is faster;
-- first-cycle versus final-cycle performance and disk growth; and
-- correctness and lifecycle success rates.
+Never discard the first build after resume: it is the primary sample. Preserve
+failures and retries in the raw data. Any excluded infrastructure failure must
+be identified with a rule established before reading performance results.
 
-The server is the replication unit. Cycle-level measurements are repeated
-observations within a server. If confidence intervals are added, resample by
-server rather than treating each cycle as independent.
+## Decision rules to agree before running
 
-Do not discard the first post-resume build. It is the primary measurement. Exact
-rebuilds are a separate secondary series.
+Correctness is non-negotiable: every result presented as successful must pass
+the revision-specific in-build artifact check, and all lifecycle transitions
+must retain the same lane MicroVM ID.
 
-## Proposed decision rules
+The proposed threshold for a strong performance claim is:
 
-The persistent build-server claim is supported only when:
+- at least 80% of matched warm builds are faster than clean builds; and
+- paired p50 build-time speedup is at least `2.0x`.
 
-- every reported image and artifact passes revision-specific verification;
-- every persistent server completes all planned cycles, or any incomplete lane
-  is disclosed without silently replacing its samples;
-- at least 80% of matched warm builds are faster than their clean controls;
-- the paired p50 warm speedup is at least `2.0x`; and
-- no cache corruption, wrong-revision output, or unhandled active MicroVM
-  remains after cleanup.
+These numbers are deliberately proposed before seeing the new results. They can
+be changed before the run if they do not match the claim we want to make, but
+must not be moved afterward to make the result look successful.
 
-These thresholds are proposed before running the benchmark so they cannot be
-chosen after seeing the results. Results below a performance threshold remain
-useful and must be published honestly; they simply do not support the stronger
-speedup claim.
+A result below the threshold is still published; it supports only the weaker
+conclusion shown by the data. Lifecycle correctness and performance are separate
+conclusions.
 
-Repeated lifecycle correctness and performance are separate conclusions. A run
-may prove that state survives while showing that the speedup is too small or
-inconsistent to market.
+## Adversarial safeguards
 
-## Output schema and evidence
+- The first benchmark workload Docker command after resume is always the timed
+  new-image build; the production supervisor's Docker readiness/restart behavior
+  remains enabled.
+- No exact rebuild is reported as a new-image build.
+- No post-build workload is allowed to warm the server before suspension.
+- Warm and clean members of a pair use identical source and runner-image inputs.
+- Source changes are deterministic and similar in size across cycles and lanes.
+- Actual CPU and memory are recorded; requested memory is not presented as the
+  observed allocation.
+- Clean controls are interleaved, not collected in a separate time window.
+- Failed samples remain visible, and raw measurements are published.
+- `overlay2`, `fuse-overlayfs`, and `vfs` results are never pooled.
+- The final report cannot reuse the old single-resume results as though they
+  were generated by this design.
 
-Raw output should identify every sample with:
+## Explicitly separate follow-up benchmarks
 
-- run ID, lane ID, MicroVM ID hash, cohort, and cycle;
-- runner-image name/version and artifact SHA-256;
-- source revision and input-tree hash;
-- output artifact or image digest;
-- storage driver, observed CPU and memory, and filesystem sizes;
-- build-only, lifecycle, and lifecycle-plus-build durations;
-- pre- and post-cycle disk/cache usage;
-- verification result and failure category; and
-- timestamps sufficient to reconstruct execution order.
+The following may be useful later but do not belong in this core run:
 
-Published evidence should include:
+- unchanged-context exact Docker cache hits;
+- npm cache and TypeScript incremental-artifact timing;
+- three simultaneous builds on one server;
+- service and job containers;
+- different suspended dwell times;
+- dependency-manifest changes;
+- registry push/pull behavior;
+- GitHub queue and JIT runner pickup; and
+- storage-driver comparisons.
 
-- this frozen methodology and the implementation commit;
-- the raw machine-readable samples;
-- the generated aggregate summary;
-- a human-readable report with limitations;
-- sanitized orchestrator logs; and
-- confirmation that all temporary MicroVMs, images, objects, and credentials
-  were removed.
+Keeping these separate ensures that each suspension follows exactly the new
+image build whose cache state the next cycle will inherit.
 
-Account identifiers, shell tokens, credentials, and private repository details
-must be removed without altering measurement values.
+## Reproducibility and cleanup
 
-## Safety and cleanup
+Publish the frozen methodology, implementation commit, raw JSON, generated
+summary, human report, source and image hashes, and sanitized orchestration
+logs.
 
-- Use a maximum MicroVM duration comfortably longer than the planned run but no
-  longer than the service's eight-hour ceiling.
-- Terminate every clean control immediately after its measurement.
-- Keep persistent servers only for the planned repeated cycles and terminate
-  them in a `finally` path.
-- On interruption, enumerate all MicroVMs created by the benchmark run and
-  terminate any non-terminal resource.
-- Delete temporary image resources, object-storage artifacts, and repository
-  credentials after results are collected.
-- End every report with the observed count of remaining non-terminated benchmark
-  MicroVMs.
+The orchestrator must terminate clean controls immediately and persistent
+servers in a `finally` path. On interruption it must enumerate resources from
+the benchmark run and terminate every non-terminal MicroVM. Temporary images,
+objects, and repository credentials are deleted after collection.
 
-## Interpretation limits
+Every report ends with the observed count of remaining non-terminated benchmark
+MicroVMs.
 
-This design demonstrates reuse within one account, Region, runner image, and
-preview-service period. It does not establish an SLA, cross-Region behavior,
-eight-hour durability, GitHub job pickup time, registry-push performance, or
-performance for every Docker storage driver.
+## Limits
 
-Report `overlay2`, `fuse-overlayfs`, and `vfs` separately. Results from one
-driver must not be generalized to another. The production `vfs` fallback is a
-correctness mechanism and should not be described as a high-performance build
-cache without its own repeated-cycle data.
+This design covers one account, Region, runner image, workload, and preview
+service period. It does not establish an SLA, eight-hour durability, cross-
+Region behavior, or performance for another storage driver.
+
+The production `vfs` fallback remains a correctness path. It must not inherit
+performance claims from `overlay2` without a separate repeated-cycle run.
