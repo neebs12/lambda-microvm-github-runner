@@ -1,0 +1,1184 @@
+{
+  "aggregate": {
+    "cold_provision_to_running_ms": {
+      "max_ms": 16902.831,
+      "mean_ms": 10562.212,
+      "min_ms": 5466.045,
+      "n": 9,
+      "p50_ms": 9885.25,
+      "p90_ms": 16902.831,
+      "p95_ms": 16902.831
+    },
+    "docker_changed_source_build_ms": {
+      "max_ms": 2394.602,
+      "mean_ms": 2012.496,
+      "min_ms": 1637.889,
+      "n": 45,
+      "p50_ms": 1804.543,
+      "p90_ms": 2368.386,
+      "p95_ms": 2372.123
+    },
+    "docker_cold_build_ms": {
+      "max_ms": 15641.238,
+      "mean_ms": 13909.225,
+      "min_ms": 12473.489,
+      "n": 9,
+      "p50_ms": 13294.862,
+      "p90_ms": 15641.238,
+      "p95_ms": 15641.238
+    },
+    "docker_warm_exact_build_ms": {
+      "max_ms": 389.506,
+      "mean_ms": 294.503,
+      "min_ms": 243.886,
+      "n": 45,
+      "p50_ms": 294.635,
+      "p90_ms": 330.322,
+      "p95_ms": 332.662
+    },
+    "npm_cold_install_ms": {
+      "max_ms": 1531.111,
+      "mean_ms": 1335.406,
+      "min_ms": 1195.02,
+      "n": 9,
+      "p50_ms": 1264.695,
+      "p90_ms": 1531.111,
+      "p95_ms": 1531.111
+    },
+    "npm_warm_install_ms": {
+      "max_ms": 1113.419,
+      "mean_ms": 927.556,
+      "min_ms": 783.957,
+      "n": 45,
+      "p50_ms": 884.347,
+      "p90_ms": 1056.905,
+      "p95_ms": 1068.592
+    },
+    "parallel_three_build_batch_ms": {
+      "max_ms": 3895.853,
+      "mean_ms": 3229.351,
+      "min_ms": 2669.753,
+      "n": 18,
+      "p50_ms": 3033.833,
+      "p90_ms": 3860.494,
+      "p95_ms": 3895.853
+    },
+    "parallel_three_build_individual_ms": {
+      "max_ms": 3858.601,
+      "mean_ms": 3188.516,
+      "min_ms": 2516.748,
+      "n": 54,
+      "p50_ms": 3031.601,
+      "p90_ms": 3820.102,
+      "p95_ms": 3828.61
+    },
+    "post_resume_container_start_ms": {
+      "max_ms": 655.673,
+      "mean_ms": 514.525,
+      "min_ms": 410.194,
+      "n": 45,
+      "p50_ms": 509.69,
+      "p90_ms": 582.177,
+      "p95_ms": 610.379
+    },
+    "post_resume_exact_build_ms": {
+      "max_ms": 2869.552,
+      "mean_ms": 685.267,
+      "min_ms": 234.999,
+      "n": 45,
+      "p50_ms": 292.151,
+      "p90_ms": 2127.541,
+      "p95_ms": 2620.008
+    },
+    "post_resume_first_exact_build_ms": {
+      "max_ms": 2869.552,
+      "mean_ms": 2299.064,
+      "min_ms": 1919.185,
+      "n": 9,
+      "p50_ms": 2127.541,
+      "p90_ms": 2869.552,
+      "p95_ms": 2869.552
+    },
+    "post_resume_steady_exact_build_ms": {
+      "max_ms": 338.769,
+      "mean_ms": 281.818,
+      "min_ms": 234.999,
+      "n": 36,
+      "p50_ms": 283.206,
+      "p90_ms": 327.026,
+      "p95_ms": 331.378
+    },
+    "resume_to_running_ms": {
+      "max_ms": 7743.432,
+      "mean_ms": 4946.2,
+      "min_ms": 4421.41,
+      "n": 9,
+      "p50_ms": 4547.077,
+      "p90_ms": 7743.432,
+      "p95_ms": 7743.432
+    },
+    "suspend_to_suspended_ms": {
+      "max_ms": 4143.635,
+      "mean_ms": 2378.176,
+      "min_ms": 2039.586,
+      "n": 9,
+      "p50_ms": 2069.633,
+      "p90_ms": 4143.635,
+      "p95_ms": 4143.635
+    },
+    "typescript_cold_artifact_build_ms": {
+      "max_ms": 2249.435,
+      "mean_ms": 1894.845,
+      "min_ms": 1617.991,
+      "n": 9,
+      "p50_ms": 1649.446,
+      "p90_ms": 2249.435,
+      "p95_ms": 2249.435
+    },
+    "typescript_incremental_artifact_build_ms": {
+      "max_ms": 1299.432,
+      "mean_ms": 1117.291,
+      "min_ms": 939.692,
+      "n": 45,
+      "p50_ms": 1068.866,
+      "p90_ms": 1260.575,
+      "p95_ms": 1289.271
+    },
+    "warm_container_start_ms": {
+      "max_ms": 610.272,
+      "mean_ms": 502.296,
+      "min_ms": 419.775,
+      "n": 90,
+      "p50_ms": 499.677,
+      "p90_ms": 548.984,
+      "p95_ms": 575.622
+    }
+  },
+  "comparisons": {
+    "docker_cold_to_changed_source": {
+      "baseline_p50_ms": 13294.862,
+      "candidate_p50_ms": 1804.543,
+      "p50_speedup": 7.37,
+      "p50_time_reduction_percent": 86.4
+    },
+    "docker_cold_to_post_resume_steady": {
+      "baseline_p50_ms": 13294.862,
+      "candidate_p50_ms": 283.206,
+      "p50_speedup": 46.94,
+      "p50_time_reduction_percent": 97.9
+    },
+    "docker_cold_to_warm_exact": {
+      "baseline_p50_ms": 13294.862,
+      "candidate_p50_ms": 294.635,
+      "p50_speedup": 45.12,
+      "p50_time_reduction_percent": 97.8
+    },
+    "npm_cold_to_warm": {
+      "baseline_p50_ms": 1264.695,
+      "candidate_p50_ms": 884.347,
+      "p50_speedup": 1.43,
+      "p50_time_reduction_percent": 30.1
+    },
+    "typescript_cold_to_incremental": {
+      "baseline_p50_ms": 1649.446,
+      "candidate_p50_ms": 1068.866,
+      "p50_speedup": 1.54,
+      "p50_time_reduction_percent": 35.2
+    }
+  },
+  "method": "nearest-rank percentiles",
+  "per_server": {
+    "server-01": {
+      "docker_changed_source_build_ms": {
+        "max_ms": 1786.528,
+        "mean_ms": 1757.21,
+        "min_ms": 1715.219,
+        "n": 5,
+        "p50_ms": 1760.345,
+        "p90_ms": 1786.528,
+        "p95_ms": 1786.528
+      },
+      "docker_cold_build_ms": {
+        "max_ms": 12473.489,
+        "mean_ms": 12473.489,
+        "min_ms": 12473.489,
+        "n": 1,
+        "p50_ms": 12473.489,
+        "p90_ms": 12473.489,
+        "p95_ms": 12473.489
+      },
+      "docker_warm_exact_build_ms": {
+        "max_ms": 320.299,
+        "mean_ms": 313.699,
+        "min_ms": 305.033,
+        "n": 5,
+        "p50_ms": 314.518,
+        "p90_ms": 320.299,
+        "p95_ms": 320.299
+      },
+      "npm_cold_install_ms": {
+        "max_ms": 1200.225,
+        "mean_ms": 1200.225,
+        "min_ms": 1200.225,
+        "n": 1,
+        "p50_ms": 1200.225,
+        "p90_ms": 1200.225,
+        "p95_ms": 1200.225
+      },
+      "npm_warm_install_ms": {
+        "max_ms": 871.141,
+        "mean_ms": 848.375,
+        "min_ms": 835.283,
+        "n": 5,
+        "p50_ms": 844.938,
+        "p90_ms": 871.141,
+        "p95_ms": 871.141
+      },
+      "parallel_three_build_batch_ms": {
+        "max_ms": 2699.37,
+        "mean_ms": 2684.561,
+        "min_ms": 2669.753,
+        "n": 2,
+        "p50_ms": 2669.753,
+        "p90_ms": 2699.37,
+        "p95_ms": 2699.37
+      },
+      "parallel_three_build_individual_ms": {
+        "max_ms": 2669.175,
+        "mean_ms": 2594.934,
+        "min_ms": 2516.748,
+        "n": 6,
+        "p50_ms": 2562.463,
+        "p90_ms": 2669.175,
+        "p95_ms": 2669.175
+      },
+      "post_resume_container_start_ms": {
+        "max_ms": 550.217,
+        "mean_ms": 498.669,
+        "min_ms": 461.865,
+        "n": 5,
+        "p50_ms": 481.52,
+        "p90_ms": 550.217,
+        "p95_ms": 550.217
+      },
+      "post_resume_exact_build_ms": {
+        "max_ms": 1919.185,
+        "mean_ms": 594.943,
+        "min_ms": 236.575,
+        "n": 5,
+        "p50_ms": 288.053,
+        "p90_ms": 1919.185,
+        "p95_ms": 1919.185
+      },
+      "typescript_cold_artifact_build_ms": {
+        "max_ms": 1631.425,
+        "mean_ms": 1631.425,
+        "min_ms": 1631.425,
+        "n": 1,
+        "p50_ms": 1631.425,
+        "p90_ms": 1631.425,
+        "p95_ms": 1631.425
+      },
+      "typescript_incremental_artifact_build_ms": {
+        "max_ms": 1069.424,
+        "mean_ms": 1022.559,
+        "min_ms": 962.27,
+        "n": 5,
+        "p50_ms": 1030.377,
+        "p90_ms": 1069.424,
+        "p95_ms": 1069.424
+      },
+      "warm_container_start_ms": {
+        "max_ms": 575.622,
+        "mean_ms": 483.378,
+        "min_ms": 449.799,
+        "n": 10,
+        "p50_ms": 469.818,
+        "p90_ms": 499.685,
+        "p95_ms": 575.622
+      }
+    },
+    "server-02": {
+      "docker_changed_source_build_ms": {
+        "max_ms": 2369.934,
+        "mean_ms": 2355.768,
+        "min_ms": 2337.7,
+        "n": 5,
+        "p50_ms": 2361.064,
+        "p90_ms": 2369.934,
+        "p95_ms": 2369.934
+      },
+      "docker_cold_build_ms": {
+        "max_ms": 15285.349,
+        "mean_ms": 15285.349,
+        "min_ms": 15285.349,
+        "n": 1,
+        "p50_ms": 15285.349,
+        "p90_ms": 15285.349,
+        "p95_ms": 15285.349
+      },
+      "docker_warm_exact_build_ms": {
+        "max_ms": 331.479,
+        "mean_ms": 297.579,
+        "min_ms": 268.512,
+        "n": 5,
+        "p50_ms": 281.688,
+        "p90_ms": 331.479,
+        "p95_ms": 331.479
+      },
+      "npm_cold_install_ms": {
+        "max_ms": 1447.934,
+        "mean_ms": 1447.934,
+        "min_ms": 1447.934,
+        "n": 1,
+        "p50_ms": 1447.934,
+        "p90_ms": 1447.934,
+        "p95_ms": 1447.934
+      },
+      "npm_warm_install_ms": {
+        "max_ms": 1113.419,
+        "mean_ms": 1066.966,
+        "min_ms": 1044.771,
+        "n": 5,
+        "p50_ms": 1056.116,
+        "p90_ms": 1113.419,
+        "p95_ms": 1113.419
+      },
+      "parallel_three_build_batch_ms": {
+        "max_ms": 3628.335,
+        "mean_ms": 3506.336,
+        "min_ms": 3384.337,
+        "n": 2,
+        "p50_ms": 3384.337,
+        "p90_ms": 3628.335,
+        "p95_ms": 3628.335
+      },
+      "parallel_three_build_individual_ms": {
+        "max_ms": 3625.04,
+        "mean_ms": 3465.328,
+        "min_ms": 3328.696,
+        "n": 6,
+        "p50_ms": 3383.715,
+        "p90_ms": 3625.04,
+        "p95_ms": 3625.04
+      },
+      "post_resume_container_start_ms": {
+        "max_ms": 569.802,
+        "mean_ms": 535.715,
+        "min_ms": 499.5,
+        "n": 5,
+        "p50_ms": 529.618,
+        "p90_ms": 569.802,
+        "p95_ms": 569.802
+      },
+      "post_resume_exact_build_ms": {
+        "max_ms": 2869.552,
+        "mean_ms": 821.761,
+        "min_ms": 270.034,
+        "n": 5,
+        "p50_ms": 320.788,
+        "p90_ms": 2869.552,
+        "p95_ms": 2869.552
+      },
+      "typescript_cold_artifact_build_ms": {
+        "max_ms": 2249.435,
+        "mean_ms": 2249.435,
+        "min_ms": 2249.435,
+        "n": 1,
+        "p50_ms": 2249.435,
+        "p90_ms": 2249.435,
+        "p95_ms": 2249.435
+      },
+      "typescript_incremental_artifact_build_ms": {
+        "max_ms": 1298.722,
+        "mean_ms": 1254.396,
+        "min_ms": 1222.691,
+        "n": 5,
+        "p50_ms": 1251.285,
+        "p90_ms": 1298.722,
+        "p95_ms": 1298.722
+      },
+      "warm_container_start_ms": {
+        "max_ms": 610.272,
+        "mean_ms": 537.232,
+        "min_ms": 509.291,
+        "n": 10,
+        "p50_ms": 519.898,
+        "p90_ms": 569.943,
+        "p95_ms": 610.272
+      }
+    },
+    "server-03": {
+      "docker_changed_source_build_ms": {
+        "max_ms": 2387.147,
+        "mean_ms": 2320.967,
+        "min_ms": 2254.497,
+        "n": 5,
+        "p50_ms": 2305.073,
+        "p90_ms": 2387.147,
+        "p95_ms": 2387.147
+      },
+      "docker_cold_build_ms": {
+        "max_ms": 15056.855,
+        "mean_ms": 15056.855,
+        "min_ms": 15056.855,
+        "n": 1,
+        "p50_ms": 15056.855,
+        "p90_ms": 15056.855,
+        "p95_ms": 15056.855
+      },
+      "docker_warm_exact_build_ms": {
+        "max_ms": 334.539,
+        "mean_ms": 297.793,
+        "min_ms": 259.043,
+        "n": 5,
+        "p50_ms": 316.293,
+        "p90_ms": 334.539,
+        "p95_ms": 334.539
+      },
+      "npm_cold_install_ms": {
+        "max_ms": 1531.111,
+        "mean_ms": 1531.111,
+        "min_ms": 1531.111,
+        "n": 1,
+        "p50_ms": 1531.111,
+        "p90_ms": 1531.111,
+        "p95_ms": 1531.111
+      },
+      "npm_warm_install_ms": {
+        "max_ms": 1056.905,
+        "mean_ms": 1022.403,
+        "min_ms": 1004.965,
+        "n": 5,
+        "p50_ms": 1021.922,
+        "p90_ms": 1056.905,
+        "p95_ms": 1056.905
+      },
+      "parallel_three_build_batch_ms": {
+        "max_ms": 3895.853,
+        "mean_ms": 3647.572,
+        "min_ms": 3399.291,
+        "n": 2,
+        "p50_ms": 3399.291,
+        "p90_ms": 3895.853,
+        "p95_ms": 3895.853
+      },
+      "parallel_three_build_individual_ms": {
+        "max_ms": 3853.913,
+        "mean_ms": 3616.663,
+        "min_ms": 3396.549,
+        "n": 6,
+        "p50_ms": 3397.422,
+        "p90_ms": 3853.913,
+        "p95_ms": 3853.913
+      },
+      "post_resume_container_start_ms": {
+        "max_ms": 562.867,
+        "mean_ms": 527.738,
+        "min_ms": 468.917,
+        "n": 5,
+        "p50_ms": 541.079,
+        "p90_ms": 562.867,
+        "p95_ms": 562.867
+      },
+      "post_resume_exact_build_ms": {
+        "max_ms": 2620.008,
+        "mean_ms": 737.882,
+        "min_ms": 257.045,
+        "n": 5,
+        "p50_ms": 270.486,
+        "p90_ms": 2620.008,
+        "p95_ms": 2620.008
+      },
+      "typescript_cold_artifact_build_ms": {
+        "max_ms": 2162.952,
+        "mean_ms": 2162.952,
+        "min_ms": 2162.952,
+        "n": 1,
+        "p50_ms": 2162.952,
+        "p90_ms": 2162.952,
+        "p95_ms": 2162.952
+      },
+      "typescript_incremental_artifact_build_ms": {
+        "max_ms": 1299.432,
+        "mean_ms": 1264.312,
+        "min_ms": 1248.293,
+        "n": 5,
+        "p50_ms": 1259.145,
+        "p90_ms": 1299.432,
+        "p95_ms": 1299.432
+      },
+      "warm_container_start_ms": {
+        "max_ms": 595.88,
+        "mean_ms": 534.371,
+        "min_ms": 489.49,
+        "n": 10,
+        "p50_ms": 539.585,
+        "p90_ms": 589.688,
+        "p95_ms": 595.88
+      }
+    },
+    "server-04": {
+      "docker_changed_source_build_ms": {
+        "max_ms": 1951.073,
+        "mean_ms": 1815.922,
+        "min_ms": 1725.419,
+        "n": 5,
+        "p50_ms": 1804.543,
+        "p90_ms": 1951.073,
+        "p95_ms": 1951.073
+      },
+      "docker_cold_build_ms": {
+        "max_ms": 12939.028,
+        "mean_ms": 12939.028,
+        "min_ms": 12939.028,
+        "n": 1,
+        "p50_ms": 12939.028,
+        "p90_ms": 12939.028,
+        "p95_ms": 12939.028
+      },
+      "docker_warm_exact_build_ms": {
+        "max_ms": 305.848,
+        "mean_ms": 285.125,
+        "min_ms": 243.886,
+        "n": 5,
+        "p50_ms": 292.529,
+        "p90_ms": 305.848,
+        "p95_ms": 305.848
+      },
+      "npm_cold_install_ms": {
+        "max_ms": 1195.02,
+        "mean_ms": 1195.02,
+        "min_ms": 1195.02,
+        "n": 1,
+        "p50_ms": 1195.02,
+        "p90_ms": 1195.02,
+        "p95_ms": 1195.02
+      },
+      "npm_warm_install_ms": {
+        "max_ms": 936.549,
+        "mean_ms": 851.349,
+        "min_ms": 805.389,
+        "n": 5,
+        "p50_ms": 843.942,
+        "p90_ms": 936.549,
+        "p95_ms": 936.549
+      },
+      "parallel_three_build_batch_ms": {
+        "max_ms": 3393.905,
+        "mean_ms": 3091.582,
+        "min_ms": 2789.259,
+        "n": 2,
+        "p50_ms": 2789.259,
+        "p90_ms": 3393.905,
+        "p95_ms": 3393.905
+      },
+      "parallel_three_build_individual_ms": {
+        "max_ms": 3393.411,
+        "mean_ms": 3057.72,
+        "min_ms": 2734.717,
+        "n": 6,
+        "p50_ms": 2756.312,
+        "p90_ms": 3393.411,
+        "p95_ms": 3393.411
+      },
+      "post_resume_container_start_ms": {
+        "max_ms": 497.818,
+        "mean_ms": 468.025,
+        "min_ms": 410.194,
+        "n": 5,
+        "p50_ms": 483.757,
+        "p90_ms": 497.818,
+        "p95_ms": 497.818
+      },
+      "post_resume_exact_build_ms": {
+        "max_ms": 1965.278,
+        "mean_ms": 621.612,
+        "min_ms": 234.999,
+        "n": 5,
+        "p50_ms": 306.36,
+        "p90_ms": 1965.278,
+        "p95_ms": 1965.278
+      },
+      "typescript_cold_artifact_build_ms": {
+        "max_ms": 1649.446,
+        "mean_ms": 1649.446,
+        "min_ms": 1649.446,
+        "n": 1,
+        "p50_ms": 1649.446,
+        "p90_ms": 1649.446,
+        "p95_ms": 1649.446
+      },
+      "typescript_incremental_artifact_build_ms": {
+        "max_ms": 1029.875,
+        "mean_ms": 1004.567,
+        "min_ms": 991.153,
+        "n": 5,
+        "p50_ms": 999.783,
+        "p90_ms": 1029.875,
+        "p95_ms": 1029.875
+      },
+      "warm_container_start_ms": {
+        "max_ms": 519.941,
+        "mean_ms": 472.494,
+        "min_ms": 419.775,
+        "n": 10,
+        "p50_ms": 460.056,
+        "p90_ms": 508.61,
+        "p95_ms": 519.941
+      }
+    },
+    "server-05": {
+      "docker_changed_source_build_ms": {
+        "max_ms": 2368.386,
+        "mean_ms": 2341.11,
+        "min_ms": 2284.345,
+        "n": 5,
+        "p50_ms": 2349.086,
+        "p90_ms": 2368.386,
+        "p95_ms": 2368.386
+      },
+      "docker_cold_build_ms": {
+        "max_ms": 15641.238,
+        "mean_ms": 15641.238,
+        "min_ms": 15641.238,
+        "n": 1,
+        "p50_ms": 15641.238,
+        "p90_ms": 15641.238,
+        "p95_ms": 15641.238
+      },
+      "docker_warm_exact_build_ms": {
+        "max_ms": 322.529,
+        "mean_ms": 287.0,
+        "min_ms": 265.184,
+        "n": 5,
+        "p50_ms": 281.94,
+        "p90_ms": 322.529,
+        "p95_ms": 322.529
+      },
+      "npm_cold_install_ms": {
+        "max_ms": 1483.897,
+        "mean_ms": 1483.897,
+        "min_ms": 1483.897,
+        "n": 1,
+        "p50_ms": 1483.897,
+        "p90_ms": 1483.897,
+        "p95_ms": 1483.897
+      },
+      "npm_warm_install_ms": {
+        "max_ms": 1076.361,
+        "mean_ms": 1027.066,
+        "min_ms": 955.365,
+        "n": 5,
+        "p50_ms": 1033.641,
+        "p90_ms": 1076.361,
+        "p95_ms": 1076.361
+      },
+      "parallel_three_build_batch_ms": {
+        "max_ms": 3860.494,
+        "mean_ms": 3823.128,
+        "min_ms": 3785.763,
+        "n": 2,
+        "p50_ms": 3785.763,
+        "p90_ms": 3860.494,
+        "p95_ms": 3860.494
+      },
+      "parallel_three_build_individual_ms": {
+        "max_ms": 3858.601,
+        "mean_ms": 3804.002,
+        "min_ms": 3769.238,
+        "n": 6,
+        "p50_ms": 3783.7,
+        "p90_ms": 3858.601,
+        "p95_ms": 3858.601
+      },
+      "post_resume_container_start_ms": {
+        "max_ms": 655.673,
+        "mean_ms": 563.375,
+        "min_ms": 481.277,
+        "n": 5,
+        "p50_ms": 555.135,
+        "p90_ms": 655.673,
+        "p95_ms": 655.673
+      },
+      "post_resume_exact_build_ms": {
+        "max_ms": 2583.772,
+        "mean_ms": 744.178,
+        "min_ms": 248.046,
+        "n": 5,
+        "p50_ms": 284.743,
+        "p90_ms": 2583.772,
+        "p95_ms": 2583.772
+      },
+      "typescript_cold_artifact_build_ms": {
+        "max_ms": 2241.978,
+        "mean_ms": 2241.978,
+        "min_ms": 2241.978,
+        "n": 1,
+        "p50_ms": 2241.978,
+        "p90_ms": 2241.978,
+        "p95_ms": 2241.978
+      },
+      "typescript_incremental_artifact_build_ms": {
+        "max_ms": 1260.575,
+        "mean_ms": 1240.113,
+        "min_ms": 1209.289,
+        "n": 5,
+        "p50_ms": 1237.53,
+        "p90_ms": 1260.575,
+        "p95_ms": 1260.575
+      },
+      "warm_container_start_ms": {
+        "max_ms": 559.785,
+        "mean_ms": 523.311,
+        "min_ms": 469.946,
+        "n": 10,
+        "p50_ms": 529.508,
+        "p90_ms": 548.984,
+        "p95_ms": 559.785
+      }
+    },
+    "server-06": {
+      "docker_changed_source_build_ms": {
+        "max_ms": 1778.347,
+        "mean_ms": 1719.563,
+        "min_ms": 1637.889,
+        "n": 5,
+        "p50_ms": 1714.447,
+        "p90_ms": 1778.347,
+        "p95_ms": 1778.347
+      },
+      "docker_cold_build_ms": {
+        "max_ms": 12772.891,
+        "mean_ms": 12772.891,
+        "min_ms": 12772.891,
+        "n": 1,
+        "p50_ms": 12772.891,
+        "p90_ms": 12772.891,
+        "p95_ms": 12772.891
+      },
+      "docker_warm_exact_build_ms": {
+        "max_ms": 302.082,
+        "mean_ms": 282.975,
+        "min_ms": 256.01,
+        "n": 5,
+        "p50_ms": 294.635,
+        "p90_ms": 302.082,
+        "p95_ms": 302.082
+      },
+      "npm_cold_install_ms": {
+        "max_ms": 1234.408,
+        "mean_ms": 1234.408,
+        "min_ms": 1234.408,
+        "n": 1,
+        "p50_ms": 1234.408,
+        "p90_ms": 1234.408,
+        "p95_ms": 1234.408
+      },
+      "npm_warm_install_ms": {
+        "max_ms": 884.347,
+        "mean_ms": 852.427,
+        "min_ms": 817.802,
+        "n": 5,
+        "p50_ms": 852.636,
+        "p90_ms": 884.347,
+        "p95_ms": 884.347
+      },
+      "parallel_three_build_batch_ms": {
+        "max_ms": 3033.833,
+        "mean_ms": 2896.952,
+        "min_ms": 2760.07,
+        "n": 2,
+        "p50_ms": 2760.07,
+        "p90_ms": 3033.833,
+        "p95_ms": 3033.833
+      },
+      "parallel_three_build_individual_ms": {
+        "max_ms": 3031.601,
+        "mean_ms": 2863.955,
+        "min_ms": 2702.71,
+        "n": 6,
+        "p50_ms": 2757.595,
+        "p90_ms": 3031.601,
+        "p95_ms": 3031.601
+      },
+      "post_resume_container_start_ms": {
+        "max_ms": 514.279,
+        "mean_ms": 480.767,
+        "min_ms": 459.582,
+        "n": 5,
+        "p50_ms": 476.269,
+        "p90_ms": 514.279,
+        "p95_ms": 514.279
+      },
+      "post_resume_exact_build_ms": {
+        "max_ms": 1978.131,
+        "mean_ms": 608.73,
+        "min_ms": 248.717,
+        "n": 5,
+        "p50_ms": 268.082,
+        "p90_ms": 1978.131,
+        "p95_ms": 1978.131
+      },
+      "typescript_cold_artifact_build_ms": {
+        "max_ms": 1617.991,
+        "mean_ms": 1617.991,
+        "min_ms": 1617.991,
+        "n": 1,
+        "p50_ms": 1617.991,
+        "p90_ms": 1617.991,
+        "p95_ms": 1617.991
+      },
+      "typescript_incremental_artifact_build_ms": {
+        "max_ms": 1104.069,
+        "mean_ms": 1012.515,
+        "min_ms": 949.548,
+        "n": 5,
+        "p50_ms": 988.658,
+        "p90_ms": 1104.069,
+        "p95_ms": 1104.069
+      },
+      "warm_container_start_ms": {
+        "max_ms": 500.273,
+        "mean_ms": 470.534,
+        "min_ms": 439.653,
+        "n": 10,
+        "p50_ms": 469.89,
+        "p90_ms": 488.124,
+        "p95_ms": 500.273
+      }
+    },
+    "server-07": {
+      "docker_changed_source_build_ms": {
+        "max_ms": 1777.905,
+        "mean_ms": 1723.375,
+        "min_ms": 1675.129,
+        "n": 5,
+        "p50_ms": 1712.932,
+        "p90_ms": 1777.905,
+        "p95_ms": 1777.905
+      },
+      "docker_cold_build_ms": {
+        "max_ms": 13294.862,
+        "mean_ms": 13294.862,
+        "min_ms": 13294.862,
+        "n": 1,
+        "p50_ms": 13294.862,
+        "p90_ms": 13294.862,
+        "p95_ms": 13294.862
+      },
+      "docker_warm_exact_build_ms": {
+        "max_ms": 303.115,
+        "mean_ms": 280.151,
+        "min_ms": 248.655,
+        "n": 5,
+        "p50_ms": 280.503,
+        "p90_ms": 303.115,
+        "p95_ms": 303.115
+      },
+      "npm_cold_install_ms": {
+        "max_ms": 1264.695,
+        "mean_ms": 1264.695,
+        "min_ms": 1264.695,
+        "n": 1,
+        "p50_ms": 1264.695,
+        "p90_ms": 1264.695,
+        "p95_ms": 1264.695
+      },
+      "npm_warm_install_ms": {
+        "max_ms": 876.722,
+        "mean_ms": 827.909,
+        "min_ms": 783.957,
+        "n": 5,
+        "p50_ms": 815.472,
+        "p90_ms": 876.722,
+        "p95_ms": 876.722
+      },
+      "parallel_three_build_batch_ms": {
+        "max_ms": 2922.276,
+        "mean_ms": 2852.868,
+        "min_ms": 2783.461,
+        "n": 2,
+        "p50_ms": 2783.461,
+        "p90_ms": 2922.276,
+        "p95_ms": 2922.276
+      },
+      "parallel_three_build_individual_ms": {
+        "max_ms": 2921.642,
+        "mean_ms": 2800.749,
+        "min_ms": 2630.864,
+        "n": 6,
+        "p50_ms": 2751.384,
+        "p90_ms": 2921.642,
+        "p95_ms": 2921.642
+      },
+      "post_resume_container_start_ms": {
+        "max_ms": 582.177,
+        "mean_ms": 520.052,
+        "min_ms": 491.012,
+        "n": 5,
+        "p50_ms": 503.279,
+        "p90_ms": 582.177,
+        "p95_ms": 582.177
+      },
+      "post_resume_exact_build_ms": {
+        "max_ms": 2127.541,
+        "mean_ms": 631.596,
+        "min_ms": 241.35,
+        "n": 5,
+        "p50_ms": 256.035,
+        "p90_ms": 2127.541,
+        "p95_ms": 2127.541
+      },
+      "typescript_cold_artifact_build_ms": {
+        "max_ms": 1625.332,
+        "mean_ms": 1625.332,
+        "min_ms": 1625.332,
+        "n": 1,
+        "p50_ms": 1625.332,
+        "p90_ms": 1625.332,
+        "p95_ms": 1625.332
+      },
+      "typescript_incremental_artifact_build_ms": {
+        "max_ms": 1019.298,
+        "mean_ms": 996.501,
+        "min_ms": 973.74,
+        "n": 5,
+        "p50_ms": 998.445,
+        "p90_ms": 1019.298,
+        "p95_ms": 1019.298
+      },
+      "warm_container_start_ms": {
+        "max_ms": 519.771,
+        "mean_ms": 477.539,
+        "min_ms": 438.791,
+        "n": 10,
+        "p50_ms": 479.631,
+        "p90_ms": 499.677,
+        "p95_ms": 519.771
+      }
+    },
+    "server-08": {
+      "docker_changed_source_build_ms": {
+        "max_ms": 1762.58,
+        "mean_ms": 1733.36,
+        "min_ms": 1699.003,
+        "n": 5,
+        "p50_ms": 1732.674,
+        "p90_ms": 1762.58,
+        "p95_ms": 1762.58
+      },
+      "docker_cold_build_ms": {
+        "max_ms": 12850.609,
+        "mean_ms": 12850.609,
+        "min_ms": 12850.609,
+        "n": 1,
+        "p50_ms": 12850.609,
+        "p90_ms": 12850.609,
+        "p95_ms": 12850.609
+      },
+      "docker_warm_exact_build_ms": {
+        "max_ms": 389.506,
+        "mean_ms": 309.04,
+        "min_ms": 254.062,
+        "n": 5,
+        "p50_ms": 299.283,
+        "p90_ms": 389.506,
+        "p95_ms": 389.506
+      },
+      "npm_cold_install_ms": {
+        "max_ms": 1259.029,
+        "mean_ms": 1259.029,
+        "min_ms": 1259.029,
+        "n": 1,
+        "p50_ms": 1259.029,
+        "p90_ms": 1259.029,
+        "p95_ms": 1259.029
+      },
+      "npm_warm_install_ms": {
+        "max_ms": 898.82,
+        "mean_ms": 854.115,
+        "min_ms": 816.434,
+        "n": 5,
+        "p50_ms": 843.463,
+        "p90_ms": 898.82,
+        "p95_ms": 898.82
+      },
+      "parallel_three_build_batch_ms": {
+        "max_ms": 2993.177,
+        "mean_ms": 2944.644,
+        "min_ms": 2896.111,
+        "n": 2,
+        "p50_ms": 2896.111,
+        "p90_ms": 2993.177,
+        "p95_ms": 2993.177
+      },
+      "parallel_three_build_individual_ms": {
+        "max_ms": 2956.467,
+        "mean_ms": 2903.736,
+        "min_ms": 2821.421,
+        "n": 6,
+        "p50_ms": 2895.601,
+        "p90_ms": 2956.467,
+        "p95_ms": 2956.467
+      },
+      "post_resume_container_start_ms": {
+        "max_ms": 620.693,
+        "mean_ms": 497.344,
+        "min_ms": 427.779,
+        "n": 5,
+        "p50_ms": 473.165,
+        "p90_ms": 620.693,
+        "p95_ms": 620.693
+      },
+      "post_resume_exact_build_ms": {
+        "max_ms": 1989.032,
+        "mean_ms": 628.244,
+        "min_ms": 256.435,
+        "n": 5,
+        "p50_ms": 301.807,
+        "p90_ms": 1989.032,
+        "p95_ms": 1989.032
+      },
+      "typescript_cold_artifact_build_ms": {
+        "max_ms": 1635.727,
+        "mean_ms": 1635.727,
+        "min_ms": 1635.727,
+        "n": 1,
+        "p50_ms": 1635.727,
+        "p90_ms": 1635.727,
+        "p95_ms": 1635.727
+      },
+      "typescript_incremental_artifact_build_ms": {
+        "max_ms": 1068.866,
+        "mean_ms": 1014.377,
+        "min_ms": 939.692,
+        "n": 5,
+        "p50_ms": 1013.609,
+        "p90_ms": 1068.866,
+        "p95_ms": 1068.866
+      },
+      "warm_container_start_ms": {
+        "max_ms": 540.055,
+        "mean_ms": 479.539,
+        "min_ms": 429.474,
+        "n": 10,
+        "p50_ms": 479.66,
+        "p90_ms": 519.966,
+        "p95_ms": 540.055
+      }
+    },
+    "server-09": {
+      "docker_changed_source_build_ms": {
+        "max_ms": 2394.602,
+        "mean_ms": 2345.191,
+        "min_ms": 2300.056,
+        "n": 5,
+        "p50_ms": 2343.436,
+        "p90_ms": 2394.602,
+        "p95_ms": 2394.602
+      },
+      "docker_cold_build_ms": {
+        "max_ms": 14868.703,
+        "mean_ms": 14868.703,
+        "min_ms": 14868.703,
+        "n": 1,
+        "p50_ms": 14868.703,
+        "p90_ms": 14868.703,
+        "p95_ms": 14868.703
+      },
+      "docker_warm_exact_build_ms": {
+        "max_ms": 332.662,
+        "mean_ms": 297.164,
+        "min_ms": 265.754,
+        "n": 5,
+        "p50_ms": 287.9,
+        "p90_ms": 332.662,
+        "p95_ms": 332.662
+      },
+      "npm_cold_install_ms": {
+        "max_ms": 1402.337,
+        "mean_ms": 1402.337,
+        "min_ms": 1402.337,
+        "n": 1,
+        "p50_ms": 1402.337,
+        "p90_ms": 1402.337,
+        "p95_ms": 1402.337
+      },
+      "npm_warm_install_ms": {
+        "max_ms": 1016.949,
+        "mean_ms": 997.395,
+        "min_ms": 972.935,
+        "n": 5,
+        "p50_ms": 1003.894,
+        "p90_ms": 1016.949,
+        "p95_ms": 1016.949
+      },
+      "parallel_three_build_batch_ms": {
+        "max_ms": 3676.861,
+        "mean_ms": 3616.514,
+        "min_ms": 3556.166,
+        "n": 2,
+        "p50_ms": 3556.166,
+        "p90_ms": 3676.861,
+        "p95_ms": 3676.861
+      },
+      "parallel_three_build_individual_ms": {
+        "max_ms": 3676.199,
+        "mean_ms": 3589.559,
+        "min_ms": 3525.864,
+        "n": 6,
+        "p50_ms": 3553.876,
+        "p90_ms": 3676.199,
+        "p95_ms": 3676.199
+      },
+      "post_resume_container_start_ms": {
+        "max_ms": 610.379,
+        "mean_ms": 539.04,
+        "min_ms": 471.518,
+        "n": 5,
+        "p50_ms": 531.259,
+        "p90_ms": 610.379,
+        "p95_ms": 610.379
+      },
+      "post_resume_exact_build_ms": {
+        "max_ms": 2639.074,
+        "mean_ms": 778.458,
+        "min_ms": 285.673,
+        "n": 5,
+        "p50_ms": 328.179,
+        "p90_ms": 2639.074,
+        "p95_ms": 2639.074
+      },
+      "typescript_cold_artifact_build_ms": {
+        "max_ms": 2239.318,
+        "mean_ms": 2239.318,
+        "min_ms": 2239.318,
+        "n": 1,
+        "p50_ms": 2239.318,
+        "p90_ms": 2239.318,
+        "p95_ms": 2239.318
+      },
+      "typescript_incremental_artifact_build_ms": {
+        "max_ms": 1289.271,
+        "mean_ms": 1246.281,
+        "min_ms": 1212.745,
+        "n": 5,
+        "p50_ms": 1250.7,
+        "p90_ms": 1289.271,
+        "p95_ms": 1289.271
+      },
+      "warm_container_start_ms": {
+        "max_ms": 580.091,
+        "mean_ms": 542.266,
+        "min_ms": 509.979,
+        "n": 10,
+        "p50_ms": 539.35,
+        "p90_ms": 569.783,
+        "p95_ms": 580.091
+      }
+    }
+  },
+  "schema_version": 1,
+  "server_count": 9
+}

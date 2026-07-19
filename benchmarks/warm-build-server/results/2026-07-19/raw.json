@@ -1,0 +1,597 @@
+{
+  "configuration": {
+    "actual_server_count": 9,
+    "image_version": "1.0",
+    "parallel_build_batches_per_server": 2,
+    "region": "us-east-1",
+    "requested_minimum_memory_mib": 2048,
+    "requested_server_count": 9,
+    "warm_iterations_per_server": 5,
+    "image_name": "lmvm-benchmark-20260718234336",
+    "image_artifact_sha256": "36aebc7fe387f6effcbc2dcd65ff6fcb69522f5fcd6eea2b877ef255cc0c0656"
+  },
+  "created_at_unix_ms": 1784422269689,
+  "schema_version": 1,
+  "servers": [
+    {
+      "control_plane": {
+        "cold_provision_to_running_ms": 16902.831,
+        "resume_to_running_ms": 4554.604,
+        "suspend_to_suspended_ms": 2442.061
+      },
+      "disk_after_phase_one": {
+        "docker_data_root_bytes": 1494573713,
+        "root_free_bytes": 3924295680,
+        "root_total_bytes": 8283189248,
+        "root_used_bytes": 3912622080
+      },
+      "disk_after_phase_two": {
+        "docker_data_root_bytes": 1497542567,
+        "root_free_bytes": 3914866688,
+        "root_total_bytes": 8283189248,
+        "root_used_bytes": 3922051072
+      },
+      "metadata": {
+        "architecture": "aarch64",
+        "logical_cpus_visible": 4,
+        "memory_total_bytes": 8406073344,
+        "node_image": "public.ecr.aws/docker/library/node:24-bookworm",
+        "parallel_batches": 2,
+        "phase_one_completed_at_unix_ms": 1784422011280,
+        "phase_two_completed_at_unix_ms": 1784422134634,
+        "post_resume_storage_driver": "overlay2",
+        "source_module_count": 500,
+        "storage_driver": "overlay2",
+        "typescript_version": "6.0.3",
+        "warm_iterations": 5
+      },
+      "samples": {
+        "docker_changed_source_build_ms": [
+          1760.345, 1753.813, 1715.219, 1786.528, 1770.144
+        ],
+        "docker_cold_build_ms": [12473.489],
+        "docker_warm_exact_build_ms": [
+          305.033, 315.851, 314.518, 312.794, 320.299
+        ],
+        "npm_cold_install_ms": [1200.225],
+        "npm_warm_install_ms": [871.141, 844.194, 844.938, 835.283, 846.319],
+        "parallel_three_build_batch_ms": [2699.37, 2669.753],
+        "parallel_three_build_individual_ms": [
+          2611.123, 2562.463, 2655.831, 2669.175, 2554.262, 2516.748
+        ],
+        "post_resume_container_start_ms": [
+          550.217, 481.52, 537.29, 462.452, 461.865
+        ],
+        "post_resume_exact_build_ms": [
+          1919.185, 288.053, 292.877, 238.026, 236.575
+        ],
+        "typescript_cold_artifact_build_ms": [1631.425],
+        "typescript_incremental_artifact_build_ms": [
+          962.27, 989.825, 1069.424, 1030.377, 1060.901
+        ],
+        "warm_container_start_ms": [
+          575.622, 479.913, 449.799, 499.64, 459.878, 469.818, 459.903, 469.595,
+          469.927, 499.685
+        ]
+      },
+      "schema_version": 1,
+      "server_id": "server-01"
+    },
+    {
+      "control_plane": {
+        "cold_provision_to_running_ms": 14322.542,
+        "resume_to_running_ms": 7743.432,
+        "suspend_to_suspended_ms": 2459.088
+      },
+      "disk_after_phase_one": {
+        "docker_data_root_bytes": 1494973863,
+        "root_free_bytes": 3923738624,
+        "root_total_bytes": 8283189248,
+        "root_used_bytes": 3913179136
+      },
+      "disk_after_phase_two": {
+        "docker_data_root_bytes": 1497695452,
+        "root_free_bytes": 3914702848,
+        "root_total_bytes": 8283189248,
+        "root_used_bytes": 3922214912
+      },
+      "metadata": {
+        "architecture": "aarch64",
+        "logical_cpus_visible": 4,
+        "memory_total_bytes": 8406073344,
+        "node_image": "public.ecr.aws/docker/library/node:24-bookworm",
+        "parallel_batches": 2,
+        "phase_one_completed_at_unix_ms": 1784422022386,
+        "phase_two_completed_at_unix_ms": 1784422135176,
+        "post_resume_storage_driver": "overlay2",
+        "source_module_count": 500,
+        "storage_driver": "overlay2",
+        "typescript_version": "6.0.3",
+        "warm_iterations": 5
+      },
+      "samples": {
+        "docker_changed_source_build_ms": [
+          2366.914, 2343.227, 2337.7, 2361.064, 2369.934
+        ],
+        "docker_cold_build_ms": [15285.349],
+        "docker_warm_exact_build_ms": [
+          331.479, 326.889, 268.512, 281.688, 279.328
+        ],
+        "npm_cold_install_ms": [1447.934],
+        "npm_warm_install_ms": [
+          1068.592, 1113.419, 1044.771, 1056.116, 1051.934
+        ],
+        "parallel_three_build_batch_ms": [3628.335, 3384.337],
+        "parallel_three_build_individual_ms": [
+          3563.376, 3625.04, 3560.37, 3383.715, 3328.696, 3330.773
+        ],
+        "post_resume_container_start_ms": [
+          569.802, 518.843, 560.814, 529.618, 499.5
+        ],
+        "post_resume_exact_build_ms": [
+          2869.552, 320.788, 338.769, 309.66, 270.034
+        ],
+        "typescript_cold_artifact_build_ms": [2249.435],
+        "typescript_incremental_artifact_build_ms": [
+          1222.691, 1251.285, 1298.722, 1239.663, 1259.621
+        ],
+        "warm_container_start_ms": [
+          524.699, 539.593, 610.272, 519.319, 519.898, 519.457, 540.289,
+          509.291, 569.943, 519.556
+        ]
+      },
+      "schema_version": 1,
+      "server_id": "server-02"
+    },
+    {
+      "control_plane": {
+        "cold_provision_to_running_ms": 13906.898,
+        "resume_to_running_ms": 4545.715,
+        "suspend_to_suspended_ms": 2057.005
+      },
+      "disk_after_phase_one": {
+        "docker_data_root_bytes": 1494975709,
+        "root_free_bytes": 3923824640,
+        "root_total_bytes": 8283189248,
+        "root_used_bytes": 3913093120
+      },
+      "disk_after_phase_two": {
+        "docker_data_root_bytes": 1497553136,
+        "root_free_bytes": 3914899456,
+        "root_total_bytes": 8283189248,
+        "root_used_bytes": 3922018304
+      },
+      "metadata": {
+        "architecture": "aarch64",
+        "logical_cpus_visible": 4,
+        "memory_total_bytes": 8406073344,
+        "node_image": "public.ecr.aws/docker/library/node:24-bookworm",
+        "parallel_batches": 2,
+        "phase_one_completed_at_unix_ms": 1784422021995,
+        "phase_two_completed_at_unix_ms": 1784422134619,
+        "post_resume_storage_driver": "overlay2",
+        "source_module_count": 500,
+        "storage_driver": "overlay2",
+        "typescript_version": "6.0.3",
+        "warm_iterations": 5
+      },
+      "samples": {
+        "docker_changed_source_build_ms": [
+          2254.497, 2295.362, 2305.073, 2387.147, 2362.756
+        ],
+        "docker_cold_build_ms": [15056.855],
+        "docker_warm_exact_build_ms": [
+          259.043, 316.293, 334.539, 260.516, 318.573
+        ],
+        "npm_cold_install_ms": [1531.111],
+        "npm_warm_install_ms": [
+          1006.162, 1022.063, 1004.965, 1056.905, 1021.922
+        ],
+        "parallel_three_build_batch_ms": [3895.853, 3399.291],
+        "parallel_three_build_individual_ms": [
+          3828.61, 3826.633, 3853.913, 3396.549, 3396.853, 3397.422
+        ],
+        "post_resume_container_start_ms": [
+          509.69, 468.917, 562.867, 541.079, 556.137
+        ],
+        "post_resume_exact_build_ms": [
+          2620.008, 270.486, 268.133, 257.045, 273.737
+        ],
+        "typescript_cold_artifact_build_ms": [2162.952],
+        "typescript_incremental_artifact_build_ms": [
+          1253.276, 1261.412, 1248.293, 1299.432, 1259.145
+        ],
+        "warm_container_start_ms": [
+          595.88, 540.819, 508.425, 509.885, 539.585, 539.743, 490.3, 489.49,
+          589.688, 539.891
+        ]
+      },
+      "schema_version": 1,
+      "server_id": "server-03"
+    },
+    {
+      "control_plane": {
+        "cold_provision_to_running_ms": 11308.822,
+        "resume_to_running_ms": 4547.077,
+        "suspend_to_suspended_ms": 2039.586
+      },
+      "disk_after_phase_one": {
+        "docker_data_root_bytes": 1495036474,
+        "root_free_bytes": 3923881984,
+        "root_total_bytes": 8283189248,
+        "root_used_bytes": 3913035776
+      },
+      "disk_after_phase_two": {
+        "docker_data_root_bytes": 1497613096,
+        "root_free_bytes": 3914850304,
+        "root_total_bytes": 8283189248,
+        "root_used_bytes": 3922067456
+      },
+      "metadata": {
+        "architecture": "aarch64",
+        "logical_cpus_visible": 4,
+        "memory_total_bytes": 8406073344,
+        "node_image": "public.ecr.aws/docker/library/node:24-bookworm",
+        "parallel_batches": 2,
+        "phase_one_completed_at_unix_ms": 1784422012469,
+        "phase_two_completed_at_unix_ms": 1784422133638,
+        "post_resume_storage_driver": "overlay2",
+        "source_module_count": 500,
+        "storage_driver": "overlay2",
+        "typescript_version": "6.0.3",
+        "warm_iterations": 5
+      },
+      "samples": {
+        "docker_changed_source_build_ms": [
+          1725.419, 1811.467, 1787.108, 1951.073, 1804.543
+        ],
+        "docker_cold_build_ms": [12939.028],
+        "docker_warm_exact_build_ms": [
+          305.848, 283.313, 300.048, 243.886, 292.529
+        ],
+        "npm_cold_install_ms": [1195.02],
+        "npm_warm_install_ms": [865.383, 805.389, 936.549, 843.942, 805.483],
+        "parallel_three_build_batch_ms": [2789.259, 3393.905],
+        "parallel_three_build_individual_ms": [
+          2754.979, 2734.717, 2756.312, 3393.411, 3354.342, 3352.559
+        ],
+        "post_resume_container_start_ms": [
+          494.318, 410.194, 454.037, 497.818, 483.757
+        ],
+        "post_resume_exact_build_ms": [
+          1965.278, 309.271, 306.36, 292.151, 234.999
+        ],
+        "typescript_cold_artifact_build_ms": [1649.446],
+        "typescript_incremental_artifact_build_ms": [
+          993.488, 991.153, 1008.536, 999.783, 1029.875
+        ],
+        "warm_container_start_ms": [
+          477.045, 459.408, 499.721, 491.256, 508.61, 419.775, 439.569, 460.056,
+          449.556, 519.941
+        ]
+      },
+      "schema_version": 1,
+      "server_id": "server-04"
+    },
+    {
+      "control_plane": {
+        "cold_provision_to_running_ms": 9885.25,
+        "resume_to_running_ms": 4551.584,
+        "suspend_to_suspended_ms": 2055.031
+      },
+      "disk_after_phase_one": {
+        "docker_data_root_bytes": 1494971365,
+        "root_free_bytes": 3923841024,
+        "root_total_bytes": 8283189248,
+        "root_used_bytes": 3913076736
+      },
+      "disk_after_phase_two": {
+        "docker_data_root_bytes": 1497696854,
+        "root_free_bytes": 3914698752,
+        "root_total_bytes": 8283189248,
+        "root_used_bytes": 3922219008
+      },
+      "metadata": {
+        "architecture": "aarch64",
+        "logical_cpus_visible": 4,
+        "memory_total_bytes": 8406073344,
+        "node_image": "public.ecr.aws/docker/library/node:24-bookworm",
+        "parallel_batches": 2,
+        "phase_one_completed_at_unix_ms": 1784422022795,
+        "phase_two_completed_at_unix_ms": 1784422134873,
+        "post_resume_storage_driver": "overlay2",
+        "source_module_count": 500,
+        "storage_driver": "overlay2",
+        "typescript_version": "6.0.3",
+        "warm_iterations": 5
+      },
+      "samples": {
+        "docker_changed_source_build_ms": [
+          2336.791, 2284.345, 2366.942, 2368.386, 2349.086
+        ],
+        "docker_cold_build_ms": [15641.238],
+        "docker_warm_exact_build_ms": [
+          322.529, 275.629, 289.717, 281.94, 265.184
+        ],
+        "npm_cold_install_ms": [1483.897],
+        "npm_warm_install_ms": [1065.63, 1004.335, 955.365, 1076.361, 1033.641],
+        "parallel_three_build_batch_ms": [3785.763, 3860.494],
+        "parallel_three_build_individual_ms": [
+          3783.7, 3769.238, 3770.377, 3821.995, 3858.601, 3820.102
+        ],
+        "post_resume_container_start_ms": [
+          655.673, 542.556, 582.236, 481.277, 555.135
+        ],
+        "post_resume_exact_build_ms": [
+          2583.772, 327.026, 277.304, 248.046, 284.743
+        ],
+        "typescript_cold_artifact_build_ms": [2241.978],
+        "typescript_incremental_artifact_build_ms": [
+          1232.797, 1260.575, 1237.53, 1260.374, 1209.289
+        ],
+        "warm_container_start_ms": [
+          545.41, 529.932, 514.442, 484.976, 529.508, 509.57, 469.946, 540.554,
+          548.984, 559.785
+        ]
+      },
+      "schema_version": 1,
+      "server_id": "server-05"
+    },
+    {
+      "control_plane": {
+        "cold_provision_to_running_ms": 8320.337,
+        "resume_to_running_ms": 4442.783,
+        "suspend_to_suspended_ms": 2054.756
+      },
+      "disk_after_phase_one": {
+        "docker_data_root_bytes": 1494966646,
+        "root_free_bytes": 3923832832,
+        "root_total_bytes": 8283189248,
+        "root_used_bytes": 3913084928
+      },
+      "disk_after_phase_two": {
+        "docker_data_root_bytes": 1497546779,
+        "root_free_bytes": 3914887168,
+        "root_total_bytes": 8283189248,
+        "root_used_bytes": 3922030592
+      },
+      "metadata": {
+        "architecture": "aarch64",
+        "logical_cpus_visible": 4,
+        "memory_total_bytes": 8406073344,
+        "node_image": "public.ecr.aws/docker/library/node:24-bookworm",
+        "parallel_batches": 2,
+        "phase_one_completed_at_unix_ms": 1784422011621,
+        "phase_two_completed_at_unix_ms": 1784422133687,
+        "post_resume_storage_driver": "overlay2",
+        "source_module_count": 500,
+        "storage_driver": "overlay2",
+        "typescript_version": "6.0.3",
+        "warm_iterations": 5
+      },
+      "samples": {
+        "docker_changed_source_build_ms": [
+          1774.594, 1714.447, 1637.889, 1778.347, 1692.536
+        ],
+        "docker_cold_build_ms": [12772.891],
+        "docker_warm_exact_build_ms": [
+          294.635, 302.082, 298.924, 263.226, 256.01
+        ],
+        "npm_cold_install_ms": [1234.408],
+        "npm_warm_install_ms": [871.626, 884.347, 817.802, 852.636, 835.724],
+        "parallel_three_build_batch_ms": [2760.07, 3033.833],
+        "parallel_three_build_individual_ms": [
+          2702.71, 2757.595, 2723.187, 3012.188, 2956.448, 3031.601
+        ],
+        "post_resume_container_start_ms": [
+          481.05, 476.269, 514.279, 472.657, 459.582
+        ],
+        "post_resume_exact_build_ms": [
+          1978.131, 253.272, 295.45, 268.082, 248.717
+        ],
+        "typescript_cold_artifact_build_ms": [1617.991],
+        "typescript_incremental_artifact_build_ms": [
+          1104.069, 960.67, 988.658, 949.548, 1059.629
+        ],
+        "warm_container_start_ms": [
+          457.53, 439.653, 469.89, 480.081, 480.839, 488.124, 500.273, 479.561,
+          469.679, 439.708
+        ]
+      },
+      "schema_version": 1,
+      "server_id": "server-06"
+    },
+    {
+      "control_plane": {
+        "cold_provision_to_running_ms": 6857.066,
+        "resume_to_running_ms": 5284.552,
+        "suspend_to_suspended_ms": 4143.635
+      },
+      "disk_after_phase_one": {
+        "docker_data_root_bytes": 1494699543,
+        "root_free_bytes": 3924074496,
+        "root_total_bytes": 8283189248,
+        "root_used_bytes": 3912843264
+      },
+      "disk_after_phase_two": {
+        "docker_data_root_bytes": 1497548901,
+        "root_free_bytes": 3914854400,
+        "root_total_bytes": 8283189248,
+        "root_used_bytes": 3922063360
+      },
+      "metadata": {
+        "architecture": "aarch64",
+        "logical_cpus_visible": 4,
+        "memory_total_bytes": 8406073344,
+        "node_image": "public.ecr.aws/docker/library/node:24-bookworm",
+        "parallel_batches": 2,
+        "phase_one_completed_at_unix_ms": 1784422011863,
+        "phase_two_completed_at_unix_ms": 1784422134274,
+        "post_resume_storage_driver": "overlay2",
+        "source_module_count": 500,
+        "storage_driver": "overlay2",
+        "typescript_version": "6.0.3",
+        "warm_iterations": 5
+      },
+      "samples": {
+        "docker_changed_source_build_ms": [
+          1759.488, 1712.932, 1675.129, 1691.42, 1777.905
+        ],
+        "docker_cold_build_ms": [13294.862],
+        "docker_warm_exact_build_ms": [
+          279.348, 303.115, 289.136, 248.655, 280.503
+        ],
+        "npm_cold_install_ms": [1264.695],
+        "npm_warm_install_ms": [858.104, 815.472, 805.288, 783.957, 876.722],
+        "parallel_three_build_batch_ms": [2783.461, 2922.276],
+        "parallel_three_build_individual_ms": [
+          2751.384, 2748.776, 2630.864, 2902.409, 2849.419, 2921.642
+        ],
+        "post_resume_container_start_ms": [
+          582.177, 503.279, 497.671, 526.12, 491.012
+        ],
+        "post_resume_exact_build_ms": [
+          2127.541, 256.035, 244.399, 241.35, 288.655
+        ],
+        "typescript_cold_artifact_build_ms": [1625.332],
+        "typescript_incremental_artifact_build_ms": [
+          973.74, 1001.348, 998.445, 989.676, 1019.298
+        ],
+        "warm_container_start_ms": [
+          487.674, 469.845, 460.664, 438.791, 519.771, 479.631, 489.682,
+          480.032, 499.677, 449.622
+        ]
+      },
+      "schema_version": 1,
+      "server_id": "server-07"
+    },
+    {
+      "control_plane": {
+        "cold_provision_to_running_ms": 5466.045,
+        "resume_to_running_ms": 4424.644,
+        "suspend_to_suspended_ms": 2082.785
+      },
+      "disk_after_phase_one": {
+        "docker_data_root_bytes": 1494582621,
+        "root_free_bytes": 3924254720,
+        "root_total_bytes": 8283189248,
+        "root_used_bytes": 3912663040
+      },
+      "disk_after_phase_two": {
+        "docker_data_root_bytes": 1497547017,
+        "root_free_bytes": 3914878976,
+        "root_total_bytes": 8283189248,
+        "root_used_bytes": 3922038784
+      },
+      "metadata": {
+        "architecture": "aarch64",
+        "logical_cpus_visible": 4,
+        "memory_total_bytes": 8406073344,
+        "node_image": "public.ecr.aws/docker/library/node:24-bookworm",
+        "parallel_batches": 2,
+        "phase_one_completed_at_unix_ms": 1784422011959,
+        "phase_two_completed_at_unix_ms": 1784422133843,
+        "post_resume_storage_driver": "overlay2",
+        "source_module_count": 500,
+        "storage_driver": "overlay2",
+        "typescript_version": "6.0.3",
+        "warm_iterations": 5
+      },
+      "samples": {
+        "docker_changed_source_build_ms": [
+          1762.58, 1732.674, 1699.003, 1725.345, 1747.196
+        ],
+        "docker_cold_build_ms": [12850.609],
+        "docker_warm_exact_build_ms": [
+          297.66, 304.688, 389.506, 299.283, 254.062
+        ],
+        "npm_cold_install_ms": [1259.029],
+        "npm_warm_install_ms": [840.551, 843.463, 898.82, 871.307, 816.434],
+        "parallel_three_build_batch_ms": [2993.177, 2896.111],
+        "parallel_three_build_individual_ms": [
+          2937.743, 2938.482, 2956.467, 2895.601, 2872.704, 2821.421
+        ],
+        "post_resume_container_start_ms": [
+          620.693, 473.165, 528.826, 436.258, 427.779
+        ],
+        "post_resume_exact_build_ms": [
+          1989.032, 256.435, 310.74, 283.206, 301.807
+        ],
+        "typescript_cold_artifact_build_ms": [1635.727],
+        "typescript_incremental_artifact_build_ms": [
+          1013.609, 1000.433, 1068.866, 1049.285, 939.692
+        ],
+        "warm_container_start_ms": [
+          457.59, 429.474, 479.864, 489.713, 519.966, 459.49, 450.142, 489.439,
+          540.055, 479.66
+        ]
+      },
+      "schema_version": 1,
+      "server_id": "server-08"
+    },
+    {
+      "control_plane": {
+        "cold_provision_to_running_ms": 8090.117,
+        "resume_to_running_ms": 4421.41,
+        "suspend_to_suspended_ms": 2069.633
+      },
+      "disk_after_phase_one": {
+        "docker_data_root_bytes": 1494978408,
+        "root_free_bytes": 3923771392,
+        "root_total_bytes": 8283189248,
+        "root_used_bytes": 3913146368
+      },
+      "disk_after_phase_two": {
+        "docker_data_root_bytes": 1498225187,
+        "root_free_bytes": 3914629120,
+        "root_total_bytes": 8283189248,
+        "root_used_bytes": 3922288640
+      },
+      "metadata": {
+        "architecture": "aarch64",
+        "logical_cpus_visible": 4,
+        "memory_total_bytes": 8406073344,
+        "node_image": "public.ecr.aws/docker/library/node:24-bookworm",
+        "parallel_batches": 2,
+        "phase_one_completed_at_unix_ms": 1784422021646,
+        "phase_two_completed_at_unix_ms": 1784422134876,
+        "post_resume_storage_driver": "overlay2",
+        "source_module_count": 500,
+        "storage_driver": "overlay2",
+        "typescript_version": "6.0.3",
+        "warm_iterations": 5
+      },
+      "samples": {
+        "docker_changed_source_build_ms": [
+          2300.056, 2343.436, 2315.739, 2394.602, 2372.123
+        ],
+        "docker_cold_build_ms": [14868.703],
+        "docker_warm_exact_build_ms": [
+          287.9, 332.662, 265.754, 330.322, 269.18
+        ],
+        "npm_cold_install_ms": [1402.337],
+        "npm_warm_install_ms": [1007.305, 985.892, 1003.894, 1016.949, 972.935],
+        "parallel_three_build_batch_ms": [3556.166, 3676.861],
+        "parallel_three_build_individual_ms": [
+          3528.116, 3525.864, 3553.876, 3676.199, 3627.094, 3626.202
+        ],
+        "post_resume_container_start_ms": [
+          610.379, 531.259, 563.854, 518.191, 471.518
+        ],
+        "post_resume_exact_build_ms": [
+          2639.074, 328.179, 285.673, 331.378, 307.985
+        ],
+        "typescript_cold_artifact_build_ms": [2239.318],
+        "typescript_incremental_artifact_build_ms": [
+          1212.745, 1250.7, 1218.758, 1289.271, 1259.929
+        ],
+        "warm_container_start_ms": [
+          545.054, 580.091, 539.109, 509.979, 520.009, 539.35, 549.703, 569.783,
+          540.123, 529.457
+        ]
+      },
+      "schema_version": 1,
+      "server_id": "server-09"
+    }
+  ]
+}

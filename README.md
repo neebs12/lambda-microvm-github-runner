@@ -189,6 +189,7 @@ Detailed guides:
 - [operations and quotas](docs/operations.md)
 - [testing and release gates](docs/testing.md)
 - [warm-cache implementation and testing plan](docs/warm-cache.md)
+- [warm build-server benchmark](benchmarks/warm-build-server/results/2026-07-19/REPORT.md)
 - [runner image](runner-image/README.md)
 
 ## Credits and inspirations
