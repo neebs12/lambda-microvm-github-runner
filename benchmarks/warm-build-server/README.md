@@ -1,9 +1,9 @@
 # Warm build-server benchmark
 
-The proposed [repeated suspend/resume methodology](METHODOLOGY.md) defines the
-next benchmark: every measured changed-image build happens immediately after a
-resume and before the following suspension, across multiple cycles on the same
-MicroVM. The current scripts and published run below use the earlier
+The proposed [fresh-versus-resumed exact-job methodology](METHODOLOGY.md)
+defines the next benchmark: run one fixed Docker, npm, and TypeScript job on a
+fresh MicroVM, then suspend, resume, and time that exact job repeatedly on the
+same MicroVM. The current scripts and published run below use the earlier
 single-resume methodology.
 
 This benchmark measures whether a suspended Lambda MicroVM preserves useful
