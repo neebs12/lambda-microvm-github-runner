@@ -17,6 +17,20 @@ done
 
 docker build --tag "${IMAGE}" "${REPOSITORY_ROOT}/runner-image"
 
+docker run --rm --entrypoint sh "${IMAGE}" -lc '
+  set -eu
+  for node_root in \
+    /opt/actions-runner/externals/node20 \
+    /opt/actions-runner/externals/node24; do
+    test "$("${node_root}/bin/node" \
+      "${node_root}/lib/node_modules/npm/bin/npm-cli.js" --version)" = \
+      "11.18.0"
+    test "$("${node_root}/bin/node" -p \
+      "require(\"${node_root}/lib/node_modules/npm/node_modules/tar/package.json\").version")" = \
+      "7.5.19"
+  done
+'
+
 container_id=""
 temporary_directory="$(mktemp -d)"
 cleanup() {

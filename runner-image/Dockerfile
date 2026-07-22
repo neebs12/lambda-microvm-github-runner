@@ -2,6 +2,8 @@ FROM public.ecr.aws/lambda/microvms:al2023-minimal@sha256:05cb9b38d841e7ff1b693d
 
 ARG RUNNER_VERSION=2.335.1
 ARG RUNNER_SHA256=6d1e85bfd1a506a8b17c1f1b9b57dba458ffed90898799aaa9f599520b0d9207
+ARG NPM_VERSION=11.18.0
+ARG NPM_SHA512=4faecce0be70366d1c67b1012c4adc1246354a6cc45bf589f92003073b05518d547403df1475c542d67a4845e22b4fafcd7cac0af02c7a96cc6814f09eb003fb
 ARG BUILDX_VERSION=0.35.0
 ARG BUILDX_SHA256=c4248d6cbc4a619a7e0b4609c11e509ad4ac0b475e1c64817c0ac20c5d90c766
 ARG COMPOSE_VERSION=5.3.0
@@ -59,6 +61,28 @@ RUN set -eux; \
     mkdir -p /opt/actions-runner; \
     tar --extract --gzip --file "${runner_archive}" --directory /opt/actions-runner; \
     rm -f "${runner_archive}"
+
+RUN set -eux; \
+    npm_archive="/tmp/npm.tgz"; \
+    curl --fail --location --silent --show-error \
+      "https://registry.npmjs.org/npm/-/npm-${NPM_VERSION}.tgz" \
+      --output "${npm_archive}"; \
+    echo "${NPM_SHA512}  ${npm_archive}" | sha512sum --check --strict; \
+    for node_root in \
+      /opt/actions-runner/externals/node20 \
+      /opt/actions-runner/externals/node24; do \
+      npm_root="${node_root}/lib/node_modules/npm"; \
+      rm -rf "${npm_root}"; \
+      mkdir -p "${npm_root}"; \
+      tar --extract --gzip --file "${npm_archive}" \
+        --directory "${npm_root}" --strip-components=1; \
+      test "$("${node_root}/bin/node" \
+        "${npm_root}/bin/npm-cli.js" --version)" = "${NPM_VERSION}"; \
+      test "$("${node_root}/bin/node" -p \
+        "require('${npm_root}/node_modules/tar/package.json').version")" = \
+        "7.5.19"; \
+    done; \
+    rm -f "${npm_archive}"
 
 RUN set -eux; \
     plugin_dir="/usr/local/lib/docker/cli-plugins"; \
