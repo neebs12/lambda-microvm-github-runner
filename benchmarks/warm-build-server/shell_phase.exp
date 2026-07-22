@@ -11,6 +11,7 @@ set server_id $env(BENCHMARK_SERVER_ID)
 set payload $env(BENCHMARK_GUEST_SCRIPT_B64)
 set job_kind $env(BENCHMARK_JOB_KIND)
 set cycle $env(BENCHMARK_CYCLE)
+set result_s3_uri $env(BENCHMARK_RESULT_S3_URI)
 
 set header_argument "--header=X-aws-proxy-auth: $token"
 spawn websocat --binary $header_argument "wss://$endpoint"
@@ -45,7 +46,7 @@ proc upload_guest {payload} {
 set prefix "/tmp/lmvm-exact-job-$cycle"
 if {$operation eq "job-start"} {
     upload_guest $payload
-    send -- "if test -f $prefix.status || (test -f $prefix.pid && kill -0 \"\$(cat $prefix.pid)\" 2>/dev/null); then true; else rm -f $prefix.status; nohup sh -c 'python3 /tmp/lmvm-exact-job-benchmark.py job --server-id \"$server_id\" --kind \"$job_kind\" --cycle \"$cycle\" > $prefix.log 2>&1; echo \$? > $prefix.status' </dev/null >$prefix.launcher.log 2>&1 & echo \$! > $prefix.pid; fi\r"
+    send -- "if test -f $prefix.status || (test -f $prefix.pid && kill -0 \"\$(cat $prefix.pid)\" 2>/dev/null); then true; else rm -f $prefix.status; nohup sh -c 'python3 /tmp/lmvm-exact-job-benchmark.py job --server-id \"$server_id\" --kind \"$job_kind\" --cycle \"$cycle\" --result-s3-uri \"$result_s3_uri\" > $prefix.log 2>&1; echo \$? > $prefix.status' </dev/null >$prefix.launcher.log 2>&1 & echo \$! > $prefix.pid; fi\r"
     expect -re {λ \$ $}
     send -- "exit\r"
     expect eof
@@ -69,7 +70,7 @@ if {$operation eq "job-start"} {
     expect eof
 } elseif {$operation eq "result"} {
     upload_guest $payload
-    send -- "if python3 /tmp/lmvm-exact-job-benchmark.py diagnostic; then echo BENCHMARK_DIAGNOSTIC_OK; else echo BENCHMARK_DIAGNOSTIC_FAILED; fi\r"
+    send -- "if python3 /tmp/lmvm-exact-job-benchmark.py diagnostic --result-s3-uri \"$result_s3_uri\"; then echo BENCHMARK_DIAGNOSTIC_OK; else echo BENCHMARK_DIAGNOSTIC_FAILED; fi\r"
     expect {
         -re {BENCHMARK_DIAGNOSTIC_OK} {}
         -re {BENCHMARK_DIAGNOSTIC_FAILED} { exit 15 }
@@ -77,16 +78,9 @@ if {$operation eq "job-start"} {
         eof { exit 16 }
     }
     expect -re {λ \$ $}
-    send -- "echo BENCHMARK_RESULT_B64=\$(base64 -w0 /tmp/lmvm-exact-job-benchmark/result.json):RESULT_END\r"
-    expect {
-        -re {BENCHMARK_RESULT_B64=([A-Za-z0-9+/=]+):RESULT_END} {
-            puts $expect_out(1,string)
-        }
-        timeout { exit 17 }
-        eof { exit 18 }
-    }
     send -- "exit\r"
     expect eof
+    puts "complete"
 } else {
     exit 21
 }

@@ -9,6 +9,7 @@ import concurrent.futures
 import gzip
 import json
 import os
+import re
 import subprocess
 import threading
 import time
@@ -197,6 +198,7 @@ def run_shell_operation(
     *,
     kind: str,
     cycle: int,
+    result_s3_uri: str,
 ) -> str:
     result: subprocess.CompletedProcess[str] | None = None
     last_error = ""
@@ -213,6 +215,7 @@ def run_shell_operation(
                     "BENCHMARK_GUEST_SCRIPT_B64": guest_script_b64,
                     "BENCHMARK_JOB_KIND": kind,
                     "BENCHMARK_CYCLE": str(cycle),
+                    "BENCHMARK_RESULT_S3_URI": result_s3_uri,
                 }
             )
             result = subprocess.run(
@@ -255,6 +258,8 @@ def run_jobs(
     kind: str,
     cycle: int,
     workers: int,
+    result_bucket: str,
+    result_prefix: str,
 ) -> None:
     guest_script_b64 = base64.b64encode(GUEST_SCRIPT.read_bytes()).decode(
         "ascii"
@@ -268,6 +273,9 @@ def run_jobs(
             guest_script_b64,
             kind=kind,
             cycle=cycle,
+            result_s3_uri=(
+                f"s3://{result_bucket}/{result_prefix}/{server.server_id}.json"
+            ),
         )
 
     with concurrent.futures.ThreadPoolExecutor(
@@ -384,22 +392,53 @@ def resume_servers(
 
 
 def fetch_guest_results(
-    aws: Aws, servers: list[Server], workers: int
+    aws: Aws,
+    servers: list[Server],
+    workers: int,
+    result_bucket: str,
+    result_prefix: str,
 ) -> dict[str, dict[str, Any]]:
     guest_script_b64 = base64.b64encode(GUEST_SCRIPT.read_bytes()).decode(
         "ascii"
     )
 
     def fetch(server: Server) -> tuple[str, dict[str, Any]]:
-        encoded = run_shell_operation(
+        result_s3_uri = (
+            f"s3://{result_bucket}/{result_prefix}/{server.server_id}.json"
+        )
+        run_shell_operation(
             aws,
             server,
             "result",
             guest_script_b64,
             kind="result",
             cycle=99,
+            result_s3_uri=result_s3_uri,
         )
-        value = json.loads(base64.b64decode(encoded).decode("utf-8"))
+        downloaded = subprocess.run(
+            [
+                "aws",
+                "s3",
+                "cp",
+                "--only-show-errors",
+                result_s3_uri,
+                "-",
+                "--profile",
+                aws.profile,
+                "--region",
+                aws.region,
+            ],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        if downloaded.returncode != 0:
+            raise RuntimeError(
+                f"failed to download {server.server_id} result: "
+                f"{downloaded.stderr.strip()}"
+            )
+        value = json.loads(downloaded.stdout)
         return server.server_id, value
 
     with concurrent.futures.ThreadPoolExecutor(
@@ -450,6 +489,10 @@ def main() -> None:
     parser.add_argument("--image-version", required=True)
     parser.add_argument("--execution-role-arn", required=True)
     parser.add_argument("--log-group", required=True)
+    parser.add_argument("--result-bucket", required=True)
+    parser.add_argument(
+        "--result-prefix", default="benchmarks/exact-job"
+    )
     parser.add_argument("--profile", default="HomesCollectorAdmin")
     parser.add_argument("--region", default="us-east-1")
     parser.add_argument("--server-count", type=int, default=10)
@@ -469,9 +512,18 @@ def main() -> None:
         parser.error("minimum server count cannot exceed server count")
     if args.cycles < 1:
         parser.error("cycles must be positive")
+    if not re.fullmatch(
+        r"[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]", args.result_bucket
+    ):
+        parser.error("result bucket must be a valid S3 bucket name")
+    if not args.result_prefix.strip("/") or not re.fullmatch(
+        r"[A-Za-z0-9!_.*'()/=-]+", args.result_prefix
+    ):
+        parser.error("result prefix contains unsupported characters")
 
     aws = Aws(args.profile, args.region)
     run_id = uuid.uuid4().hex[:12]
+    result_prefix = f"{args.result_prefix.strip('/')}/{run_id}"
     servers: list[Server] = []
     guest_results: dict[str, dict[str, Any]] = {}
     try:
@@ -490,6 +542,8 @@ def main() -> None:
             kind="fresh",
             cycle=0,
             workers=args.shell_workers,
+            result_bucket=args.result_bucket,
+            result_prefix=result_prefix,
         )
         suspend_servers(aws, servers, after_cycle=0, workers=5)
         print("fresh jobs complete; all servers suspended", flush=True)
@@ -503,10 +557,16 @@ def main() -> None:
                 kind="resumed",
                 cycle=cycle,
                 workers=args.shell_workers,
+                result_bucket=args.result_bucket,
+                result_prefix=result_prefix,
             )
             if cycle == args.cycles:
                 guest_results = fetch_guest_results(
-                    aws, servers, args.shell_workers
+                    aws,
+                    servers,
+                    args.shell_workers,
+                    args.result_bucket,
+                    result_prefix,
                 )
             suspend_servers(
                 aws, servers, after_cycle=cycle, workers=5

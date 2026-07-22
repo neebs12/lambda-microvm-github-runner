@@ -143,17 +143,22 @@ For each server:
 3. Confirm that benchmark cache and artifact paths do not exist.
 4. Record the fixed input-tree hash.
 5. Run and time the exact job. This is the fresh sample.
-6. Record provision-to-job-complete duration.
-7. Suspend and wait for `SUSPENDED`.
-8. For resumed cycles one through five:
+6. After the workload timer stops, atomically overwrite that lane's private S3
+   result object with the completed sample.
+7. Record provision-to-job-complete duration.
+8. Suspend and wait for `SUSPENDED`.
+9. For resumed cycles one through five:
    1. Start a timer immediately before resume.
    2. Resume the same MicroVM ID and wait for `RUNNING`.
    3. Establish shell readiness through the normal production path.
    4. Confirm the input-tree hash has not changed.
    5. Run and time the exact same job.
-   6. Record resume-to-job-complete duration.
-   7. Suspend and wait for `SUSPENDED`.
-9. Terminate the MicroVM after the fifth resumed job.
+   6. After the workload timer stops, atomically overwrite the same
+      lane-specific S3 object with the complete result-so-far.
+   7. Record resume-to-job-complete duration.
+   8. Suspend and wait for `SUSPENDED`.
+10. Download the ten final result objects, validate them, and terminate every
+    MicroVM after the fifth resumed job.
 
 No cache or artifact directory is manually deleted between the TypeScript build
 and suspension. Only `node_modules` is removed as part of the defined npm
@@ -176,8 +181,10 @@ Record for every fresh and resumed job:
 - root free space; and
 - observed CPU, memory, Docker driver, and runner-image identity.
 
-Use monotonic clocks. Store unrounded milliseconds in raw output and round only
-when presenting results.
+Use monotonic clocks. Store milliseconds to microsecond precision in raw output.
+S3 result uploads start only after the exact-job timer stops, so result
+transport is never included in Docker, npm, TypeScript, or total-job
+measurements.
 
 ## Reporting
 
@@ -210,6 +217,10 @@ ratios directly.
 - Actual guest resources are recorded instead of claiming the requested memory
   minimum was the observed allocation.
 - Failed samples and retries remain in the raw results.
+- Every completed sample is checkpointed to a run-scoped, lane-specific private
+  S3 key; one lane cannot overwrite another lane's result.
+- Result uploads occur after workload timing and upload failures fail the
+  sample.
 - Results from different Docker storage drivers are never pooled.
 - The old single-resume benchmark is not mixed into the new statistics.
 
@@ -229,6 +240,10 @@ Keep these as separate follow-up experiments:
 
 Publish the frozen methodology, implementation commit, raw JSON, generated
 summary, human report, pinned input hashes, and sanitized logs.
+
+The runtime role may only write beneath the benchmark's private S3 result
+prefix. The host downloads those objects after final diagnostics; shell output
+does not transport benchmark JSON.
 
 The orchestrator terminates every server in a `finally` path. After an
 interruption, it enumerates the run's MicroVMs and terminates every non-terminal

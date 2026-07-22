@@ -352,7 +352,25 @@ def load_result() -> dict[str, Any]:
     return json.loads(RESULT.read_text(encoding="utf-8"))
 
 
-def execute_job(server_id: str, kind: str, cycle: int) -> None:
+def upload_result(result_s3_uri: str) -> None:
+    if not result_s3_uri.startswith("s3://"):
+        raise RuntimeError("benchmark result URI must use s3://")
+    run(
+        [
+            "aws",
+            "s3",
+            "cp",
+            "--only-show-errors",
+            str(RESULT),
+            result_s3_uri,
+        ],
+        log_name="result-upload",
+    )
+
+
+def execute_job(
+    server_id: str, kind: str, cycle: int, result_s3_uri: str
+) -> None:
     if kind == "fresh":
         if cycle != 0:
             raise RuntimeError("fresh job must use cycle zero")
@@ -421,10 +439,11 @@ def execute_job(server_id: str, kind: str, cycle: int) -> None:
         }
     )
     write_json(RESULT, result)
+    upload_result(result_s3_uri)
     print(f"BENCHMARK_JOB_COMPLETE kind={kind} cycle={cycle}", flush=True)
 
 
-def diagnostic() -> None:
+def diagnostic(result_s3_uri: str) -> None:
     result = load_result()
     docker_driver, _ = run(
         ["docker", "info", "--format", "{{.Driver}}"],
@@ -453,6 +472,7 @@ def diagnostic() -> None:
         "completed_at_unix_ms": time.time_ns() // 1_000_000,
     }
     write_json(RESULT, result)
+    upload_result(result_s3_uri)
 
 
 def main() -> None:
@@ -462,12 +482,16 @@ def main() -> None:
     job.add_argument("--server-id", required=True)
     job.add_argument("--kind", choices=("fresh", "resumed"), required=True)
     job.add_argument("--cycle", type=int, required=True)
-    subparsers.add_parser("diagnostic")
+    job.add_argument("--result-s3-uri", required=True)
+    diagnostic_parser = subparsers.add_parser("diagnostic")
+    diagnostic_parser.add_argument("--result-s3-uri", required=True)
     args = parser.parse_args()
     if args.command == "job":
-        execute_job(args.server_id, args.kind, args.cycle)
+        execute_job(
+            args.server_id, args.kind, args.cycle, args.result_s3_uri
+        )
     else:
-        diagnostic()
+        diagnostic(args.result_s3_uri)
 
 
 if __name__ == "__main__":
