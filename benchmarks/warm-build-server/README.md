@@ -67,7 +67,16 @@ failed verification. Percentiles use the nearest-rank method. Because cycles on
 one server are repeated observations, the output includes per-server and
 per-cycle results rather than presenting all 50 samples as independent servers.
 
-## Earlier published run
+## Published runs
+
+The current
+[2026-07-22 exact-job report](results/2026-07-22-exact-job/REPORT.md) contains
+10 fresh and 50 resumed samples. Its
+[raw data](results/2026-07-22-exact-job/raw.json) and
+[generated summary](results/2026-07-22-exact-job/summary.json) are published for
+independent inspection.
+
+### Earlier methodology
 
 The [2026-07-19 report](results/2026-07-19/REPORT.md),
 [raw samples](results/2026-07-19/raw.json), and

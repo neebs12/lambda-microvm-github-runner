@@ -1,0 +1,3069 @@
+{
+  "configuration": {
+    "actual_server_count": 10,
+    "fresh_sample_count": 10,
+    "image_artifact_sha256": "36aebc7fe387f6effcbc2dcd65ff6fcb69522f5fcd6eea2b877ef255cc0c0656",
+    "image_name": "lmvm-exact-job-benchmark-20260722",
+    "image_version": "2.0",
+    "region": "us-east-1",
+    "requested_minimum_memory_mib": 2048,
+    "requested_server_count": 10,
+    "resumed_cycles_per_server": 5,
+    "resumed_sample_count": 50
+  },
+  "created_at_unix_ms": 1784717950986,
+  "run_id": "08864344e933",
+  "schema_version": 2,
+  "servers": [
+    {
+      "control_plane": {
+        "fresh": {
+          "provision_to_job_complete_ms": 185262.714,
+          "provision_to_running_ms": 10861.324,
+          "suspend_to_suspended_ms": 2940.575
+        },
+        "resumed_cycles": [
+          {
+            "cycle": 1,
+            "resume_to_job_complete_ms": 155145.789,
+            "resume_to_running_ms": 4927.507,
+            "suspend_to_suspended_ms": 2871.102,
+            "suspended_dwell_ms": 3396.789
+          },
+          {
+            "cycle": 2,
+            "resume_to_job_complete_ms": 157953.944,
+            "resume_to_running_ms": 5275.059,
+            "suspend_to_suspended_ms": 3878.988,
+            "suspended_dwell_ms": 2601.37
+          },
+          {
+            "cycle": 3,
+            "resume_to_job_complete_ms": 155719.243,
+            "resume_to_running_ms": 7143.909,
+            "suspend_to_suspended_ms": 2920.487,
+            "suspended_dwell_ms": 2343.057
+          },
+          {
+            "cycle": 4,
+            "resume_to_job_complete_ms": 159681.053,
+            "resume_to_running_ms": 4680.161,
+            "suspend_to_suspended_ms": 2856.74,
+            "suspended_dwell_ms": 2523.273
+          },
+          {
+            "cycle": 5,
+            "resume_to_job_complete_ms": 159460.139,
+            "resume_to_running_ms": 7001.881,
+            "suspend_to_suspended_ms": 2634.823,
+            "suspended_dwell_ms": 2558.322
+          }
+        ]
+      },
+      "expected_output": "124750",
+      "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+      "jobs": [
+        {
+          "completed_at_unix_ms": 1784716938090,
+          "cycle": 0,
+          "docker": {
+            "build_ms": 14341.373,
+            "buildkit_cached_steps": 0,
+            "image_id": "sha256:63793132fd341147367227ad72df9d9adf9c16388d46d016747a6526e8db8237",
+            "output": "124750",
+            "verification_ms": 504.68
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "fresh",
+          "npm": {
+            "install_ms": 1673.285,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4056342528,
+            "total_bytes": 8283189248,
+            "used_bytes": 3780575232
+          },
+          "started_at_unix_ms": 1784716919257,
+          "timings": {
+            "docker_build_ms": 14341.373,
+            "docker_verification_ms": 504.68,
+            "job_total_ms": 18813.889,
+            "npm_install_ms": 1673.285,
+            "typescript_build_ms": 2293.034
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 2293.034,
+            "output": "124750"
+          },
+          "verified": true
+        },
+        {
+          "completed_at_unix_ms": 1784717079679,
+          "cycle": 1,
+          "docker": {
+            "build_ms": 274.907,
+            "buildkit_cached_steps": 10,
+            "image_id": "sha256:63793132fd341147367227ad72df9d9adf9c16388d46d016747a6526e8db8237",
+            "output": "124750",
+            "verification_ms": 657.299
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "resumed",
+          "npm": {
+            "install_ms": 1546.122,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4055973888,
+            "total_bytes": 8283189248,
+            "used_bytes": 3780943872
+          },
+          "started_at_unix_ms": 1784717075830,
+          "timings": {
+            "docker_build_ms": 274.907,
+            "docker_verification_ms": 657.299,
+            "job_total_ms": 3830.121,
+            "npm_install_ms": 1546.122,
+            "typescript_build_ms": 1347.73
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1347.73,
+            "output": "124750"
+          },
+          "verified": true
+        },
+        {
+          "completed_at_unix_ms": 1784717243399,
+          "cycle": 2,
+          "docker": {
+            "build_ms": 227.512,
+            "buildkit_cached_steps": 10,
+            "image_id": "sha256:63793132fd341147367227ad72df9d9adf9c16388d46d016747a6526e8db8237",
+            "output": "124750",
+            "verification_ms": 564.387
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "resumed",
+          "npm": {
+            "install_ms": 1445.101,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4055629824,
+            "total_bytes": 8283189248,
+            "used_bytes": 3781287936
+          },
+          "started_at_unix_ms": 1784717239811,
+          "timings": {
+            "docker_build_ms": 227.512,
+            "docker_verification_ms": 564.387,
+            "job_total_ms": 3569.481,
+            "npm_install_ms": 1445.101,
+            "typescript_build_ms": 1328.988
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1328.988,
+            "output": "124750"
+          },
+          "verified": true
+        },
+        {
+          "completed_at_unix_ms": 1784717406839,
+          "cycle": 3,
+          "docker": {
+            "build_ms": 231.847,
+            "buildkit_cached_steps": 10,
+            "image_id": "sha256:63793132fd341147367227ad72df9d9adf9c16388d46d016747a6526e8db8237",
+            "output": "124750",
+            "verification_ms": 744.698
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "resumed",
+          "npm": {
+            "install_ms": 1455.895,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4055314432,
+            "total_bytes": 8283189248,
+            "used_bytes": 3781603328
+          },
+          "started_at_unix_ms": 1784717403086,
+          "timings": {
+            "docker_build_ms": 231.847,
+            "docker_verification_ms": 744.698,
+            "job_total_ms": 3733.947,
+            "npm_install_ms": 1455.895,
+            "typescript_build_ms": 1297.676
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1297.676,
+            "output": "124750"
+          },
+          "verified": true
+        },
+        {
+          "completed_at_unix_ms": 1784717569859,
+          "cycle": 4,
+          "docker": {
+            "build_ms": 254.744,
+            "buildkit_cached_steps": 10,
+            "image_id": "sha256:63793132fd341147367227ad72df9d9adf9c16388d46d016747a6526e8db8237",
+            "output": "124750",
+            "verification_ms": 536.488
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "resumed",
+          "npm": {
+            "install_ms": 1323.881,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4055044096,
+            "total_bytes": 8283189248,
+            "used_bytes": 3781873664
+          },
+          "started_at_unix_ms": 1784717566392,
+          "timings": {
+            "docker_build_ms": 254.744,
+            "docker_verification_ms": 536.488,
+            "job_total_ms": 3448.767,
+            "npm_install_ms": 1323.881,
+            "typescript_build_ms": 1330.21
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1330.21,
+            "output": "124750"
+          },
+          "verified": true
+        },
+        {
+          "completed_at_unix_ms": 1784717735420,
+          "cycle": 5,
+          "docker": {
+            "build_ms": 286.96,
+            "buildkit_cached_steps": 10,
+            "image_id": "sha256:63793132fd341147367227ad72df9d9adf9c16388d46d016747a6526e8db8237",
+            "output": "124750",
+            "verification_ms": 632.795
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "resumed",
+          "npm": {
+            "install_ms": 1460.597,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4054777856,
+            "total_bytes": 8283189248,
+            "used_bytes": 3782139904
+          },
+          "started_at_unix_ms": 1784717731663,
+          "timings": {
+            "docker_build_ms": 286.96,
+            "docker_verification_ms": 632.795,
+            "job_total_ms": 3738.199,
+            "npm_install_ms": 1460.597,
+            "typescript_build_ms": 1354.102
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1354.102,
+            "output": "124750"
+          },
+          "verified": true
+        }
+      ],
+      "metadata": {
+        "disk_before_fresh_job": {
+          "free_bytes": 5615587328,
+          "total_bytes": 8283189248,
+          "used_bytes": 2221330432
+        },
+        "final_diagnostic": {
+          "completed_at_unix_ms": 1784717880430,
+          "docker_data_root_bytes": 1529004032,
+          "docker_storage_driver": "overlay2",
+          "root_filesystem": {
+            "free_bytes": 4054761472,
+            "total_bytes": 8283189248,
+            "used_bytes": 3782156288
+          }
+        },
+        "node_image": "public.ecr.aws/docker/library/node:24-bookworm@sha256:5711a0d445a1af54af9589066c646df387d1831a608226f4cd694fc59e745059",
+        "node_slim_image": "public.ecr.aws/docker/library/node:24-bookworm-slim@sha256:6f7b03f7c2c8e2e784dcf9295400527b9b1270fd37b7e9a7285cf83b6951452d",
+        "resources": {
+          "architecture": "aarch64",
+          "logical_cpus": 4,
+          "memory_total_bytes": 8406073344,
+          "root_filesystem": {
+            "free_bytes": 5615587328,
+            "total_bytes": 8283189248,
+            "used_bytes": 2221330432
+          }
+        },
+        "source_module_count": 500,
+        "typescript_version": "6.0.3"
+      },
+      "schema_version": 2,
+      "server_id": "server-01"
+    },
+    {
+      "control_plane": {
+        "fresh": {
+          "provision_to_job_complete_ms": 185291.604,
+          "provision_to_running_ms": 8696.227,
+          "suspend_to_suspended_ms": 2921.371
+        },
+        "resumed_cycles": [
+          {
+            "cycle": 1,
+            "resume_to_job_complete_ms": 155501.558,
+            "resume_to_running_ms": 4921.681,
+            "suspend_to_suspended_ms": 2866.812,
+            "suspended_dwell_ms": 3415.133
+          },
+          {
+            "cycle": 2,
+            "resume_to_job_complete_ms": 156705.938,
+            "resume_to_running_ms": 5281.521,
+            "suspend_to_suspended_ms": 2862.056,
+            "suspended_dwell_ms": 2604.93
+          },
+          {
+            "cycle": 3,
+            "resume_to_job_complete_ms": 155858.866,
+            "resume_to_running_ms": 4945.957,
+            "suspend_to_suspended_ms": 2913.909,
+            "suspended_dwell_ms": 3357.155
+          },
+          {
+            "cycle": 4,
+            "resume_to_job_complete_ms": 159303.071,
+            "resume_to_running_ms": 6900.142,
+            "suspend_to_suspended_ms": 2858.997,
+            "suspended_dwell_ms": 2529.734
+          },
+          {
+            "cycle": 5,
+            "resume_to_job_complete_ms": 159460.196,
+            "resume_to_running_ms": 4834.775,
+            "suspend_to_suspended_ms": 2631.012,
+            "suspended_dwell_ms": 2552.774
+          }
+        ]
+      },
+      "expected_output": "124750",
+      "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+      "jobs": [
+        {
+          "completed_at_unix_ms": 1784716939271,
+          "cycle": 0,
+          "docker": {
+            "build_ms": 15697.604,
+            "buildkit_cached_steps": 0,
+            "image_id": "sha256:3ca5b8d29bbd8a4a26b654dc2816994524a3945c14f9fab4e26508f5523f003e",
+            "output": "124750",
+            "verification_ms": 602.25
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "fresh",
+          "npm": {
+            "install_ms": 1635.012,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4056342528,
+            "total_bytes": 8283189248,
+            "used_bytes": 3780575232
+          },
+          "started_at_unix_ms": 1784716919050,
+          "timings": {
+            "docker_build_ms": 15697.604,
+            "docker_verification_ms": 602.25,
+            "job_total_ms": 20202.48,
+            "npm_install_ms": 1635.012,
+            "typescript_build_ms": 2266.093
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 2266.093,
+            "output": "124750"
+          },
+          "verified": true
+        },
+        {
+          "completed_at_unix_ms": 1784717079675,
+          "cycle": 1,
+          "docker": {
+            "build_ms": 256.202,
+            "buildkit_cached_steps": 10,
+            "image_id": "sha256:3ca5b8d29bbd8a4a26b654dc2816994524a3945c14f9fab4e26508f5523f003e",
+            "output": "124750",
+            "verification_ms": 559.185
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "resumed",
+          "npm": {
+            "install_ms": 1591.186,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4055969792,
+            "total_bytes": 8283189248,
+            "used_bytes": 3780947968
+          },
+          "started_at_unix_ms": 1784717075923,
+          "timings": {
+            "docker_build_ms": 256.202,
+            "docker_verification_ms": 559.185,
+            "job_total_ms": 3732.181,
+            "npm_install_ms": 1591.186,
+            "typescript_build_ms": 1321.982
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1321.982,
+            "output": "124750"
+          },
+          "verified": true
+        },
+        {
+          "completed_at_unix_ms": 1784717243245,
+          "cycle": 2,
+          "docker": {
+            "build_ms": 257.349,
+            "buildkit_cached_steps": 10,
+            "image_id": "sha256:3ca5b8d29bbd8a4a26b654dc2816994524a3945c14f9fab4e26508f5523f003e",
+            "output": "124750",
+            "verification_ms": 564.363
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "resumed",
+          "npm": {
+            "install_ms": 1329.153,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4055625728,
+            "total_bytes": 8283189248,
+            "used_bytes": 3781292032
+          },
+          "started_at_unix_ms": 1784717239677,
+          "timings": {
+            "docker_build_ms": 257.349,
+            "docker_verification_ms": 564.363,
+            "job_total_ms": 3548.383,
+            "npm_install_ms": 1329.153,
+            "typescript_build_ms": 1394.15
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1394.15,
+            "output": "124750"
+          },
+          "verified": true
+        },
+        {
+          "completed_at_unix_ms": 1784717406534,
+          "cycle": 3,
+          "docker": {
+            "build_ms": 269.705,
+            "buildkit_cached_steps": 10,
+            "image_id": "sha256:3ca5b8d29bbd8a4a26b654dc2816994524a3945c14f9fab4e26508f5523f003e",
+            "output": "124750",
+            "verification_ms": 602.467
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "resumed",
+          "npm": {
+            "install_ms": 1308.706,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4055306240,
+            "total_bytes": 8283189248,
+            "used_bytes": 3781611520
+          },
+          "started_at_unix_ms": 1784717403036,
+          "timings": {
+            "docker_build_ms": 269.705,
+            "docker_verification_ms": 602.467,
+            "job_total_ms": 3478.974,
+            "npm_install_ms": 1308.706,
+            "typescript_build_ms": 1294.553
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1294.553,
+            "output": "124750"
+          },
+          "verified": true
+        },
+        {
+          "completed_at_unix_ms": 1784717571165,
+          "cycle": 4,
+          "docker": {
+            "build_ms": 338.648,
+            "buildkit_cached_steps": 10,
+            "image_id": "sha256:3ca5b8d29bbd8a4a26b654dc2816994524a3945c14f9fab4e26508f5523f003e",
+            "output": "124750",
+            "verification_ms": 834.566
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "resumed",
+          "npm": {
+            "install_ms": 1877.328,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4055040000,
+            "total_bytes": 8283189248,
+            "used_bytes": 3781877760
+          },
+          "started_at_unix_ms": 1784717566686,
+          "timings": {
+            "docker_build_ms": 338.648,
+            "docker_verification_ms": 834.566,
+            "job_total_ms": 4460.919,
+            "npm_install_ms": 1877.328,
+            "typescript_build_ms": 1406.885
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1406.885,
+            "output": "124750"
+          },
+          "verified": true
+        },
+        {
+          "completed_at_unix_ms": 1784717735265,
+          "cycle": 5,
+          "docker": {
+            "build_ms": 266.706,
+            "buildkit_cached_steps": 10,
+            "image_id": "sha256:3ca5b8d29bbd8a4a26b654dc2816994524a3945c14f9fab4e26508f5523f003e",
+            "output": "124750",
+            "verification_ms": 601.915
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "resumed",
+          "npm": {
+            "install_ms": 1316.913,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4054773760,
+            "total_bytes": 8283189248,
+            "used_bytes": 3782144000
+          },
+          "started_at_unix_ms": 1784717731700,
+          "timings": {
+            "docker_build_ms": 266.706,
+            "docker_verification_ms": 601.915,
+            "job_total_ms": 3545.467,
+            "npm_install_ms": 1316.913,
+            "typescript_build_ms": 1356.442
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1356.442,
+            "output": "124750"
+          },
+          "verified": true
+        }
+      ],
+      "metadata": {
+        "disk_before_fresh_job": {
+          "free_bytes": 5615587328,
+          "total_bytes": 8283189248,
+          "used_bytes": 2221330432
+        },
+        "final_diagnostic": {
+          "completed_at_unix_ms": 1784717883295,
+          "docker_data_root_bytes": 1529004032,
+          "docker_storage_driver": "overlay2",
+          "root_filesystem": {
+            "free_bytes": 4054757376,
+            "total_bytes": 8283189248,
+            "used_bytes": 3782160384
+          }
+        },
+        "node_image": "public.ecr.aws/docker/library/node:24-bookworm@sha256:5711a0d445a1af54af9589066c646df387d1831a608226f4cd694fc59e745059",
+        "node_slim_image": "public.ecr.aws/docker/library/node:24-bookworm-slim@sha256:6f7b03f7c2c8e2e784dcf9295400527b9b1270fd37b7e9a7285cf83b6951452d",
+        "resources": {
+          "architecture": "aarch64",
+          "logical_cpus": 4,
+          "memory_total_bytes": 8406073344,
+          "root_filesystem": {
+            "free_bytes": 5615587328,
+            "total_bytes": 8283189248,
+            "used_bytes": 2221330432
+          }
+        },
+        "source_module_count": 500,
+        "typescript_version": "6.0.3"
+      },
+      "schema_version": 2,
+      "server_id": "server-02"
+    },
+    {
+      "control_plane": {
+        "fresh": {
+          "provision_to_job_complete_ms": 185273.834,
+          "provision_to_running_ms": 8660.895,
+          "suspend_to_suspended_ms": 2925.487
+        },
+        "resumed_cycles": [
+          {
+            "cycle": 1,
+            "resume_to_job_complete_ms": 155137.779,
+            "resume_to_running_ms": 4909.642,
+            "suspend_to_suspended_ms": 2872.314,
+            "suspended_dwell_ms": 3411.965
+          },
+          {
+            "cycle": 2,
+            "resume_to_job_complete_ms": 157655.867,
+            "resume_to_running_ms": 5285.331,
+            "suspend_to_suspended_ms": 2871.656,
+            "suspended_dwell_ms": 2598.909
+          },
+          {
+            "cycle": 3,
+            "resume_to_job_complete_ms": 156074.806,
+            "resume_to_running_ms": 4938.25,
+            "suspend_to_suspended_ms": 2915.431,
+            "suspended_dwell_ms": 3346.025
+          },
+          {
+            "cycle": 4,
+            "resume_to_job_complete_ms": 159264.94,
+            "resume_to_running_ms": 5742.423,
+            "suspend_to_suspended_ms": 2845.628,
+            "suspended_dwell_ms": 2531.02
+          },
+          {
+            "cycle": 5,
+            "resume_to_job_complete_ms": 159687.294,
+            "resume_to_running_ms": 4829.383,
+            "suspend_to_suspended_ms": 2647.055,
+            "suspended_dwell_ms": 2565.021
+          }
+        ]
+      },
+      "expected_output": "124750",
+      "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+      "jobs": [
+        {
+          "completed_at_unix_ms": 1784716937935,
+          "cycle": 0,
+          "docker": {
+            "build_ms": 14161.566,
+            "buildkit_cached_steps": 0,
+            "image_id": "sha256:b55db44f11e9ce12a67841abaa75b3b9484d3e158d365ddd4d8a9c431f7f7d23",
+            "output": "124750",
+            "verification_ms": 604.141
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "fresh",
+          "npm": {
+            "install_ms": 1592.148,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4056346624,
+            "total_bytes": 8283189248,
+            "used_bytes": 3780571136
+          },
+          "started_at_unix_ms": 1784716919257,
+          "timings": {
+            "docker_build_ms": 14161.566,
+            "docker_verification_ms": 604.141,
+            "job_total_ms": 18658.652,
+            "npm_install_ms": 1592.148,
+            "typescript_build_ms": 2299.265
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 2299.265,
+            "output": "124750"
+          },
+          "verified": true
+        },
+        {
+          "completed_at_unix_ms": 1784717079308,
+          "cycle": 1,
+          "docker": {
+            "build_ms": 268.407,
+            "buildkit_cached_steps": 10,
+            "image_id": "sha256:b55db44f11e9ce12a67841abaa75b3b9484d3e158d365ddd4d8a9c431f7f7d23",
+            "output": "124750",
+            "verification_ms": 591.097
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "resumed",
+          "npm": {
+            "install_ms": 1345.308,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4055977984,
+            "total_bytes": 8283189248,
+            "used_bytes": 3780939776
+          },
+          "started_at_unix_ms": 1784717075803,
+          "timings": {
+            "docker_build_ms": 268.407,
+            "docker_verification_ms": 591.097,
+            "job_total_ms": 3485.911,
+            "npm_install_ms": 1345.308,
+            "typescript_build_ms": 1277.477
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1277.477,
+            "output": "124750"
+          },
+          "verified": true
+        },
+        {
+          "completed_at_unix_ms": 1784717242927,
+          "cycle": 2,
+          "docker": {
+            "build_ms": 260.624,
+            "buildkit_cached_steps": 10,
+            "image_id": "sha256:b55db44f11e9ce12a67841abaa75b3b9484d3e158d365ddd4d8a9c431f7f7d23",
+            "output": "124750",
+            "verification_ms": 569.032
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "resumed",
+          "npm": {
+            "install_ms": 1344.799,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4055683072,
+            "total_bytes": 8283189248,
+            "used_bytes": 3781234688
+          },
+          "started_at_unix_ms": 1784717239362,
+          "timings": {
+            "docker_build_ms": 260.624,
+            "docker_verification_ms": 569.032,
+            "job_total_ms": 3545.451,
+            "npm_install_ms": 1344.799,
+            "typescript_build_ms": 1367.483
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1367.483,
+            "output": "124750"
+          },
+          "verified": true
+        },
+        {
+          "completed_at_unix_ms": 1784717406548,
+          "cycle": 3,
+          "docker": {
+            "build_ms": 280.933,
+            "buildkit_cached_steps": 10,
+            "image_id": "sha256:b55db44f11e9ce12a67841abaa75b3b9484d3e158d365ddd4d8a9c431f7f7d23",
+            "output": "124750",
+            "verification_ms": 520.746
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "resumed",
+          "npm": {
+            "install_ms": 1327.48,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4055367680,
+            "total_bytes": 8283189248,
+            "used_bytes": 3781550080
+          },
+          "started_at_unix_ms": 1784717403041,
+          "timings": {
+            "docker_build_ms": 280.933,
+            "docker_verification_ms": 520.746,
+            "job_total_ms": 3487.891,
+            "npm_install_ms": 1327.48,
+            "typescript_build_ms": 1355.189
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1355.189,
+            "output": "124750"
+          },
+          "verified": true
+        },
+        {
+          "completed_at_unix_ms": 1784717569827,
+          "cycle": 4,
+          "docker": {
+            "build_ms": 265.062,
+            "buildkit_cached_steps": 10,
+            "image_id": "sha256:b55db44f11e9ce12a67841abaa75b3b9484d3e158d365ddd4d8a9c431f7f7d23",
+            "output": "124750",
+            "verification_ms": 581.659
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "resumed",
+          "npm": {
+            "install_ms": 1330.258,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4055048192,
+            "total_bytes": 8283189248,
+            "used_bytes": 3781869568
+          },
+          "started_at_unix_ms": 1784717566345,
+          "timings": {
+            "docker_build_ms": 265.062,
+            "docker_verification_ms": 581.659,
+            "job_total_ms": 3463.135,
+            "npm_install_ms": 1330.258,
+            "typescript_build_ms": 1282.688
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1282.688,
+            "output": "124750"
+          },
+          "verified": true
+        },
+        {
+          "completed_at_unix_ms": 1784717735648,
+          "cycle": 5,
+          "docker": {
+            "build_ms": 257.474,
+            "buildkit_cached_steps": 10,
+            "image_id": "sha256:b55db44f11e9ce12a67841abaa75b3b9484d3e158d365ddd4d8a9c431f7f7d23",
+            "output": "124750",
+            "verification_ms": 593.956
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "resumed",
+          "npm": {
+            "install_ms": 1320.614,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4054745088,
+            "total_bytes": 8283189248,
+            "used_bytes": 3782172672
+          },
+          "started_at_unix_ms": 1784717732020,
+          "timings": {
+            "docker_build_ms": 257.474,
+            "docker_verification_ms": 593.956,
+            "job_total_ms": 3608.688,
+            "npm_install_ms": 1320.614,
+            "typescript_build_ms": 1433.148
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1433.148,
+            "output": "124750"
+          },
+          "verified": true
+        }
+      ],
+      "metadata": {
+        "disk_before_fresh_job": {
+          "free_bytes": 5615587328,
+          "total_bytes": 8283189248,
+          "used_bytes": 2221330432
+        },
+        "final_diagnostic": {
+          "completed_at_unix_ms": 1784717880706,
+          "docker_data_root_bytes": 1529036800,
+          "docker_storage_driver": "overlay2",
+          "root_filesystem": {
+            "free_bytes": 4054728704,
+            "total_bytes": 8283189248,
+            "used_bytes": 3782189056
+          }
+        },
+        "node_image": "public.ecr.aws/docker/library/node:24-bookworm@sha256:5711a0d445a1af54af9589066c646df387d1831a608226f4cd694fc59e745059",
+        "node_slim_image": "public.ecr.aws/docker/library/node:24-bookworm-slim@sha256:6f7b03f7c2c8e2e784dcf9295400527b9b1270fd37b7e9a7285cf83b6951452d",
+        "resources": {
+          "architecture": "aarch64",
+          "logical_cpus": 4,
+          "memory_total_bytes": 8406073344,
+          "root_filesystem": {
+            "free_bytes": 5615587328,
+            "total_bytes": 8283189248,
+            "used_bytes": 2221330432
+          }
+        },
+        "source_module_count": 500,
+        "typescript_version": "6.0.3"
+      },
+      "schema_version": 2,
+      "server_id": "server-03"
+    },
+    {
+      "control_plane": {
+        "fresh": {
+          "provision_to_job_complete_ms": 185261.529,
+          "provision_to_running_ms": 8648.523,
+          "suspend_to_suspended_ms": 2907.442
+        },
+        "resumed_cycles": [
+          {
+            "cycle": 1,
+            "resume_to_job_complete_ms": 154986.174,
+            "resume_to_running_ms": 4910.632,
+            "suspend_to_suspended_ms": 2875.269,
+            "suspended_dwell_ms": 3428.692
+          },
+          {
+            "cycle": 2,
+            "resume_to_job_complete_ms": 157655.555,
+            "resume_to_running_ms": 5280.177,
+            "suspend_to_suspended_ms": 2866.065,
+            "suspended_dwell_ms": 2597.131
+          },
+          {
+            "cycle": 3,
+            "resume_to_job_complete_ms": 155700.146,
+            "resume_to_running_ms": 4939.862,
+            "suspend_to_suspended_ms": 2913.258,
+            "suspended_dwell_ms": 3352.723
+          },
+          {
+            "cycle": 4,
+            "resume_to_job_complete_ms": 159260.473,
+            "resume_to_running_ms": 4699.363,
+            "suspend_to_suspended_ms": 2864.521,
+            "suspended_dwell_ms": 2535.013
+          },
+          {
+            "cycle": 5,
+            "resume_to_job_complete_ms": 159706.937,
+            "resume_to_running_ms": 4843.768,
+            "suspend_to_suspended_ms": 2644.361,
+            "suspended_dwell_ms": 2546.752
+          }
+        ]
+      },
+      "expected_output": "124750",
+      "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+      "jobs": [
+        {
+          "completed_at_unix_ms": 1784716934686,
+          "cycle": 0,
+          "docker": {
+            "build_ms": 12034.796,
+            "buildkit_cached_steps": 0,
+            "image_id": "sha256:acaa1a346da37cd8b3d2b5e7be0311a3c91f2f473117356570a05d219fae9383",
+            "output": "124750",
+            "verification_ms": 575.342
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "fresh",
+          "npm": {
+            "install_ms": 1308.764,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4056342528,
+            "total_bytes": 8283189248,
+            "used_bytes": 3780575232
+          },
+          "started_at_unix_ms": 1784716919042,
+          "timings": {
+            "docker_build_ms": 12034.796,
+            "docker_verification_ms": 575.342,
+            "job_total_ms": 15630.026,
+            "npm_install_ms": 1308.764,
+            "typescript_build_ms": 1709.857
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1709.857,
+            "output": "124750"
+          },
+          "verified": true
+        },
+        {
+          "completed_at_unix_ms": 1784717079090,
+          "cycle": 1,
+          "docker": {
+            "build_ms": 224.05,
+            "buildkit_cached_steps": 10,
+            "image_id": "sha256:acaa1a346da37cd8b3d2b5e7be0311a3c91f2f473117356570a05d219fae9383",
+            "output": "124750",
+            "verification_ms": 602.86
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "resumed",
+          "npm": {
+            "install_ms": 1211.22,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4056121344,
+            "total_bytes": 8283189248,
+            "used_bytes": 3780796416
+          },
+          "started_at_unix_ms": 1784717075964,
+          "timings": {
+            "docker_build_ms": 224.05,
+            "docker_verification_ms": 602.86,
+            "job_total_ms": 3111.401,
+            "npm_install_ms": 1211.22,
+            "typescript_build_ms": 1070.359
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1070.359,
+            "output": "124750"
+          },
+          "verified": true
+        },
+        {
+          "completed_at_unix_ms": 1784717242130,
+          "cycle": 2,
+          "docker": {
+            "build_ms": 232.051,
+            "buildkit_cached_steps": 10,
+            "image_id": "sha256:acaa1a346da37cd8b3d2b5e7be0311a3c91f2f473117356570a05d219fae9383",
+            "output": "124750",
+            "verification_ms": 506.097
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "resumed",
+          "npm": {
+            "install_ms": 1077.293,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4055826432,
+            "total_bytes": 8283189248,
+            "used_bytes": 3781091328
+          },
+          "started_at_unix_ms": 1784717239223,
+          "timings": {
+            "docker_build_ms": 232.051,
+            "docker_verification_ms": 506.097,
+            "job_total_ms": 2892.231,
+            "npm_install_ms": 1077.293,
+            "typescript_build_ms": 1073.987
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1073.987,
+            "output": "124750"
+          },
+          "verified": true
+        },
+        {
+          "completed_at_unix_ms": 1784717406100,
+          "cycle": 3,
+          "docker": {
+            "build_ms": 228.955,
+            "buildkit_cached_steps": 10,
+            "image_id": "sha256:acaa1a346da37cd8b3d2b5e7be0311a3c91f2f473117356570a05d219fae9383",
+            "output": "124750",
+            "verification_ms": 453.664
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "resumed",
+          "npm": {
+            "install_ms": 1185.725,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4055547904,
+            "total_bytes": 8283189248,
+            "used_bytes": 3781369856
+          },
+          "started_at_unix_ms": 1784717403098,
+          "timings": {
+            "docker_build_ms": 228.955,
+            "docker_verification_ms": 453.664,
+            "job_total_ms": 2986.936,
+            "npm_install_ms": 1185.725,
+            "typescript_build_ms": 1115.748
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1115.748,
+            "output": "124750"
+          },
+          "verified": true
+        },
+        {
+          "completed_at_unix_ms": 1784717569590,
+          "cycle": 4,
+          "docker": {
+            "build_ms": 242.557,
+            "buildkit_cached_steps": 10,
+            "image_id": "sha256:acaa1a346da37cd8b3d2b5e7be0311a3c91f2f473117356570a05d219fae9383",
+            "output": "124750",
+            "verification_ms": 573.127
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "resumed",
+          "npm": {
+            "install_ms": 1199.407,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4055187456,
+            "total_bytes": 8283189248,
+            "used_bytes": 3781730304
+          },
+          "started_at_unix_ms": 1784717566445,
+          "timings": {
+            "docker_build_ms": 242.557,
+            "docker_verification_ms": 573.127,
+            "job_total_ms": 3130.271,
+            "npm_install_ms": 1199.407,
+            "typescript_build_ms": 1112.17
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1112.17,
+            "output": "124750"
+          },
+          "verified": true
+        },
+        {
+          "completed_at_unix_ms": 1784717735510,
+          "cycle": 5,
+          "docker": {
+            "build_ms": 259.186,
+            "buildkit_cached_steps": 10,
+            "image_id": "sha256:acaa1a346da37cd8b3d2b5e7be0311a3c91f2f473117356570a05d219fae9383",
+            "output": "124750",
+            "verification_ms": 470.455
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "resumed",
+          "npm": {
+            "install_ms": 1084.643,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4054921216,
+            "total_bytes": 8283189248,
+            "used_bytes": 3781996544
+          },
+          "started_at_unix_ms": 1784717732621,
+          "timings": {
+            "docker_build_ms": 259.186,
+            "docker_verification_ms": 470.455,
+            "job_total_ms": 2874.485,
+            "npm_install_ms": 1084.643,
+            "typescript_build_ms": 1057.194
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1057.194,
+            "output": "124750"
+          },
+          "verified": true
+        }
+      ],
+      "metadata": {
+        "disk_before_fresh_job": {
+          "free_bytes": 5615587328,
+          "total_bytes": 8283189248,
+          "used_bytes": 2221330432
+        },
+        "final_diagnostic": {
+          "completed_at_unix_ms": 1784717883331,
+          "docker_data_root_bytes": 1529008128,
+          "docker_storage_driver": "overlay2",
+          "root_filesystem": {
+            "free_bytes": 4054753280,
+            "total_bytes": 8283189248,
+            "used_bytes": 3782164480
+          }
+        },
+        "node_image": "public.ecr.aws/docker/library/node:24-bookworm@sha256:5711a0d445a1af54af9589066c646df387d1831a608226f4cd694fc59e745059",
+        "node_slim_image": "public.ecr.aws/docker/library/node:24-bookworm-slim@sha256:6f7b03f7c2c8e2e784dcf9295400527b9b1270fd37b7e9a7285cf83b6951452d",
+        "resources": {
+          "architecture": "aarch64",
+          "logical_cpus": 4,
+          "memory_total_bytes": 8406073344,
+          "root_filesystem": {
+            "free_bytes": 5615587328,
+            "total_bytes": 8283189248,
+            "used_bytes": 2221330432
+          }
+        },
+        "source_module_count": 500,
+        "typescript_version": "6.0.3"
+      },
+      "schema_version": 2,
+      "server_id": "server-04"
+    },
+    {
+      "control_plane": {
+        "fresh": {
+          "provision_to_job_complete_ms": 185269.461,
+          "provision_to_running_ms": 8673.785,
+          "suspend_to_suspended_ms": 2924.485
+        },
+        "resumed_cycles": [
+          {
+            "cycle": 1,
+            "resume_to_job_complete_ms": 155012.146,
+            "resume_to_running_ms": 4910.029,
+            "suspend_to_suspended_ms": 2857.067,
+            "suspended_dwell_ms": 3410.919
+          },
+          {
+            "cycle": 2,
+            "resume_to_job_complete_ms": 158013.707,
+            "resume_to_running_ms": 5281.603,
+            "suspend_to_suspended_ms": 2860.535,
+            "suspended_dwell_ms": 2613.746
+          },
+          {
+            "cycle": 3,
+            "resume_to_job_complete_ms": 155713.333,
+            "resume_to_running_ms": 4933.758,
+            "suspend_to_suspended_ms": 2926.429,
+            "suspended_dwell_ms": 3358.898
+          },
+          {
+            "cycle": 4,
+            "resume_to_job_complete_ms": 158070.605,
+            "resume_to_running_ms": 4687.122,
+            "suspend_to_suspended_ms": 2866.803,
+            "suspended_dwell_ms": 2518.219
+          },
+          {
+            "cycle": 5,
+            "resume_to_job_complete_ms": 159661.773,
+            "resume_to_running_ms": 4826.944,
+            "suspend_to_suspended_ms": 3611.721,
+            "suspended_dwell_ms": 2545.702
+          }
+        ]
+      },
+      "expected_output": "124750",
+      "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+      "jobs": [
+        {
+          "completed_at_unix_ms": 1784716934597,
+          "cycle": 0,
+          "docker": {
+            "build_ms": 12003.102,
+            "buildkit_cached_steps": 0,
+            "image_id": "sha256:4965581ff9e36f7036b07f8a5c0690e8a4a2daca39b1ff8d8843be7e52af44ba",
+            "output": "124750",
+            "verification_ms": 524.618
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "fresh",
+          "npm": {
+            "install_ms": 1319.585,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4056338432,
+            "total_bytes": 8283189248,
+            "used_bytes": 3780579328
+          },
+          "started_at_unix_ms": 1784716919045,
+          "timings": {
+            "docker_build_ms": 12003.102,
+            "docker_verification_ms": 524.618,
+            "job_total_ms": 15536.783,
+            "npm_install_ms": 1319.585,
+            "typescript_build_ms": 1688.23
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1688.23,
+            "output": "124750"
+          },
+          "verified": true
+        },
+        {
+          "completed_at_unix_ms": 1784717078560,
+          "cycle": 1,
+          "docker": {
+            "build_ms": 232.361,
+            "buildkit_cached_steps": 10,
+            "image_id": "sha256:4965581ff9e36f7036b07f8a5c0690e8a4a2daca39b1ff8d8843be7e52af44ba",
+            "output": "124750",
+            "verification_ms": 518.324
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "resumed",
+          "npm": {
+            "install_ms": 1066.307,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4056117248,
+            "total_bytes": 8283189248,
+            "used_bytes": 3780800512
+          },
+          "started_at_unix_ms": 1784717075711,
+          "timings": {
+            "docker_build_ms": 232.361,
+            "docker_verification_ms": 518.324,
+            "job_total_ms": 2835.178,
+            "npm_install_ms": 1066.307,
+            "typescript_build_ms": 1015.414
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1015.414,
+            "output": "124750"
+          },
+          "verified": true
+        },
+        {
+          "completed_at_unix_ms": 1784717242250,
+          "cycle": 2,
+          "docker": {
+            "build_ms": 251.101,
+            "buildkit_cached_steps": 10,
+            "image_id": "sha256:4965581ff9e36f7036b07f8a5c0690e8a4a2daca39b1ff8d8843be7e52af44ba",
+            "output": "124750",
+            "verification_ms": 584.872
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "resumed",
+          "npm": {
+            "install_ms": 1135.178,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4055822336,
+            "total_bytes": 8283189248,
+            "used_bytes": 3781095424
+          },
+          "started_at_unix_ms": 1784717239246,
+          "timings": {
+            "docker_build_ms": 251.101,
+            "docker_verification_ms": 584.872,
+            "job_total_ms": 2990.174,
+            "npm_install_ms": 1135.178,
+            "typescript_build_ms": 1015.915
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1015.915,
+            "output": "124750"
+          },
+          "verified": true
+        },
+        {
+          "completed_at_unix_ms": 1784717405990,
+          "cycle": 3,
+          "docker": {
+            "build_ms": 242.884,
+            "buildkit_cached_steps": 10,
+            "image_id": "sha256:4965581ff9e36f7036b07f8a5c0690e8a4a2daca39b1ff8d8843be7e52af44ba",
+            "output": "124750",
+            "verification_ms": 498.944
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "resumed",
+          "npm": {
+            "install_ms": 1066.554,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4055543808,
+            "total_bytes": 8283189248,
+            "used_bytes": 3781373952
+          },
+          "started_at_unix_ms": 1784717403059,
+          "timings": {
+            "docker_build_ms": 242.884,
+            "docker_verification_ms": 498.944,
+            "job_total_ms": 2915.618,
+            "npm_install_ms": 1066.554,
+            "typescript_build_ms": 1104.48
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1104.48,
+            "output": "124750"
+          },
+          "verified": true
+        },
+        {
+          "completed_at_unix_ms": 1784717569790,
+          "cycle": 4,
+          "docker": {
+            "build_ms": 247.241,
+            "buildkit_cached_steps": 10,
+            "image_id": "sha256:4965581ff9e36f7036b07f8a5c0690e8a4a2daca39b1ff8d8843be7e52af44ba",
+            "output": "124750",
+            "verification_ms": 568.434
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "resumed",
+          "npm": {
+            "install_ms": 1228.245,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4055183360,
+            "total_bytes": 8283189248,
+            "used_bytes": 3781734400
+          },
+          "started_at_unix_ms": 1784717566675,
+          "timings": {
+            "docker_build_ms": 247.241,
+            "docker_verification_ms": 568.434,
+            "job_total_ms": 3099.862,
+            "npm_install_ms": 1228.245,
+            "typescript_build_ms": 1052.89
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1052.89,
+            "output": "124750"
+          },
+          "verified": true
+        },
+        {
+          "completed_at_unix_ms": 1784717734670,
+          "cycle": 5,
+          "docker": {
+            "build_ms": 229.321,
+            "buildkit_cached_steps": 10,
+            "image_id": "sha256:4965581ff9e36f7036b07f8a5c0690e8a4a2daca39b1ff8d8843be7e52af44ba",
+            "output": "124750",
+            "verification_ms": 486.957
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "resumed",
+          "npm": {
+            "install_ms": 1044.99,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4054921216,
+            "total_bytes": 8283189248,
+            "used_bytes": 3781996544
+          },
+          "started_at_unix_ms": 1784717731815,
+          "timings": {
+            "docker_build_ms": 229.321,
+            "docker_verification_ms": 486.957,
+            "job_total_ms": 2840.445,
+            "npm_install_ms": 1044.99,
+            "typescript_build_ms": 1076.28
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1076.28,
+            "output": "124750"
+          },
+          "verified": true
+        }
+      ],
+      "metadata": {
+        "disk_before_fresh_job": {
+          "free_bytes": 5615587328,
+          "total_bytes": 8283189248,
+          "used_bytes": 2221330432
+        },
+        "final_diagnostic": {
+          "completed_at_unix_ms": 1784717879656,
+          "docker_data_root_bytes": 1529049088,
+          "docker_storage_driver": "overlay2",
+          "root_filesystem": {
+            "free_bytes": 4054716416,
+            "total_bytes": 8283189248,
+            "used_bytes": 3782201344
+          }
+        },
+        "node_image": "public.ecr.aws/docker/library/node:24-bookworm@sha256:5711a0d445a1af54af9589066c646df387d1831a608226f4cd694fc59e745059",
+        "node_slim_image": "public.ecr.aws/docker/library/node:24-bookworm-slim@sha256:6f7b03f7c2c8e2e784dcf9295400527b9b1270fd37b7e9a7285cf83b6951452d",
+        "resources": {
+          "architecture": "aarch64",
+          "logical_cpus": 4,
+          "memory_total_bytes": 8406073344,
+          "root_filesystem": {
+            "free_bytes": 5615587328,
+            "total_bytes": 8283189248,
+            "used_bytes": 2221330432
+          }
+        },
+        "source_module_count": 500,
+        "typescript_version": "6.0.3"
+      },
+      "schema_version": 2,
+      "server_id": "server-05"
+    },
+    {
+      "control_plane": {
+        "fresh": {
+          "provision_to_job_complete_ms": 185237.511,
+          "provision_to_running_ms": 8679.697,
+          "suspend_to_suspended_ms": 3421.124
+        },
+        "resumed_cycles": [
+          {
+            "cycle": 1,
+            "resume_to_job_complete_ms": 150230.427,
+            "resume_to_running_ms": 4807.025,
+            "suspend_to_suspended_ms": 2605.599,
+            "suspended_dwell_ms": 4915.725
+          },
+          {
+            "cycle": 2,
+            "resume_to_job_complete_ms": 152384.478,
+            "resume_to_running_ms": 4801.992,
+            "suspend_to_suspended_ms": 2381.25,
+            "suspended_dwell_ms": 5275.853
+          },
+          {
+            "cycle": 3,
+            "resume_to_job_complete_ms": 150762.647,
+            "resume_to_running_ms": 4626.409,
+            "suspend_to_suspended_ms": 2506.564,
+            "suspended_dwell_ms": 5915.195
+          },
+          {
+            "cycle": 4,
+            "resume_to_job_complete_ms": 154624.95,
+            "resume_to_running_ms": 4540.059,
+            "suspend_to_suspended_ms": 2551.149,
+            "suspended_dwell_ms": 4703.502
+          },
+          {
+            "cycle": 5,
+            "resume_to_job_complete_ms": 154630.756,
+            "resume_to_running_ms": 4703.272,
+            "suspend_to_suspended_ms": 2416.045,
+            "suspended_dwell_ms": 4843.262
+          }
+        ]
+      },
+      "expected_output": "124750",
+      "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+      "jobs": [
+        {
+          "completed_at_unix_ms": 1784716934197,
+          "cycle": 0,
+          "docker": {
+            "build_ms": 11423.673,
+            "buildkit_cached_steps": 0,
+            "image_id": "sha256:ee2097fcee311f61ba1c5167bd76b196a4aa6093d1bfe3abebdfb6a287a94b04",
+            "output": "124750",
+            "verification_ms": 687.526
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "fresh",
+          "npm": {
+            "install_ms": 1321.994,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4056334336,
+            "total_bytes": 8283189248,
+            "used_bytes": 3780583424
+          },
+          "started_at_unix_ms": 1784716919042,
+          "timings": {
+            "docker_build_ms": 11423.673,
+            "docker_verification_ms": 687.526,
+            "job_total_ms": 15141.251,
+            "npm_install_ms": 1321.994,
+            "typescript_build_ms": 1706.827
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1706.827,
+            "output": "124750"
+          },
+          "verified": true
+        },
+        {
+          "completed_at_unix_ms": 1784717078731,
+          "cycle": 1,
+          "docker": {
+            "build_ms": 234.886,
+            "buildkit_cached_steps": 10,
+            "image_id": "sha256:ee2097fcee311f61ba1c5167bd76b196a4aa6093d1bfe3abebdfb6a287a94b04",
+            "output": "124750",
+            "verification_ms": 555.094
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "resumed",
+          "npm": {
+            "install_ms": 1176.883,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4056117248,
+            "total_bytes": 8283189248,
+            "used_bytes": 3780800512
+          },
+          "started_at_unix_ms": 1784717075722,
+          "timings": {
+            "docker_build_ms": 234.886,
+            "docker_verification_ms": 555.094,
+            "job_total_ms": 2994.353,
+            "npm_install_ms": 1176.883,
+            "typescript_build_ms": 1024.241
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1024.241,
+            "output": "124750"
+          },
+          "verified": true
+        },
+        {
+          "completed_at_unix_ms": 1784717242321,
+          "cycle": 2,
+          "docker": {
+            "build_ms": 173.584,
+            "buildkit_cached_steps": 10,
+            "image_id": "sha256:ee2097fcee311f61ba1c5167bd76b196a4aa6093d1bfe3abebdfb6a287a94b04",
+            "output": "124750",
+            "verification_ms": 504.59
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "resumed",
+          "npm": {
+            "install_ms": 1088.615,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4055822336,
+            "total_bytes": 8283189248,
+            "used_bytes": 3781095424
+          },
+          "started_at_unix_ms": 1784717239484,
+          "timings": {
+            "docker_build_ms": 173.584,
+            "docker_verification_ms": 504.59,
+            "job_total_ms": 2822.601,
+            "npm_install_ms": 1088.615,
+            "typescript_build_ms": 1052.979
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1052.979,
+            "output": "124750"
+          },
+          "verified": true
+        },
+        {
+          "completed_at_unix_ms": 1784717406031,
+          "cycle": 3,
+          "docker": {
+            "build_ms": 217.394,
+            "buildkit_cached_steps": 10,
+            "image_id": "sha256:ee2097fcee311f61ba1c5167bd76b196a4aa6093d1bfe3abebdfb6a287a94b04",
+            "output": "124750",
+            "verification_ms": 553.801
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "resumed",
+          "npm": {
+            "install_ms": 1057.255,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4055543808,
+            "total_bytes": 8283189248,
+            "used_bytes": 3781373952
+          },
+          "started_at_unix_ms": 1784717403071,
+          "timings": {
+            "docker_build_ms": 217.394,
+            "docker_verification_ms": 553.801,
+            "job_total_ms": 2945.189,
+            "npm_install_ms": 1057.255,
+            "typescript_build_ms": 1113.853
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1113.853,
+            "output": "124750"
+          },
+          "verified": true
+        },
+        {
+          "completed_at_unix_ms": 1784717569680,
+          "cycle": 4,
+          "docker": {
+            "build_ms": 246.259,
+            "buildkit_cached_steps": 10,
+            "image_id": "sha256:ee2097fcee311f61ba1c5167bd76b196a4aa6093d1bfe3abebdfb6a287a94b04",
+            "output": "124750",
+            "verification_ms": 589.285
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "resumed",
+          "npm": {
+            "install_ms": 1268.24,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4055236608,
+            "total_bytes": 8283189248,
+            "used_bytes": 3781681152
+          },
+          "started_at_unix_ms": 1784717566496,
+          "timings": {
+            "docker_build_ms": 246.259,
+            "docker_verification_ms": 589.285,
+            "job_total_ms": 3169.813,
+            "npm_install_ms": 1268.24,
+            "typescript_build_ms": 1062.763
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1062.763,
+            "output": "124750"
+          },
+          "verified": true
+        },
+        {
+          "completed_at_unix_ms": 1784717734721,
+          "cycle": 5,
+          "docker": {
+            "build_ms": 172.934,
+            "buildkit_cached_steps": 10,
+            "image_id": "sha256:ee2097fcee311f61ba1c5167bd76b196a4aa6093d1bfe3abebdfb6a287a94b04",
+            "output": "124750",
+            "verification_ms": 518.917
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "resumed",
+          "npm": {
+            "install_ms": 1098.107,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4054974464,
+            "total_bytes": 8283189248,
+            "used_bytes": 3781943296
+          },
+          "started_at_unix_ms": 1784717731890,
+          "timings": {
+            "docker_build_ms": 172.934,
+            "docker_verification_ms": 518.917,
+            "job_total_ms": 2816.64,
+            "npm_install_ms": 1098.107,
+            "typescript_build_ms": 1023.757
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1023.757,
+            "output": "124750"
+          },
+          "verified": true
+        }
+      ],
+      "metadata": {
+        "disk_before_fresh_job": {
+          "free_bytes": 5615587328,
+          "total_bytes": 8283189248,
+          "used_bytes": 2221330432
+        },
+        "final_diagnostic": {
+          "completed_at_unix_ms": 1784717880324,
+          "docker_data_root_bytes": 1528954880,
+          "docker_storage_driver": "overlay2",
+          "root_filesystem": {
+            "free_bytes": 4054806528,
+            "total_bytes": 8283189248,
+            "used_bytes": 3782111232
+          }
+        },
+        "node_image": "public.ecr.aws/docker/library/node:24-bookworm@sha256:5711a0d445a1af54af9589066c646df387d1831a608226f4cd694fc59e745059",
+        "node_slim_image": "public.ecr.aws/docker/library/node:24-bookworm-slim@sha256:6f7b03f7c2c8e2e784dcf9295400527b9b1270fd37b7e9a7285cf83b6951452d",
+        "resources": {
+          "architecture": "aarch64",
+          "logical_cpus": 4,
+          "memory_total_bytes": 8406073344,
+          "root_filesystem": {
+            "free_bytes": 5615587328,
+            "total_bytes": 8283189248,
+            "used_bytes": 2221330432
+          }
+        },
+        "source_module_count": 500,
+        "typescript_version": "6.0.3"
+      },
+      "schema_version": 2,
+      "server_id": "server-06"
+    },
+    {
+      "control_plane": {
+        "fresh": {
+          "provision_to_job_complete_ms": 185237.042,
+          "provision_to_running_ms": 8693.675,
+          "suspend_to_suspended_ms": 3309.016
+        },
+        "resumed_cycles": [
+          {
+            "cycle": 1,
+            "resume_to_job_complete_ms": 150228.161,
+            "resume_to_running_ms": 4801.851,
+            "suspend_to_suspended_ms": 2595.525,
+            "suspended_dwell_ms": 5021.972
+          },
+          {
+            "cycle": 2,
+            "resume_to_job_complete_ms": 152395.971,
+            "resume_to_running_ms": 5811.358,
+            "suspend_to_suspended_ms": 2380.329,
+            "suspended_dwell_ms": 5291.009
+          },
+          {
+            "cycle": 3,
+            "resume_to_job_complete_ms": 150762.441,
+            "resume_to_running_ms": 4654.328,
+            "suspend_to_suspended_ms": 2529.006,
+            "suspended_dwell_ms": 5912.552
+          },
+          {
+            "cycle": 4,
+            "resume_to_job_complete_ms": 154611.154,
+            "resume_to_running_ms": 4541.298,
+            "suspend_to_suspended_ms": 2557.726,
+            "suspended_dwell_ms": 4694.741
+          },
+          {
+            "cycle": 5,
+            "resume_to_job_complete_ms": 154609.664,
+            "resume_to_running_ms": 4703.929,
+            "suspend_to_suspended_ms": 2433.443,
+            "suspended_dwell_ms": 4833.498
+          }
+        ]
+      },
+      "expected_output": "124750",
+      "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+      "jobs": [
+        {
+          "completed_at_unix_ms": 1784716935370,
+          "cycle": 0,
+          "docker": {
+            "build_ms": 12782.699,
+            "buildkit_cached_steps": 0,
+            "image_id": "sha256:205aa301db4e475e45eeb65ebb056469e2cfc3599f931cbdfdef229dd656a668",
+            "output": "124750",
+            "verification_ms": 488.353
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "fresh",
+          "npm": {
+            "install_ms": 1358.307,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4056346624,
+            "total_bytes": 8283189248,
+            "used_bytes": 3780571136
+          },
+          "started_at_unix_ms": 1784716919044,
+          "timings": {
+            "docker_build_ms": 12782.699,
+            "docker_verification_ms": 488.353,
+            "job_total_ms": 16312.15,
+            "npm_install_ms": 1358.307,
+            "typescript_build_ms": 1681.583
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1681.583,
+            "output": "124750"
+          },
+          "verified": true
+        },
+        {
+          "completed_at_unix_ms": 1784717078823,
+          "cycle": 1,
+          "docker": {
+            "build_ms": 322.643,
+            "buildkit_cached_steps": 10,
+            "image_id": "sha256:205aa301db4e475e45eeb65ebb056469e2cfc3599f931cbdfdef229dd656a668",
+            "output": "124750",
+            "verification_ms": 588.044
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "resumed",
+          "npm": {
+            "install_ms": 1159.045,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4056125440,
+            "total_bytes": 8283189248,
+            "used_bytes": 3780792320
+          },
+          "started_at_unix_ms": 1784717075703,
+          "timings": {
+            "docker_build_ms": 322.643,
+            "docker_verification_ms": 588.044,
+            "job_total_ms": 3105.652,
+            "npm_install_ms": 1159.045,
+            "typescript_build_ms": 1032.936
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1032.936,
+            "output": "124750"
+          },
+          "verified": true
+        },
+        {
+          "completed_at_unix_ms": 1784717242332,
+          "cycle": 2,
+          "docker": {
+            "build_ms": 227.545,
+            "buildkit_cached_steps": 10,
+            "image_id": "sha256:205aa301db4e475e45eeb65ebb056469e2cfc3599f931cbdfdef229dd656a668",
+            "output": "124750",
+            "verification_ms": 483.056
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "resumed",
+          "npm": {
+            "install_ms": 1076.571,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4055781376,
+            "total_bytes": 8283189248,
+            "used_bytes": 3781136384
+          },
+          "started_at_unix_ms": 1784717239413,
+          "timings": {
+            "docker_build_ms": 227.545,
+            "docker_verification_ms": 483.056,
+            "job_total_ms": 2905.161,
+            "npm_install_ms": 1076.571,
+            "typescript_build_ms": 1115.202
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1115.202,
+            "output": "124750"
+          },
+          "verified": true
+        },
+        {
+          "completed_at_unix_ms": 1784717406002,
+          "cycle": 3,
+          "docker": {
+            "build_ms": 226.617,
+            "buildkit_cached_steps": 10,
+            "image_id": "sha256:205aa301db4e475e45eeb65ebb056469e2cfc3599f931cbdfdef229dd656a668",
+            "output": "124750",
+            "verification_ms": 567.249
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "resumed",
+          "npm": {
+            "install_ms": 1085.695,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4055506944,
+            "total_bytes": 8283189248,
+            "used_bytes": 3781410816
+          },
+          "started_at_unix_ms": 1784717403039,
+          "timings": {
+            "docker_build_ms": 226.617,
+            "docker_verification_ms": 567.249,
+            "job_total_ms": 2948.101,
+            "npm_install_ms": 1085.695,
+            "typescript_build_ms": 1065.73
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1065.73,
+            "output": "124750"
+          },
+          "verified": true
+        },
+        {
+          "completed_at_unix_ms": 1784717569363,
+          "cycle": 4,
+          "docker": {
+            "build_ms": 236.949,
+            "buildkit_cached_steps": 10,
+            "image_id": "sha256:205aa301db4e475e45eeb65ebb056469e2cfc3599f931cbdfdef229dd656a668",
+            "output": "124750",
+            "verification_ms": 568.519
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "resumed",
+          "npm": {
+            "install_ms": 1140.121,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4055195648,
+            "total_bytes": 8283189248,
+            "used_bytes": 3781722112
+          },
+          "started_at_unix_ms": 1784717566318,
+          "timings": {
+            "docker_build_ms": 236.949,
+            "docker_verification_ms": 568.519,
+            "job_total_ms": 3030.889,
+            "npm_install_ms": 1140.121,
+            "typescript_build_ms": 1082.289
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1082.289,
+            "output": "124750"
+          },
+          "verified": true
+        },
+        {
+          "completed_at_unix_ms": 1784717734661,
+          "cycle": 5,
+          "docker": {
+            "build_ms": 230.498,
+            "buildkit_cached_steps": 10,
+            "image_id": "sha256:205aa301db4e475e45eeb65ebb056469e2cfc3599f931cbdfdef229dd656a668",
+            "output": "124750",
+            "verification_ms": 469.825
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "resumed",
+          "npm": {
+            "install_ms": 1078.512,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4054929408,
+            "total_bytes": 8283189248,
+            "used_bytes": 3781988352
+          },
+          "started_at_unix_ms": 1784717731813,
+          "timings": {
+            "docker_build_ms": 230.498,
+            "docker_verification_ms": 469.825,
+            "job_total_ms": 2834.018,
+            "npm_install_ms": 1078.512,
+            "typescript_build_ms": 1052.431
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1052.431,
+            "output": "124750"
+          },
+          "verified": true
+        }
+      ],
+      "metadata": {
+        "disk_before_fresh_job": {
+          "free_bytes": 5615587328,
+          "total_bytes": 8283189248,
+          "used_bytes": 2221330432
+        },
+        "final_diagnostic": {
+          "completed_at_unix_ms": 1784717880089,
+          "docker_data_root_bytes": 1529036800,
+          "docker_storage_driver": "overlay2",
+          "root_filesystem": {
+            "free_bytes": 4054724608,
+            "total_bytes": 8283189248,
+            "used_bytes": 3782193152
+          }
+        },
+        "node_image": "public.ecr.aws/docker/library/node:24-bookworm@sha256:5711a0d445a1af54af9589066c646df387d1831a608226f4cd694fc59e745059",
+        "node_slim_image": "public.ecr.aws/docker/library/node:24-bookworm-slim@sha256:6f7b03f7c2c8e2e784dcf9295400527b9b1270fd37b7e9a7285cf83b6951452d",
+        "resources": {
+          "architecture": "aarch64",
+          "logical_cpus": 4,
+          "memory_total_bytes": 8406073344,
+          "root_filesystem": {
+            "free_bytes": 5615587328,
+            "total_bytes": 8283189248,
+            "used_bytes": 2221330432
+          }
+        },
+        "source_module_count": 500,
+        "typescript_version": "6.0.3"
+      },
+      "schema_version": 2,
+      "server_id": "server-07"
+    },
+    {
+      "control_plane": {
+        "fresh": {
+          "provision_to_job_complete_ms": 185533.362,
+          "provision_to_running_ms": 8681.388,
+          "suspend_to_suspended_ms": 2635.661
+        },
+        "resumed_cycles": [
+          {
+            "cycle": 1,
+            "resume_to_job_complete_ms": 150155.464,
+            "resume_to_running_ms": 4867.497,
+            "suspend_to_suspended_ms": 2594.853,
+            "suspended_dwell_ms": 5688.936
+          },
+          {
+            "cycle": 2,
+            "resume_to_job_complete_ms": 152399.672,
+            "resume_to_running_ms": 4791.976,
+            "suspend_to_suspended_ms": 2357.021,
+            "suspended_dwell_ms": 5292.905
+          },
+          {
+            "cycle": 3,
+            "resume_to_job_complete_ms": 150758.784,
+            "resume_to_running_ms": 6792.639,
+            "suspend_to_suspended_ms": 2502.866,
+            "suspended_dwell_ms": 5935.635
+          },
+          {
+            "cycle": 4,
+            "resume_to_job_complete_ms": 154598.68,
+            "resume_to_running_ms": 4518.616,
+            "suspend_to_suspended_ms": 2532.373,
+            "suspended_dwell_ms": 4729.455
+          },
+          {
+            "cycle": 5,
+            "resume_to_job_complete_ms": 155592.692,
+            "resume_to_running_ms": 4701.244,
+            "suspend_to_suspended_ms": 2411.408,
+            "suspended_dwell_ms": 4855.185
+          }
+        ]
+      },
+      "expected_output": "124750",
+      "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+      "jobs": [
+        {
+          "completed_at_unix_ms": 1784716934183,
+          "cycle": 0,
+          "docker": {
+            "build_ms": 11519.333,
+            "buildkit_cached_steps": 0,
+            "image_id": "sha256:deb819d9619e38b6172e770f8281860c253efeaeb136eb8dfa7bf20c5f4014da",
+            "output": "124750",
+            "verification_ms": 553.155
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "fresh",
+          "npm": {
+            "install_ms": 1351.302,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4056350720,
+            "total_bytes": 8283189248,
+            "used_bytes": 3780567040
+          },
+          "started_at_unix_ms": 1784716919046,
+          "timings": {
+            "docker_build_ms": 11519.333,
+            "docker_verification_ms": 553.155,
+            "job_total_ms": 15122.146,
+            "npm_install_ms": 1351.302,
+            "typescript_build_ms": 1697.127
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1697.127,
+            "output": "124750"
+          },
+          "verified": true
+        },
+        {
+          "completed_at_unix_ms": 1784717079165,
+          "cycle": 1,
+          "docker": {
+            "build_ms": 238.87,
+            "buildkit_cached_steps": 10,
+            "image_id": "sha256:deb819d9619e38b6172e770f8281860c253efeaeb136eb8dfa7bf20c5f4014da",
+            "output": "124750",
+            "verification_ms": 496.849
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "resumed",
+          "npm": {
+            "install_ms": 1127.611,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4056129536,
+            "total_bytes": 8283189248,
+            "used_bytes": 3780788224
+          },
+          "started_at_unix_ms": 1784717076301,
+          "timings": {
+            "docker_build_ms": 238.87,
+            "docker_verification_ms": 496.849,
+            "job_total_ms": 2850.323,
+            "npm_install_ms": 1127.611,
+            "typescript_build_ms": 984.174
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 984.174,
+            "output": "124750"
+          },
+          "verified": true
+        },
+        {
+          "completed_at_unix_ms": 1784717242685,
+          "cycle": 2,
+          "docker": {
+            "build_ms": 236.944,
+            "buildkit_cached_steps": 10,
+            "image_id": "sha256:deb819d9619e38b6172e770f8281860c253efeaeb136eb8dfa7bf20c5f4014da",
+            "output": "124750",
+            "verification_ms": 522.398
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "resumed",
+          "npm": {
+            "install_ms": 1143.727,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4055834624,
+            "total_bytes": 8283189248,
+            "used_bytes": 3781083136
+          },
+          "started_at_unix_ms": 1784717239717,
+          "timings": {
+            "docker_build_ms": 236.944,
+            "docker_verification_ms": 522.398,
+            "job_total_ms": 2953.254,
+            "npm_install_ms": 1143.727,
+            "typescript_build_ms": 1047.462
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1047.462,
+            "output": "124750"
+          },
+          "verified": true
+        },
+        {
+          "completed_at_unix_ms": 1784717406195,
+          "cycle": 3,
+          "docker": {
+            "build_ms": 267.845,
+            "buildkit_cached_steps": 10,
+            "image_id": "sha256:deb819d9619e38b6172e770f8281860c253efeaeb136eb8dfa7bf20c5f4014da",
+            "output": "124750",
+            "verification_ms": 551.849
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "resumed",
+          "npm": {
+            "install_ms": 1189.139,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4055556096,
+            "total_bytes": 8283189248,
+            "used_bytes": 3781361664
+          },
+          "started_at_unix_ms": 1784717403137,
+          "timings": {
+            "docker_build_ms": 267.845,
+            "docker_verification_ms": 551.849,
+            "job_total_ms": 3043.591,
+            "npm_install_ms": 1189.139,
+            "typescript_build_ms": 1031.96
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1031.96,
+            "output": "124750"
+          },
+          "verified": true
+        },
+        {
+          "completed_at_unix_ms": 1784717569254,
+          "cycle": 4,
+          "docker": {
+            "build_ms": 236.785,
+            "buildkit_cached_steps": 10,
+            "image_id": "sha256:deb819d9619e38b6172e770f8281860c253efeaeb136eb8dfa7bf20c5f4014da",
+            "output": "124750",
+            "verification_ms": 504.048
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "resumed",
+          "npm": {
+            "install_ms": 1053.888,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4055199744,
+            "total_bytes": 8283189248,
+            "used_bytes": 3781718016
+          },
+          "started_at_unix_ms": 1784717566376,
+          "timings": {
+            "docker_build_ms": 236.785,
+            "docker_verification_ms": 504.048,
+            "job_total_ms": 2864.211,
+            "npm_install_ms": 1053.888,
+            "typescript_build_ms": 1066.718
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1066.718,
+            "output": "124750"
+          },
+          "verified": true
+        },
+        {
+          "completed_at_unix_ms": 1784717734625,
+          "cycle": 5,
+          "docker": {
+            "build_ms": 224.149,
+            "buildkit_cached_steps": 10,
+            "image_id": "sha256:deb819d9619e38b6172e770f8281860c253efeaeb136eb8dfa7bf20c5f4014da",
+            "output": "124750",
+            "verification_ms": 466.479
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "resumed",
+          "npm": {
+            "install_ms": 1029.003,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4054933504,
+            "total_bytes": 8283189248,
+            "used_bytes": 3781984256
+          },
+          "started_at_unix_ms": 1784717731835,
+          "timings": {
+            "docker_build_ms": 224.149,
+            "docker_verification_ms": 466.479,
+            "job_total_ms": 2775.078,
+            "npm_install_ms": 1029.003,
+            "typescript_build_ms": 1052.719
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1052.719,
+            "output": "124750"
+          },
+          "verified": true
+        }
+      ],
+      "metadata": {
+        "disk_before_fresh_job": {
+          "free_bytes": 5615587328,
+          "total_bytes": 8283189248,
+          "used_bytes": 2221330432
+        },
+        "final_diagnostic": {
+          "completed_at_unix_ms": 1784717880183,
+          "docker_data_root_bytes": 1528999936,
+          "docker_storage_driver": "overlay2",
+          "root_filesystem": {
+            "free_bytes": 4054765568,
+            "total_bytes": 8283189248,
+            "used_bytes": 3782152192
+          }
+        },
+        "node_image": "public.ecr.aws/docker/library/node:24-bookworm@sha256:5711a0d445a1af54af9589066c646df387d1831a608226f4cd694fc59e745059",
+        "node_slim_image": "public.ecr.aws/docker/library/node:24-bookworm-slim@sha256:6f7b03f7c2c8e2e784dcf9295400527b9b1270fd37b7e9a7285cf83b6951452d",
+        "resources": {
+          "architecture": "aarch64",
+          "logical_cpus": 4,
+          "memory_total_bytes": 8406073344,
+          "root_filesystem": {
+            "free_bytes": 5615587328,
+            "total_bytes": 8283189248,
+            "used_bytes": 2221330432
+          }
+        },
+        "source_module_count": 500,
+        "typescript_version": "6.0.3"
+      },
+      "schema_version": 2,
+      "server_id": "server-08"
+    },
+    {
+      "control_plane": {
+        "fresh": {
+          "provision_to_job_complete_ms": 185982.185,
+          "provision_to_running_ms": 8654.306,
+          "suspend_to_suspended_ms": 2642.167
+        },
+        "resumed_cycles": [
+          {
+            "cycle": 1,
+            "resume_to_job_complete_ms": 150591.491,
+            "resume_to_running_ms": 4795.753,
+            "suspend_to_suspended_ms": 2584.358,
+            "suspended_dwell_ms": 5684.416
+          },
+          {
+            "cycle": 2,
+            "resume_to_job_complete_ms": 152710.203,
+            "resume_to_running_ms": 4788.578,
+            "suspend_to_suspended_ms": 3343.888,
+            "suspended_dwell_ms": 5299.895
+          },
+          {
+            "cycle": 3,
+            "resume_to_job_complete_ms": 150733.502,
+            "resume_to_running_ms": 6789.871,
+            "suspend_to_suspended_ms": 2519.92,
+            "suspended_dwell_ms": 4946.722
+          },
+          {
+            "cycle": 4,
+            "resume_to_job_complete_ms": 153557.816,
+            "resume_to_running_ms": 4530.41,
+            "suspend_to_suspended_ms": 2512.598,
+            "suspended_dwell_ms": 5748.868
+          },
+          {
+            "cycle": 5,
+            "resume_to_job_complete_ms": 154580.857,
+            "resume_to_running_ms": 6848.143,
+            "suspend_to_suspended_ms": 2415.047,
+            "suspended_dwell_ms": 4877.892
+          }
+        ]
+      },
+      "expected_output": "124750",
+      "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+      "jobs": [
+        {
+          "completed_at_unix_ms": 1784716938967,
+          "cycle": 0,
+          "docker": {
+            "build_ms": 15312.727,
+            "buildkit_cached_steps": 0,
+            "image_id": "sha256:cd24de46092e176605e9cc15aba205e5b806c2d699c2d67f5db72d86b35d7c7f",
+            "output": "124750",
+            "verification_ms": 673.892
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "fresh",
+          "npm": {
+            "install_ms": 1618.501,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4056342528,
+            "total_bytes": 8283189248,
+            "used_bytes": 3780575232
+          },
+          "started_at_unix_ms": 1784716919048,
+          "timings": {
+            "docker_build_ms": 15312.727,
+            "docker_verification_ms": 673.892,
+            "job_total_ms": 19900.439,
+            "npm_install_ms": 1618.501,
+            "typescript_build_ms": 2293.8
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 2293.8,
+            "output": "124750"
+          },
+          "verified": true
+        },
+        {
+          "completed_at_unix_ms": 1784717080331,
+          "cycle": 1,
+          "docker": {
+            "build_ms": 310.63,
+            "buildkit_cached_steps": 10,
+            "image_id": "sha256:cd24de46092e176605e9cc15aba205e5b806c2d699c2d67f5db72d86b35d7c7f",
+            "output": "124750",
+            "verification_ms": 870.358
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "resumed",
+          "npm": {
+            "install_ms": 1806.13,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4055969792,
+            "total_bytes": 8283189248,
+            "used_bytes": 3780947968
+          },
+          "started_at_unix_ms": 1784717075954,
+          "timings": {
+            "docker_build_ms": 310.63,
+            "docker_verification_ms": 870.358,
+            "job_total_ms": 4358.276,
+            "npm_install_ms": 1806.13,
+            "typescript_build_ms": 1367.282
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1367.282,
+            "output": "124750"
+          },
+          "verified": true
+        },
+        {
+          "completed_at_unix_ms": 1784717243291,
+          "cycle": 2,
+          "docker": {
+            "build_ms": 265.555,
+            "buildkit_cached_steps": 10,
+            "image_id": "sha256:cd24de46092e176605e9cc15aba205e5b806c2d699c2d67f5db72d86b35d7c7f",
+            "output": "124750",
+            "verification_ms": 536.724
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "resumed",
+          "npm": {
+            "install_ms": 1378.845,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4055670784,
+            "total_bytes": 8283189248,
+            "used_bytes": 3781246976
+          },
+          "started_at_unix_ms": 1784717239663,
+          "timings": {
+            "docker_build_ms": 265.555,
+            "docker_verification_ms": 536.724,
+            "job_total_ms": 3609.0,
+            "npm_install_ms": 1378.845,
+            "typescript_build_ms": 1424.429
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1424.429,
+            "output": "124750"
+          },
+          "verified": true
+        },
+        {
+          "completed_at_unix_ms": 1784717407492,
+          "cycle": 3,
+          "docker": {
+            "build_ms": 301.707,
+            "buildkit_cached_steps": 10,
+            "image_id": "sha256:cd24de46092e176605e9cc15aba205e5b806c2d699c2d67f5db72d86b35d7c7f",
+            "output": "124750",
+            "verification_ms": 811.014
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "resumed",
+          "npm": {
+            "install_ms": 1899.856,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4055355392,
+            "total_bytes": 8283189248,
+            "used_bytes": 3781562368
+          },
+          "started_at_unix_ms": 1784717403131,
+          "timings": {
+            "docker_build_ms": 301.707,
+            "docker_verification_ms": 811.014,
+            "job_total_ms": 4340.388,
+            "npm_install_ms": 1899.856,
+            "typescript_build_ms": 1323.618
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1323.618,
+            "output": "124750"
+          },
+          "verified": true
+        },
+        {
+          "completed_at_unix_ms": 1784717570841,
+          "cycle": 4,
+          "docker": {
+            "build_ms": 367.333,
+            "buildkit_cached_steps": 10,
+            "image_id": "sha256:cd24de46092e176605e9cc15aba205e5b806c2d699c2d67f5db72d86b35d7c7f",
+            "output": "124750",
+            "verification_ms": 870.125
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "resumed",
+          "npm": {
+            "install_ms": 1556.647,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4055035904,
+            "total_bytes": 8283189248,
+            "used_bytes": 3781881856
+          },
+          "started_at_unix_ms": 1784717566647,
+          "timings": {
+            "docker_build_ms": 367.333,
+            "docker_verification_ms": 870.125,
+            "job_total_ms": 4175.333,
+            "npm_install_ms": 1556.647,
+            "typescript_build_ms": 1376.651
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1376.651,
+            "output": "124750"
+          },
+          "verified": true
+        },
+        {
+          "completed_at_unix_ms": 1784717738020,
+          "cycle": 5,
+          "docker": {
+            "build_ms": 260.611,
+            "buildkit_cached_steps": 10,
+            "image_id": "sha256:cd24de46092e176605e9cc15aba205e5b806c2d699c2d67f5db72d86b35d7c7f",
+            "output": "124750",
+            "verification_ms": 587.97
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "resumed",
+          "npm": {
+            "install_ms": 1669.196,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4054765568,
+            "total_bytes": 8283189248,
+            "used_bytes": 3782152192
+          },
+          "started_at_unix_ms": 1784717734126,
+          "timings": {
+            "docker_build_ms": 260.611,
+            "docker_verification_ms": 587.97,
+            "job_total_ms": 3875.427,
+            "npm_install_ms": 1669.196,
+            "typescript_build_ms": 1354.215
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1354.215,
+            "output": "124750"
+          },
+          "verified": true
+        }
+      ],
+      "metadata": {
+        "disk_before_fresh_job": {
+          "free_bytes": 5615587328,
+          "total_bytes": 8283189248,
+          "used_bytes": 2221330432
+        },
+        "final_diagnostic": {
+          "completed_at_unix_ms": 1784717881947,
+          "docker_data_root_bytes": 1529016320,
+          "docker_storage_driver": "overlay2",
+          "root_filesystem": {
+            "free_bytes": 4054749184,
+            "total_bytes": 8283189248,
+            "used_bytes": 3782168576
+          }
+        },
+        "node_image": "public.ecr.aws/docker/library/node:24-bookworm@sha256:5711a0d445a1af54af9589066c646df387d1831a608226f4cd694fc59e745059",
+        "node_slim_image": "public.ecr.aws/docker/library/node:24-bookworm-slim@sha256:6f7b03f7c2c8e2e784dcf9295400527b9b1270fd37b7e9a7285cf83b6951452d",
+        "resources": {
+          "architecture": "aarch64",
+          "logical_cpus": 4,
+          "memory_total_bytes": 8406073344,
+          "root_filesystem": {
+            "free_bytes": 5615587328,
+            "total_bytes": 8283189248,
+            "used_bytes": 2221330432
+          }
+        },
+        "source_module_count": 500,
+        "typescript_version": "6.0.3"
+      },
+      "schema_version": 2,
+      "server_id": "server-09"
+    },
+    {
+      "control_plane": {
+        "fresh": {
+          "provision_to_job_complete_ms": 185956.9,
+          "provision_to_running_ms": 10811.143,
+          "suspend_to_suspended_ms": 2373.991
+        },
+        "resumed_cycles": [
+          {
+            "cycle": 1,
+            "resume_to_job_complete_ms": 150145.658,
+            "resume_to_running_ms": 4791.968,
+            "suspend_to_suspended_ms": 2574.88,
+            "suspended_dwell_ms": 5950.307
+          },
+          {
+            "cycle": 2,
+            "resume_to_job_complete_ms": 152370.702,
+            "resume_to_running_ms": 6950.296,
+            "suspend_to_suspended_ms": 2339.989,
+            "suspended_dwell_ms": 5305.757
+          },
+          {
+            "cycle": 3,
+            "resume_to_job_complete_ms": 148574.995,
+            "resume_to_running_ms": 4545.354,
+            "suspend_to_suspended_ms": 2507.25,
+            "suspended_dwell_ms": 7146.928
+          },
+          {
+            "cycle": 4,
+            "resume_to_job_complete_ms": 152334.783,
+            "resume_to_running_ms": 6645.795,
+            "suspend_to_suspended_ms": 2518.725,
+            "suspended_dwell_ms": 6904.231
+          },
+          {
+            "cycle": 5,
+            "resume_to_job_complete_ms": 153682.6,
+            "resume_to_running_ms": 6843.581,
+            "suspend_to_suspended_ms": 2350.599,
+            "suspended_dwell_ms": 7022.944
+          }
+        ]
+      },
+      "expected_output": "124750",
+      "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+      "jobs": [
+        {
+          "completed_at_unix_ms": 1784716940048,
+          "cycle": 0,
+          "docker": {
+            "build_ms": 16478.275,
+            "buildkit_cached_steps": 0,
+            "image_id": "sha256:827a0ca08ecabb0f6f7da099229ed66cf858ae1571db98ffe59c217565065c6e",
+            "output": "124750",
+            "verification_ms": 583.582
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "fresh",
+          "npm": {
+            "install_ms": 1652.966,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4056342528,
+            "total_bytes": 8283189248,
+            "used_bytes": 3780575232
+          },
+          "started_at_unix_ms": 1784716919054,
+          "timings": {
+            "docker_build_ms": 16478.275,
+            "docker_verification_ms": 583.582,
+            "job_total_ms": 20975.582,
+            "npm_install_ms": 1652.966,
+            "typescript_build_ms": 2259.249
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 2259.249,
+            "output": "124750"
+          },
+          "verified": true
+        },
+        {
+          "completed_at_unix_ms": 1784717079242,
+          "cycle": 1,
+          "docker": {
+            "build_ms": 260.716,
+            "buildkit_cached_steps": 10,
+            "image_id": "sha256:827a0ca08ecabb0f6f7da099229ed66cf858ae1571db98ffe59c217565065c6e",
+            "output": "124750",
+            "verification_ms": 580.117
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "resumed",
+          "npm": {
+            "install_ms": 1330.035,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4055973888,
+            "total_bytes": 8283189248,
+            "used_bytes": 3780943872
+          },
+          "started_at_unix_ms": 1784717075725,
+          "timings": {
+            "docker_build_ms": 260.716,
+            "docker_verification_ms": 580.117,
+            "job_total_ms": 3497.414,
+            "npm_install_ms": 1330.035,
+            "typescript_build_ms": 1323.068
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1323.068,
+            "output": "124750"
+          },
+          "verified": true
+        },
+        {
+          "completed_at_unix_ms": 1784717244222,
+          "cycle": 2,
+          "docker": {
+            "build_ms": 348.736,
+            "buildkit_cached_steps": 10,
+            "image_id": "sha256:827a0ca08ecabb0f6f7da099229ed66cf858ae1571db98ffe59c217565065c6e",
+            "output": "124750",
+            "verification_ms": 885.568
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "resumed",
+          "npm": {
+            "install_ms": 1873.821,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4055629824,
+            "total_bytes": 8283189248,
+            "used_bytes": 3781287936
+          },
+          "started_at_unix_ms": 1784717239691,
+          "timings": {
+            "docker_build_ms": 348.736,
+            "docker_verification_ms": 885.568,
+            "job_total_ms": 4511.95,
+            "npm_install_ms": 1873.821,
+            "typescript_build_ms": 1399.547
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1399.547,
+            "output": "124750"
+          },
+          "verified": true
+        },
+        {
+          "completed_at_unix_ms": 1784717406651,
+          "cycle": 3,
+          "docker": {
+            "build_ms": 251.941,
+            "buildkit_cached_steps": 10,
+            "image_id": "sha256:827a0ca08ecabb0f6f7da099229ed66cf858ae1571db98ffe59c217565065c6e",
+            "output": "124750",
+            "verification_ms": 613.951
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "resumed",
+          "npm": {
+            "install_ms": 1361.521,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4055314432,
+            "total_bytes": 8283189248,
+            "used_bytes": 3781603328
+          },
+          "started_at_unix_ms": 1784717403080,
+          "timings": {
+            "docker_build_ms": 251.941,
+            "docker_verification_ms": 613.951,
+            "job_total_ms": 3552.035,
+            "npm_install_ms": 1361.521,
+            "typescript_build_ms": 1321.151
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1321.151,
+            "output": "124750"
+          },
+          "verified": true
+        },
+        {
+          "completed_at_unix_ms": 1784717571363,
+          "cycle": 4,
+          "docker": {
+            "build_ms": 254.144,
+            "buildkit_cached_steps": 10,
+            "image_id": "sha256:827a0ca08ecabb0f6f7da099229ed66cf858ae1571db98ffe59c217565065c6e",
+            "output": "124750",
+            "verification_ms": 835.874
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "resumed",
+          "npm": {
+            "install_ms": 1944.508,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4055048192,
+            "total_bytes": 8283189248,
+            "used_bytes": 3781869568
+          },
+          "started_at_unix_ms": 1784717567006,
+          "timings": {
+            "docker_build_ms": 254.144,
+            "docker_verification_ms": 835.874,
+            "job_total_ms": 4337.595,
+            "npm_install_ms": 1944.508,
+            "typescript_build_ms": 1298.35
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1298.35,
+            "output": "124750"
+          },
+          "verified": true
+        },
+        {
+          "completed_at_unix_ms": 1784717736673,
+          "cycle": 5,
+          "docker": {
+            "build_ms": 364.005,
+            "buildkit_cached_steps": 10,
+            "image_id": "sha256:827a0ca08ecabb0f6f7da099229ed66cf858ae1571db98ffe59c217565065c6e",
+            "output": "124750",
+            "verification_ms": 880.467
+          },
+          "input_tree_sha256": "3876eb948541701eb9fb44ec5582fda8b28021ef78cfc4d62e4cbb5f14cf716b",
+          "kind": "resumed",
+          "npm": {
+            "install_ms": 1897.253,
+            "typescript_version": "6.0.3"
+          },
+          "root_filesystem_after_job": {
+            "free_bytes": 4054777856,
+            "total_bytes": 8283189248,
+            "used_bytes": 3782139904
+          },
+          "started_at_unix_ms": 1784717732152,
+          "timings": {
+            "docker_build_ms": 364.005,
+            "docker_verification_ms": 880.467,
+            "job_total_ms": 4501.691,
+            "npm_install_ms": 1897.253,
+            "typescript_build_ms": 1355.618
+          },
+          "typescript": {
+            "artifact_sha256": "5c1655806283d434ecf632538b695ccf8c6ca9afa216f3202a65012b177e8155",
+            "build_info_sha256": "749975d6fa7d1b569b2884e7cd5b1e97248135c14f23d03c84a455745e314fe8",
+            "build_ms": 1355.618,
+            "output": "124750"
+          },
+          "verified": true
+        }
+      ],
+      "metadata": {
+        "disk_before_fresh_job": {
+          "free_bytes": 5615587328,
+          "total_bytes": 8283189248,
+          "used_bytes": 2221330432
+        },
+        "final_diagnostic": {
+          "completed_at_unix_ms": 1784717880798,
+          "docker_data_root_bytes": 1528999936,
+          "docker_storage_driver": "overlay2",
+          "root_filesystem": {
+            "free_bytes": 4054761472,
+            "total_bytes": 8283189248,
+            "used_bytes": 3782156288
+          }
+        },
+        "node_image": "public.ecr.aws/docker/library/node:24-bookworm@sha256:5711a0d445a1af54af9589066c646df387d1831a608226f4cd694fc59e745059",
+        "node_slim_image": "public.ecr.aws/docker/library/node:24-bookworm-slim@sha256:6f7b03f7c2c8e2e784dcf9295400527b9b1270fd37b7e9a7285cf83b6951452d",
+        "resources": {
+          "architecture": "aarch64",
+          "logical_cpus": 4,
+          "memory_total_bytes": 8406073344,
+          "root_filesystem": {
+            "free_bytes": 5615587328,
+            "total_bytes": 8283189248,
+            "used_bytes": 2221330432
+          }
+        },
+        "source_module_count": 500,
+        "typescript_version": "6.0.3"
+      },
+      "schema_version": 2,
+      "server_id": "server-10"
+    }
+  ]
+}

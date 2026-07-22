@@ -216,7 +216,8 @@ ratios directly.
 - Input and output hashes detect accidental source changes or stale artifacts.
 - Actual guest resources are recorded instead of claiming the requested memory
   minimum was the observed allocation.
-- Failed samples and retries remain in the raw results.
+- A failed or missing sample rejects the entire run; the harness never silently
+  reduces the requested sample count.
 - Every completed sample is checkpointed to a run-scoped, lane-specific private
   S3 key; one lane cannot overwrite another lane's result.
 - Result uploads occur after workload timing and upload failures fail the
