@@ -27,6 +27,40 @@ def valid_raw(count: int = 3):
     for workload_index, workload in enumerate(summarize_module.WORKLOADS):
         for lane in range(1, count + 1):
             microvm_id = f"microvm-{workload_index}-{lane}"
+            proofs = {
+                "docker": (
+                    {
+                        "buildkit_cached_steps": 0,
+                        "image_id": "sha256:image",
+                        "output": "124750",
+                    },
+                    {
+                        "buildkit_cached_steps": 10,
+                        "image_id": "sha256:image",
+                        "output": "124750",
+                    },
+                ),
+                "npm": (
+                    {"installed_package_count": 200},
+                    {"installed_package_count": 200},
+                ),
+                "rails": (
+                    {"rails_version": "8.1.3", "bundle_bytes": 1000},
+                    {"rails_version": "8.1.3", "bundle_bytes": 1000},
+                ),
+                "dotnet": (
+                    {
+                        "assets_file_count": 21,
+                        "assets_sha256": "assets",
+                        "nuget_packages_bytes": 1000,
+                    },
+                    {
+                        "assets_file_count": 21,
+                        "assets_sha256": "assets",
+                        "nuget_packages_bytes": 1000,
+                    },
+                ),
+            }[workload]
             results.append(
                 {
                     "workload": workload,
@@ -46,11 +80,13 @@ def valid_raw(count: int = 3):
                                 "phase": "fresh",
                                 "duration_ms": 1000 + lane,
                                 "verified": True,
+                                "proof": proofs[0],
                             },
                             {
                                 "phase": "resumed",
                                 "duration_ms": 100 + lane,
                                 "verified": True,
+                                "proof": proofs[1],
                             },
                         ],
                     },
@@ -118,6 +154,33 @@ class SummaryTests(unittest.TestCase):
     def test_rejects_unterminated_lane(self):
         self.assert_rejected(
             lambda value: value["results"][0].update(terminated=False)
+        )
+
+    def test_rejects_fresh_docker_cache(self):
+        self.assert_rejected(
+            lambda value: value["results"][0]["guest"]["samples"][0][
+                "proof"
+            ].update(buildkit_cached_steps=1)
+        )
+
+    def test_rejects_changed_rails_bundle(self):
+        self.assert_rejected(
+            lambda value: next(
+                result
+                for result in value["results"]
+                if result["workload"] == "rails"
+            )["guest"]["samples"][1]["proof"].update(bundle_bytes=999)
+        )
+
+    def test_rejects_changed_dotnet_assets(self):
+        self.assert_rejected(
+            lambda value: next(
+                result
+                for result in value["results"]
+                if result["workload"] == "dotnet"
+            )["guest"]["samples"][1]["proof"].update(
+                assets_sha256="changed"
+            )
         )
 
     def test_bootstrap_is_reproducible(self):

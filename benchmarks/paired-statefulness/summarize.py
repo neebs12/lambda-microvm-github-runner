@@ -98,6 +98,46 @@ def validate(raw: dict[str, Any]) -> dict[str, list[dict[str, Any]]]:
             raise ValueError(f"unverified pair: {lane_key}")
         if not all(float(sample.get("duration_ms", 0)) > 0 for sample in samples):
             raise ValueError(f"invalid duration: {lane_key}")
+        fresh_proof = samples[0].get("proof", {})
+        resumed_proof = samples[1].get("proof", {})
+        if workload == "docker":
+            if fresh_proof.get("buildkit_cached_steps") != 0:
+                raise ValueError(f"fresh Docker cache was not empty: {lane_key}")
+            if int(resumed_proof.get("buildkit_cached_steps", 0)) < 1:
+                raise ValueError(f"resumed Docker cache was unused: {lane_key}")
+            if (
+                fresh_proof.get("image_id") != resumed_proof.get("image_id")
+                or fresh_proof.get("output") != resumed_proof.get("output")
+            ):
+                raise ValueError(f"Docker output identity changed: {lane_key}")
+        elif workload == "npm":
+            fresh_count = int(fresh_proof.get("installed_package_count", 0))
+            resumed_count = int(
+                resumed_proof.get("installed_package_count", 0)
+            )
+            if fresh_count < 50 or fresh_count != resumed_count:
+                raise ValueError(f"npm dependency tree changed: {lane_key}")
+        elif workload == "rails":
+            if (
+                fresh_proof.get("rails_version")
+                != resumed_proof.get("rails_version")
+                or int(fresh_proof.get("bundle_bytes", 0)) < 1
+                or fresh_proof.get("bundle_bytes")
+                != resumed_proof.get("bundle_bytes")
+            ):
+                raise ValueError(f"Rails bundle identity changed: {lane_key}")
+        elif workload == "dotnet":
+            if (
+                int(fresh_proof.get("assets_file_count", 0)) < 15
+                or fresh_proof.get("assets_file_count")
+                != resumed_proof.get("assets_file_count")
+                or fresh_proof.get("assets_sha256")
+                != resumed_proof.get("assets_sha256")
+                or int(fresh_proof.get("nuget_packages_bytes", 0)) < 1
+                or fresh_proof.get("nuget_packages_bytes")
+                != resumed_proof.get("nuget_packages_bytes")
+            ):
+                raise ValueError(f".NET restore identity changed: {lane_key}")
         grouped[workload].append(result)
     for workload, results in grouped.items():
         if len(results) != expected_count:

@@ -185,15 +185,17 @@ overwriting a record.
 
 ## Crash recovery and retries
 
-The orchestrator supports `run`, `resume-run`, `status`, and `cleanup-run`.
-These commands are idempotent for a run ID.
+The implemented orchestrator checkpoints every transition but deliberately does
+not resume a partially timed lane after an uncatchable host crash. It is not
+possible to prove where the guest timer was interrupted, so recovery is to
+terminate the recorded run IDs and rerun any incomplete pair from fresh.
 
-On restart it reads S3, lists MicroVMs, and reconciles by recorded MicroVM ID.
-If launch returned but the host died before recording the ID, the unique
-temporary image, deterministic client token, run start time, and lane attempt
-history bound the orphan search. The orchestrator refuses to guess when more
-than one candidate exists; cleanup reports the ambiguity and terminates every
-candidate belonging to the run image.
+Recovery reads the run manifest and lane host records from S3, reconciles each
+recorded MicroVM ID with `get-microvm`, and terminates every non-terminal ID. If
+launch returned but the host died before recording the ID, the temporary image,
+deterministic client token, run start time, and lane attempt history bound the
+orphan search. Recovery refuses to guess when more than one candidate exists; it
+terminates every non-terminal candidate belonging to the temporary run image.
 
 A lane attempt that fails before a validated fresh result may be terminated and
 restarted. A failure after fresh validation cannot be replaced only on the
@@ -202,11 +204,12 @@ new MicroVM reruns both fresh and resumed measurements. Published results use
 exactly one successful attempt for every predeclared lane and disclose failed
 attempt counts. Missing lanes never silently reduce `n`.
 
-All normal exits and exceptions invoke cleanup. `cleanup-run` terminates every
-non-terminal MicroVM found in S3 or associated with the unique run image, then
-removes the temporary image, logs, role/policy, and other run-owned AWS
-resources after final artifacts have been downloaded. Cleanup is verified with
-fresh list/get calls rather than assumed from successful API responses.
+All normal lane exits and exceptions invoke termination. After an uncatchable
+host failure, the operator applies the S3 recovery procedure above. Run-level
+cleanup terminates every recorded or image-associated MicroVM, then removes the
+temporary image, logs, role/policy, and other run-owned AWS resources after
+final artifacts have been downloaded. Cleanup is verified with fresh list/get
+calls rather than assumed from successful API responses.
 
 ## Timing and recorded facts
 

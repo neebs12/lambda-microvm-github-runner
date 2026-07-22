@@ -411,15 +411,23 @@ def launch(
 
 
 def terminate(aws: Aws, microvm_id: str) -> None:
-    try:
-        if aws.state(microvm_id) != "TERMINATED":
+    errors: list[str] = []
+    for attempt in range(1, 11):
+        try:
+            if aws.state(microvm_id) == "TERMINATED":
+                return
             aws.call(
                 "lambda-microvms", "terminate-microvm",
                 "--microvm-identifier", microvm_id,
             )
             aws.wait(microvm_id, "TERMINATED", timeout=300)
-    except (RuntimeError, TimeoutError) as error:
-        print(f"cleanup warning for {microvm_id}: {error}", flush=True)
+            return
+        except (RuntimeError, TimeoutError) as error:
+            errors.append(f"attempt {attempt}: {error}")
+            time.sleep(min(attempt * 2, 15))
+    raise RuntimeError(
+        f"could not verify termination for {microvm_id}: {'; '.join(errors)}"
+    )
 
 
 def execute_lane(
@@ -542,7 +550,10 @@ def execute_lane(
                  "error": str(error)},
             )
             if microvm_id:
-                terminate(aws, microvm_id)
+                try:
+                    terminate(aws, microvm_id)
+                except RuntimeError as cleanup_error:
+                    errors.append(f"cleanup: {cleanup_error}")
             print(f"{lane_path} {message}", flush=True)
     raise RuntimeError(f"{lane_path} exhausted attempts: {'; '.join(errors)}")
 

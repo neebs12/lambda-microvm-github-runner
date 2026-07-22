@@ -1,0 +1,1095 @@
+{
+  "replication_unit": "one MicroVM fresh/resumed pair",
+  "run_id": "full-20260723-6532e02",
+  "schema_version": 1,
+  "workloads": {
+    "docker": {
+      "fresh": {
+        "count": 30,
+        "max_ms": 23067.611,
+        "mean_ms": 13769.303,
+        "min_ms": 10485.226,
+        "p50_ms": 13404.217,
+        "p90_ms": 16184.681,
+        "standard_deviation_ms": 2585.902
+      },
+      "paired": {
+        "median_difference_ms": 13184.819,
+        "median_fresh_over_resumed_ratio": 52.496868,
+        "ratio_bootstrap_95_ci": {
+          "iterations": 20000,
+          "lower_95": 48.156292,
+          "seed": 20260723,
+          "upper_95": 54.643889
+        }
+      },
+      "pairs": [
+        {
+          "difference_ms": 11651.091,
+          "fresh_ms": 11946.724,
+          "fresh_over_resumed_ratio": 40.410658,
+          "lane_id": "lane-001",
+          "microvm_id": "microvm-df0c5650-6d21-3af6-b067-cd0c2538401d",
+          "resumed_ms": 295.633
+        },
+        {
+          "difference_ms": 11842.521,
+          "fresh_ms": 12330.491,
+          "fresh_over_resumed_ratio": 25.268953,
+          "lane_id": "lane-002",
+          "microvm_id": "microvm-625f7770-acdf-3f05-82b0-a276b1344e66",
+          "resumed_ms": 487.97
+        },
+        {
+          "difference_ms": 14520.666,
+          "fresh_ms": 14790.711,
+          "fresh_over_resumed_ratio": 54.771283,
+          "lane_id": "lane-003",
+          "microvm_id": "microvm-3032b9ba-8d61-3a9a-a534-66c3aab6e203",
+          "resumed_ms": 270.045
+        },
+        {
+          "difference_ms": 11769.367,
+          "fresh_ms": 11992.984,
+          "fresh_over_resumed_ratio": 53.631808,
+          "lane_id": "lane-004",
+          "microvm_id": "microvm-eead715d-6f3e-32e7-b295-3a51f25c2d0b",
+          "resumed_ms": 223.617
+        },
+        {
+          "difference_ms": 13193.161,
+          "fresh_ms": 13642.73,
+          "fresh_over_resumed_ratio": 30.346243,
+          "lane_id": "lane-005",
+          "microvm_id": "microvm-9dd7c492-f7f1-397a-be08-1199d830d705",
+          "resumed_ms": 449.569
+        },
+        {
+          "difference_ms": 22746.456,
+          "fresh_ms": 23067.611,
+          "fresh_over_resumed_ratio": 71.827034,
+          "lane_id": "lane-006",
+          "microvm_id": "microvm-2e6e8b3c-0d21-3db0-999c-1bacd35f4e12",
+          "resumed_ms": 321.155
+        },
+        {
+          "difference_ms": 15924.386,
+          "fresh_ms": 16184.681,
+          "fresh_over_resumed_ratio": 62.178225,
+          "lane_id": "lane-007",
+          "microvm_id": "microvm-c4485cf2-499e-37e6-b032-d128bccc8473",
+          "resumed_ms": 260.295
+        },
+        {
+          "difference_ms": 15386.564,
+          "fresh_ms": 15744.677,
+          "fresh_over_resumed_ratio": 43.965667,
+          "lane_id": "lane-008",
+          "microvm_id": "microvm-1a136a9f-23e7-3db5-817e-d3e277a6c4e8",
+          "resumed_ms": 358.113
+        },
+        {
+          "difference_ms": 16993.256,
+          "fresh_ms": 17338.574,
+          "fresh_over_resumed_ratio": 50.210455,
+          "lane_id": "lane-009",
+          "microvm_id": "microvm-70081626-8909-30f2-97fd-c6eb8beb6673",
+          "resumed_ms": 345.318
+        },
+        {
+          "difference_ms": 14601.386,
+          "fresh_ms": 14860.962,
+          "fresh_over_resumed_ratio": 57.250909,
+          "lane_id": "lane-010",
+          "microvm_id": "microvm-04efb9c3-a610-3672-83a3-7350114ca5e2",
+          "resumed_ms": 259.576
+        },
+        {
+          "difference_ms": 16003.096,
+          "fresh_ms": 16264.844,
+          "fresh_over_resumed_ratio": 62.139325,
+          "lane_id": "lane-011",
+          "microvm_id": "microvm-2a083c4b-f0be-3f2f-84b2-0079858a92a4",
+          "resumed_ms": 261.748
+        },
+        {
+          "difference_ms": 14129.159,
+          "fresh_ms": 14413.676,
+          "fresh_over_resumed_ratio": 50.660157,
+          "lane_id": "lane-012",
+          "microvm_id": "microvm-a40b621e-34e4-3e04-b706-32c719e6b1b5",
+          "resumed_ms": 284.517
+        },
+        {
+          "difference_ms": 14163.229,
+          "fresh_ms": 14428.763,
+          "fresh_over_resumed_ratio": 54.338665,
+          "lane_id": "lane-013",
+          "microvm_id": "microvm-4897b6a5-6f2a-3576-adae-cb868b8f8e8e",
+          "resumed_ms": 265.534
+        },
+        {
+          "difference_ms": 12606.802,
+          "fresh_ms": 12835.855,
+          "fresh_over_resumed_ratio": 56.038799,
+          "lane_id": "lane-014",
+          "microvm_id": "microvm-9ad6148d-5857-380f-86b9-4ba612f1d6e2",
+          "resumed_ms": 229.053
+        },
+        {
+          "difference_ms": 10924.146,
+          "fresh_ms": 11153.417,
+          "fresh_over_resumed_ratio": 48.647308,
+          "lane_id": "lane-015",
+          "microvm_id": "microvm-d5973797-548b-32ca-91e9-de3284aff210",
+          "resumed_ms": 229.271
+        },
+        {
+          "difference_ms": 11778.872,
+          "fresh_ms": 12007.043,
+          "fresh_over_resumed_ratio": 52.623002,
+          "lane_id": "lane-016",
+          "microvm_id": "microvm-1e09791a-f59d-3076-8cef-46393bc1f860",
+          "resumed_ms": 228.171
+        },
+        {
+          "difference_ms": 10731.007,
+          "fresh_ms": 10960.964,
+          "fresh_over_resumed_ratio": 47.665277,
+          "lane_id": "lane-017",
+          "microvm_id": "microvm-8adc366a-23de-3f2c-bd98-04c8cf2ea7b3",
+          "resumed_ms": 229.957
+        },
+        {
+          "difference_ms": 11136.985,
+          "fresh_ms": 11376.889,
+          "fresh_over_resumed_ratio": 47.422673,
+          "lane_id": "lane-018",
+          "microvm_id": "microvm-a58f665d-57eb-307c-b007-7dd66deca7ef",
+          "resumed_ms": 239.904
+        },
+        {
+          "difference_ms": 12446.404,
+          "fresh_ms": 12675.942,
+          "fresh_over_resumed_ratio": 55.223719,
+          "lane_id": "lane-019",
+          "microvm_id": "microvm-228a21f2-a91a-3c93-9803-6b27b3c9f1b4",
+          "resumed_ms": 229.538
+        },
+        {
+          "difference_ms": 14062.742,
+          "fresh_ms": 14317.643,
+          "fresh_over_resumed_ratio": 56.169427,
+          "lane_id": "lane-020",
+          "microvm_id": "microvm-ad000340-c0d5-3da0-9b7a-39e56b9dc82c",
+          "resumed_ms": 254.901
+        },
+        {
+          "difference_ms": 15702.422,
+          "fresh_ms": 16012.095,
+          "fresh_over_resumed_ratio": 51.706461,
+          "lane_id": "lane-021",
+          "microvm_id": "microvm-84abc3a0-974b-3a83-abba-2a006bcfd238",
+          "resumed_ms": 309.673
+        },
+        {
+          "difference_ms": 13176.477,
+          "fresh_ms": 13404.217,
+          "fresh_over_resumed_ratio": 58.857544,
+          "lane_id": "lane-022",
+          "microvm_id": "microvm-26060d8a-12b5-30b6-a855-2f1dacbcc6e5",
+          "resumed_ms": 227.74
+        },
+        {
+          "difference_ms": 13727.891,
+          "fresh_ms": 13984.408,
+          "fresh_over_resumed_ratio": 54.516496,
+          "lane_id": "lane-023",
+          "microvm_id": "microvm-e31786d0-8c72-3162-9dcb-2fde00da1210",
+          "resumed_ms": 256.517
+        },
+        {
+          "difference_ms": 14482.113,
+          "fresh_ms": 14763.666,
+          "fresh_over_resumed_ratio": 52.436543,
+          "lane_id": "lane-024",
+          "microvm_id": "microvm-23ac0368-31e0-37a8-9151-22801b9ff222",
+          "resumed_ms": 281.553
+        },
+        {
+          "difference_ms": 15247.937,
+          "fresh_ms": 15543.685,
+          "fresh_over_resumed_ratio": 52.557194,
+          "lane_id": "lane-025",
+          "microvm_id": "microvm-c66f0738-7a01-335a-964c-12118a5631ed",
+          "resumed_ms": 295.748
+        },
+        {
+          "difference_ms": 10410.317,
+          "fresh_ms": 10837.951,
+          "fresh_over_resumed_ratio": 25.343988,
+          "lane_id": "lane-026",
+          "microvm_id": "microvm-d132919d-6bbb-32cd-a026-d0be90d6e3ee",
+          "resumed_ms": 427.634
+        },
+        {
+          "difference_ms": 10802.115,
+          "fresh_ms": 11122.47,
+          "fresh_over_resumed_ratio": 34.719202,
+          "lane_id": "lane-027",
+          "microvm_id": "microvm-65d71afb-022f-3b3c-be0b-eddf870c18bd",
+          "resumed_ms": 320.355
+        },
+        {
+          "difference_ms": 10155.786,
+          "fresh_ms": 10485.226,
+          "fresh_over_resumed_ratio": 31.827422,
+          "lane_id": "lane-028",
+          "microvm_id": "microvm-68e8c8ca-da1f-31aa-bd60-2fb400297a3d",
+          "resumed_ms": 329.44
+        },
+        {
+          "difference_ms": 11304.9,
+          "fresh_ms": 11551.52,
+          "fresh_over_resumed_ratio": 46.839348,
+          "lane_id": "lane-029",
+          "microvm_id": "microvm-2977de7a-cc58-38cf-b7f9-513ca4263a98",
+          "resumed_ms": 246.62
+        },
+        {
+          "difference_ms": 12802.361,
+          "fresh_ms": 13038.675,
+          "fresh_over_resumed_ratio": 55.175212,
+          "lane_id": "lane-030",
+          "microvm_id": "microvm-01e66ef0-e09d-3598-b163-bb0fa055b0c3",
+          "resumed_ms": 236.314
+        }
+      ],
+      "resumed": {
+        "count": 30,
+        "max_ms": 487.97,
+        "mean_ms": 288.516,
+        "min_ms": 223.617,
+        "p50_ms": 261.748,
+        "p90_ms": 358.113,
+        "standard_deviation_ms": 68.287
+      }
+    },
+    "dotnet": {
+      "fresh": {
+        "count": 30,
+        "max_ms": 31210.38,
+        "mean_ms": 14129.522,
+        "min_ms": 11146.197,
+        "p50_ms": 12799.748,
+        "p90_ms": 15884.974,
+        "standard_deviation_ms": 3585.765
+      },
+      "paired": {
+        "median_difference_ms": 10593.759,
+        "median_fresh_over_resumed_ratio": 5.558352,
+        "ratio_bootstrap_95_ci": {
+          "iterations": 20000,
+          "lower_95": 5.225364,
+          "seed": 20260723,
+          "upper_95": 5.688979
+        }
+      },
+      "pairs": [
+        {
+          "difference_ms": 27336.384,
+          "fresh_ms": 31210.38,
+          "fresh_over_resumed_ratio": 8.056379,
+          "lane_id": "lane-001",
+          "microvm_id": "microvm-aaf00961-2f69-3a54-bc28-8186dabfb129",
+          "resumed_ms": 3873.996
+        },
+        {
+          "difference_ms": 10160.813,
+          "fresh_ms": 12379.886,
+          "fresh_over_resumed_ratio": 5.578855,
+          "lane_id": "lane-002",
+          "microvm_id": "microvm-ddf05540-d334-38da-9f48-5438b11792e7",
+          "resumed_ms": 2219.073
+        },
+        {
+          "difference_ms": 9595.36,
+          "fresh_ms": 11848.19,
+          "fresh_over_resumed_ratio": 5.259247,
+          "lane_id": "lane-003",
+          "microvm_id": "microvm-1c595040-cd97-3b75-9b77-75580e48ff79",
+          "resumed_ms": 2252.83
+        },
+        {
+          "difference_ms": 11488.525,
+          "fresh_ms": 14592.681,
+          "fresh_over_resumed_ratio": 4.701014,
+          "lane_id": "lane-004",
+          "microvm_id": "microvm-9f8b6fb0-56a6-3277-bedb-27a374fa1178",
+          "resumed_ms": 3104.156
+        },
+        {
+          "difference_ms": 9683.0,
+          "fresh_ms": 11956.681,
+          "fresh_over_resumed_ratio": 5.258733,
+          "lane_id": "lane-005",
+          "microvm_id": "microvm-f4128e2a-6469-3cc8-9780-ee33b3ddb97d",
+          "resumed_ms": 2273.681
+        },
+        {
+          "difference_ms": 9021.334,
+          "fresh_ms": 11489.124,
+          "fresh_over_resumed_ratio": 4.655633,
+          "lane_id": "lane-006",
+          "microvm_id": "microvm-2b7073f2-115c-35b4-b2b7-f56382496560",
+          "resumed_ms": 2467.79
+        },
+        {
+          "difference_ms": 9033.813,
+          "fresh_ms": 11146.197,
+          "fresh_over_resumed_ratio": 5.276596,
+          "lane_id": "lane-007",
+          "microvm_id": "microvm-8cbc8f5c-211a-32c1-bbff-b523f2c0738f",
+          "resumed_ms": 2112.384
+        },
+        {
+          "difference_ms": 11899.369,
+          "fresh_ms": 14704.309,
+          "fresh_over_resumed_ratio": 5.24229,
+          "lane_id": "lane-008",
+          "microvm_id": "microvm-4bbf4c99-b000-3909-b8b1-f75225e448dd",
+          "resumed_ms": 2804.94
+        },
+        {
+          "difference_ms": 11804.203,
+          "fresh_ms": 14609.092,
+          "fresh_over_resumed_ratio": 5.208439,
+          "lane_id": "lane-009",
+          "microvm_id": "microvm-d5f0fa0b-c4de-39a1-be9d-8ad9dd67f76d",
+          "resumed_ms": 2804.889
+        },
+        {
+          "difference_ms": 12625.44,
+          "fresh_ms": 15276.328,
+          "fresh_over_resumed_ratio": 5.762721,
+          "lane_id": "lane-010",
+          "microvm_id": "microvm-e8f5f450-92ac-3057-9046-7cc66329df6a",
+          "resumed_ms": 2650.888
+        },
+        {
+          "difference_ms": 9925.909,
+          "fresh_ms": 12113.269,
+          "fresh_over_resumed_ratio": 5.537849,
+          "lane_id": "lane-011",
+          "microvm_id": "microvm-771acc8e-c0a6-33b6-a5f9-4ce05fea20fc",
+          "resumed_ms": 2187.36
+        },
+        {
+          "difference_ms": 10551.748,
+          "fresh_ms": 12799.748,
+          "fresh_over_resumed_ratio": 5.693838,
+          "lane_id": "lane-012",
+          "microvm_id": "microvm-ba5fd767-6209-3c45-9a59-d66df5f56e7d",
+          "resumed_ms": 2248.0
+        },
+        {
+          "difference_ms": 9819.815,
+          "fresh_ms": 12697.624,
+          "fresh_over_resumed_ratio": 4.412254,
+          "lane_id": "lane-013",
+          "microvm_id": "microvm-4379f70f-d29c-387b-ae76-fd69ef0cb695",
+          "resumed_ms": 2877.809
+        },
+        {
+          "difference_ms": 10635.77,
+          "fresh_ms": 12783.638,
+          "fresh_over_resumed_ratio": 5.95178,
+          "lane_id": "lane-014",
+          "microvm_id": "microvm-6d5f8d74-5379-326b-9bfb-4fbc663a750d",
+          "resumed_ms": 2147.868
+        },
+        {
+          "difference_ms": 11352.822,
+          "fresh_ms": 13591.507,
+          "fresh_over_resumed_ratio": 6.071201,
+          "lane_id": "lane-015",
+          "microvm_id": "microvm-a9558d9d-5e17-33ff-9d06-01e28d03c9e4",
+          "resumed_ms": 2238.685
+        },
+        {
+          "difference_ms": 9986.428,
+          "fresh_ms": 12161.238,
+          "fresh_over_resumed_ratio": 5.591862,
+          "lane_id": "lane-016",
+          "microvm_id": "microvm-efd689ac-6d83-3567-9046-21e66178cbb8",
+          "resumed_ms": 2174.81
+        },
+        {
+          "difference_ms": 14416.428,
+          "fresh_ms": 17107.125,
+          "fresh_over_resumed_ratio": 6.357879,
+          "lane_id": "lane-017",
+          "microvm_id": "microvm-72e79dbc-82a0-3f4b-9b45-f0a5858ff3a1",
+          "resumed_ms": 2690.697
+        },
+        {
+          "difference_ms": 10082.275,
+          "fresh_ms": 12676.499,
+          "fresh_over_resumed_ratio": 4.886432,
+          "lane_id": "lane-018",
+          "microvm_id": "microvm-2c4a2690-3026-3869-8ea3-ff24998eb1a2",
+          "resumed_ms": 2594.224
+        },
+        {
+          "difference_ms": 11577.966,
+          "fresh_ms": 14499.58,
+          "fresh_over_resumed_ratio": 4.962866,
+          "lane_id": "lane-019",
+          "microvm_id": "microvm-7c9eeb1c-918f-3646-bee7-ca5eda683858",
+          "resumed_ms": 2921.614
+        },
+        {
+          "difference_ms": 12732.815,
+          "fresh_ms": 15434.377,
+          "fresh_over_resumed_ratio": 5.713131,
+          "lane_id": "lane-020",
+          "microvm_id": "microvm-a440afdf-c0f5-3c5e-b049-0d95abe2ea4f",
+          "resumed_ms": 2701.562
+        },
+        {
+          "difference_ms": 10395.767,
+          "fresh_ms": 12924.0,
+          "fresh_over_resumed_ratio": 5.111871,
+          "lane_id": "lane-021",
+          "microvm_id": "microvm-47d59860-d22f-3b2b-9ddf-d665db6b9d77",
+          "resumed_ms": 2528.233
+        },
+        {
+          "difference_ms": 9957.746,
+          "fresh_ms": 12111.837,
+          "fresh_over_resumed_ratio": 5.622714,
+          "lane_id": "lane-022",
+          "microvm_id": "microvm-6540679d-7698-3bda-8549-d5e65b8029c4",
+          "resumed_ms": 2154.091
+        },
+        {
+          "difference_ms": 13303.964,
+          "fresh_ms": 16162.697,
+          "fresh_over_resumed_ratio": 5.653797,
+          "lane_id": "lane-023",
+          "microvm_id": "microvm-96b32fca-a6fe-39b8-bf64-4da16cef84c1",
+          "resumed_ms": 2858.733
+        },
+        {
+          "difference_ms": 10727.453,
+          "fresh_ms": 15088.561,
+          "fresh_over_resumed_ratio": 3.4598,
+          "lane_id": "lane-024",
+          "microvm_id": "microvm-e736fa5f-ee05-3fbb-866a-ab6312cc41fe",
+          "resumed_ms": 4361.108
+        },
+        {
+          "difference_ms": 13090.351,
+          "fresh_ms": 15884.974,
+          "fresh_over_resumed_ratio": 5.684121,
+          "lane_id": "lane-025",
+          "microvm_id": "microvm-692a784d-58f1-3084-ae8e-97589730b604",
+          "resumed_ms": 2794.623
+        },
+        {
+          "difference_ms": 11668.981,
+          "fresh_ms": 15271.826,
+          "fresh_over_resumed_ratio": 4.238824,
+          "lane_id": "lane-026",
+          "microvm_id": "microvm-4f18b079-c220-332f-aced-9cea8bc14be3",
+          "resumed_ms": 3602.845
+        },
+        {
+          "difference_ms": 9798.876,
+          "fresh_ms": 12515.439,
+          "fresh_over_resumed_ratio": 4.607086,
+          "lane_id": "lane-027",
+          "microvm_id": "microvm-9da749d5-7ac3-3f5f-9364-5a7a8a0af3c8",
+          "resumed_ms": 2716.563
+        },
+        {
+          "difference_ms": 10148.294,
+          "fresh_ms": 12202.915,
+          "fresh_over_resumed_ratio": 5.939254,
+          "lane_id": "lane-028",
+          "microvm_id": "microvm-3148f4fd-35a7-37fc-86e5-ab7d9e9c0b2b",
+          "resumed_ms": 2054.621
+        },
+        {
+          "difference_ms": 11747.038,
+          "fresh_ms": 13997.732,
+          "fresh_over_resumed_ratio": 6.219296,
+          "lane_id": "lane-029",
+          "microvm_id": "microvm-2782d803-41aa-3847-8995-94387f5f5854",
+          "resumed_ms": 2250.694
+        },
+        {
+          "difference_ms": 10458.213,
+          "fresh_ms": 12648.216,
+          "fresh_over_resumed_ratio": 5.775433,
+          "lane_id": "lane-030",
+          "microvm_id": "microvm-5b44dd0f-d905-33dc-a71e-eb5932a901ab",
+          "resumed_ms": 2190.003
+        }
+      ],
+      "resumed": {
+        "count": 30,
+        "max_ms": 4361.108,
+        "mean_ms": 2628.626,
+        "min_ms": 2054.621,
+        "p50_ms": 2528.233,
+        "p90_ms": 3104.156,
+        "standard_deviation_ms": 544.339
+      }
+    },
+    "npm": {
+      "fresh": {
+        "count": 30,
+        "max_ms": 4580.084,
+        "mean_ms": 3897.967,
+        "min_ms": 3286.4,
+        "p50_ms": 3670.24,
+        "p90_ms": 4417.631,
+        "standard_deviation_ms": 469.83
+      },
+      "paired": {
+        "median_difference_ms": 2030.707,
+        "median_fresh_over_resumed_ratio": 2.185125,
+        "ratio_bootstrap_95_ci": {
+          "iterations": 20000,
+          "lower_95": 2.105448,
+          "seed": 20260723,
+          "upper_95": 2.245378
+        }
+      },
+      "pairs": [
+        {
+          "difference_ms": 2341.24,
+          "fresh_ms": 4270.601,
+          "fresh_over_resumed_ratio": 2.213479,
+          "lane_id": "lane-001",
+          "microvm_id": "microvm-9edaf74d-822c-3e0c-aff4-71eb33b9041d",
+          "resumed_ms": 1929.361
+        },
+        {
+          "difference_ms": 1955.257,
+          "fresh_ms": 3461.269,
+          "fresh_over_resumed_ratio": 2.298301,
+          "lane_id": "lane-002",
+          "microvm_id": "microvm-ba64fe78-e064-324c-b2cb-a4a94ff09eb0",
+          "resumed_ms": 1506.012
+        },
+        {
+          "difference_ms": 2205.741,
+          "fresh_ms": 4176.949,
+          "fresh_over_resumed_ratio": 2.118979,
+          "lane_id": "lane-003",
+          "microvm_id": "microvm-0b10a836-e93d-3eca-9aee-2bb43d26be8d",
+          "resumed_ms": 1971.208
+        },
+        {
+          "difference_ms": 2422.905,
+          "fresh_ms": 4364.759,
+          "fresh_over_resumed_ratio": 2.247728,
+          "lane_id": "lane-004",
+          "microvm_id": "microvm-202d8a7e-5bc3-35f8-89db-b086d6cd5f43",
+          "resumed_ms": 1941.854
+        },
+        {
+          "difference_ms": 1829.769,
+          "fresh_ms": 3397.979,
+          "fresh_over_resumed_ratio": 2.166788,
+          "lane_id": "lane-005",
+          "microvm_id": "microvm-b066d76d-dd26-34aa-bd6b-eff28fef22a0",
+          "resumed_ms": 1568.21
+        },
+        {
+          "difference_ms": 2040.228,
+          "fresh_ms": 3600.087,
+          "fresh_over_resumed_ratio": 2.307957,
+          "lane_id": "lane-006",
+          "microvm_id": "microvm-e343b538-9481-3191-9a10-9f6e68e64bc0",
+          "resumed_ms": 1559.859
+        },
+        {
+          "difference_ms": 2610.723,
+          "fresh_ms": 4580.084,
+          "fresh_over_resumed_ratio": 2.32567,
+          "lane_id": "lane-007",
+          "microvm_id": "microvm-09a2310e-e0bb-322d-a879-e9aefc5a7dcf",
+          "resumed_ms": 1969.361
+        },
+        {
+          "difference_ms": 2484.118,
+          "fresh_ms": 4519.895,
+          "fresh_over_resumed_ratio": 2.220231,
+          "lane_id": "lane-008",
+          "microvm_id": "microvm-fc87a609-4360-37bb-b24f-44b99d443a47",
+          "resumed_ms": 2035.777
+        },
+        {
+          "difference_ms": 2169.482,
+          "fresh_ms": 4156.338,
+          "fresh_over_resumed_ratio": 2.091917,
+          "lane_id": "lane-009",
+          "microvm_id": "microvm-5aa6ce24-3bea-375c-ad77-c719da3d0c98",
+          "resumed_ms": 1986.856
+        },
+        {
+          "difference_ms": 1784.753,
+          "fresh_ms": 3353.588,
+          "fresh_over_resumed_ratio": 2.13763,
+          "lane_id": "lane-010",
+          "microvm_id": "microvm-c3249849-cce6-3e23-84ed-6c8f62d84f84",
+          "resumed_ms": 1568.835
+        },
+        {
+          "difference_ms": 1605.998,
+          "fresh_ms": 3444.659,
+          "fresh_over_resumed_ratio": 1.873461,
+          "lane_id": "lane-011",
+          "microvm_id": "microvm-6adca83c-f25b-3239-9af6-f9704212a61f",
+          "resumed_ms": 1838.661
+        },
+        {
+          "difference_ms": 2021.185,
+          "fresh_ms": 3588.481,
+          "fresh_over_resumed_ratio": 2.2896,
+          "lane_id": "lane-012",
+          "microvm_id": "microvm-a591bfff-5c4c-3fdf-abd9-3d9926e166fd",
+          "resumed_ms": 1567.296
+        },
+        {
+          "difference_ms": 2402.019,
+          "fresh_ms": 4427.731,
+          "fresh_over_resumed_ratio": 2.185765,
+          "lane_id": "lane-013",
+          "microvm_id": "microvm-fa969fc7-94d6-3cd3-9cb4-cfa22aaa0017",
+          "resumed_ms": 2025.712
+        },
+        {
+          "difference_ms": 1927.051,
+          "fresh_ms": 3409.004,
+          "fresh_over_resumed_ratio": 2.300346,
+          "lane_id": "lane-014",
+          "microvm_id": "microvm-df5166ce-a555-3cb6-8e14-1d3ca467a780",
+          "resumed_ms": 1481.953
+        },
+        {
+          "difference_ms": 2221.669,
+          "fresh_ms": 4394.455,
+          "fresh_over_resumed_ratio": 2.022498,
+          "lane_id": "lane-015",
+          "microvm_id": "microvm-bd851016-b4a2-3e80-b513-8e577ea47405",
+          "resumed_ms": 2172.786
+        },
+        {
+          "difference_ms": 1910.612,
+          "fresh_ms": 4259.867,
+          "fresh_over_resumed_ratio": 1.813284,
+          "lane_id": "lane-016",
+          "microvm_id": "microvm-9b6a7aa9-b1b0-3934-84fe-dbff6f872a41",
+          "resumed_ms": 2349.255
+        },
+        {
+          "difference_ms": 1957.298,
+          "fresh_ms": 3446.639,
+          "fresh_over_resumed_ratio": 2.314204,
+          "lane_id": "lane-017",
+          "microvm_id": "microvm-566b9710-9adc-3246-905e-812cb737446e",
+          "resumed_ms": 1489.341
+        },
+        {
+          "difference_ms": 922.17,
+          "fresh_ms": 4417.631,
+          "fresh_over_resumed_ratio": 1.263819,
+          "lane_id": "lane-018",
+          "microvm_id": "microvm-5860cbb2-0a65-3e8c-ba3e-bc0cf261ac38",
+          "resumed_ms": 3495.461
+        },
+        {
+          "difference_ms": 1672.976,
+          "fresh_ms": 3383.155,
+          "fresh_over_resumed_ratio": 1.978246,
+          "lane_id": "lane-019",
+          "microvm_id": "microvm-8a20a70f-5ce2-39d9-98b4-61b2597afcd9",
+          "resumed_ms": 1710.179
+        },
+        {
+          "difference_ms": 1873.366,
+          "fresh_ms": 3396.911,
+          "fresh_over_resumed_ratio": 2.22961,
+          "lane_id": "lane-020",
+          "microvm_id": "microvm-d021a621-23b8-3eaf-b5f6-36235598c1a2",
+          "resumed_ms": 1523.545
+        },
+        {
+          "difference_ms": 1226.267,
+          "fresh_ms": 3442.994,
+          "fresh_over_resumed_ratio": 1.553188,
+          "lane_id": "lane-021",
+          "microvm_id": "microvm-ebd78490-3306-306f-a0d0-3384c2c44598",
+          "resumed_ms": 2216.727
+        },
+        {
+          "difference_ms": 1673.297,
+          "fresh_ms": 3322.927,
+          "fresh_over_resumed_ratio": 2.014347,
+          "lane_id": "lane-022",
+          "microvm_id": "microvm-94f90e78-03b2-3102-ae9b-a7018caa22b1",
+          "resumed_ms": 1649.63
+        },
+        {
+          "difference_ms": 2004.207,
+          "fresh_ms": 3535.356,
+          "fresh_over_resumed_ratio": 2.308956,
+          "lane_id": "lane-023",
+          "microvm_id": "microvm-e5601824-df59-3d58-9979-8d6f5be7618e",
+          "resumed_ms": 1531.149
+        },
+        {
+          "difference_ms": 2324.971,
+          "fresh_ms": 4287.827,
+          "fresh_over_resumed_ratio": 2.184484,
+          "lane_id": "lane-024",
+          "microvm_id": "microvm-3751e023-3ffe-37ff-98b9-a3e9beaf8b57",
+          "resumed_ms": 1962.856
+        },
+        {
+          "difference_ms": 2436.588,
+          "fresh_ms": 4396.792,
+          "fresh_over_resumed_ratio": 2.243028,
+          "lane_id": "lane-025",
+          "microvm_id": "microvm-5fccabbf-761f-3e01-a29d-7fb74f284f8e",
+          "resumed_ms": 1960.204
+        },
+        {
+          "difference_ms": 2096.219,
+          "fresh_ms": 3670.24,
+          "fresh_over_resumed_ratio": 2.331761,
+          "lane_id": "lane-026",
+          "microvm_id": "microvm-1d84a5d1-f4af-30d4-a951-27a5bf0391a8",
+          "resumed_ms": 1574.021
+        },
+        {
+          "difference_ms": 1526.56,
+          "fresh_ms": 3286.4,
+          "fresh_over_resumed_ratio": 1.867442,
+          "lane_id": "lane-027",
+          "microvm_id": "microvm-827dcefd-f799-3cd2-9c3c-182d8b243f9e",
+          "resumed_ms": 1759.84
+        },
+        {
+          "difference_ms": 2258.762,
+          "fresh_ms": 4266.237,
+          "fresh_over_resumed_ratio": 2.125176,
+          "lane_id": "lane-028",
+          "microvm_id": "microvm-7f8b649f-a8c0-32ba-8550-06c575a233fa",
+          "resumed_ms": 2007.475
+        },
+        {
+          "difference_ms": 2159.172,
+          "fresh_ms": 4263.986,
+          "fresh_over_resumed_ratio": 2.025826,
+          "lane_id": "lane-029",
+          "microvm_id": "microvm-08fa0e98-5047-35b6-b65d-6fd9777f04be",
+          "resumed_ms": 2104.814
+        },
+        {
+          "difference_ms": 2457.496,
+          "fresh_ms": 4416.163,
+          "fresh_over_resumed_ratio": 2.254678,
+          "lane_id": "lane-030",
+          "microvm_id": "microvm-feb28ff4-1a4a-3599-ac35-4dadf9d20a8f",
+          "resumed_ms": 1958.667
+        }
+      ],
+      "resumed": {
+        "count": 30,
+        "max_ms": 3495.461,
+        "mean_ms": 1880.563,
+        "min_ms": 1481.953,
+        "p50_ms": 1929.361,
+        "p90_ms": 2172.786,
+        "standard_deviation_ms": 393.062
+      }
+    },
+    "rails": {
+      "fresh": {
+        "count": 30,
+        "max_ms": 57039.638,
+        "mean_ms": 50871.216,
+        "min_ms": 42440.592,
+        "p50_ms": 56134.093,
+        "p90_ms": 56555.857,
+        "standard_deviation_ms": 6859.33
+      },
+      "paired": {
+        "median_difference_ms": 54946.755,
+        "median_fresh_over_resumed_ratio": 56.036463,
+        "ratio_bootstrap_95_ci": {
+          "iterations": 20000,
+          "lower_95": 54.288742,
+          "seed": 20260723,
+          "upper_95": 58.548267
+        }
+      },
+      "pairs": [
+        {
+          "difference_ms": 55182.431,
+          "fresh_ms": 56134.093,
+          "fresh_over_resumed_ratio": 58.985326,
+          "lane_id": "lane-001",
+          "microvm_id": "microvm-4fa714de-d9d8-3793-a074-e8b2c8daad25",
+          "resumed_ms": 951.662
+        },
+        {
+          "difference_ms": 41686.603,
+          "fresh_ms": 42463.661,
+          "fresh_over_resumed_ratio": 54.646707,
+          "lane_id": "lane-002",
+          "microvm_id": "microvm-c0277199-3ef3-3f9a-a2ba-f76f2bfd5843",
+          "resumed_ms": 777.058
+        },
+        {
+          "difference_ms": 41902.84,
+          "fresh_ms": 42665.073,
+          "fresh_over_resumed_ratio": 55.973794,
+          "lane_id": "lane-003",
+          "microvm_id": "microvm-efbd35da-c26c-39cf-ab04-a2c1473415df",
+          "resumed_ms": 762.233
+        },
+        {
+          "difference_ms": 41777.054,
+          "fresh_ms": 42534.529,
+          "fresh_over_resumed_ratio": 56.153047,
+          "lane_id": "lane-004",
+          "microvm_id": "microvm-7aceea8d-369c-3baa-a46d-79baccf82a32",
+          "resumed_ms": 757.475
+        },
+        {
+          "difference_ms": 56072.721,
+          "fresh_ms": 57039.638,
+          "fresh_over_resumed_ratio": 58.991245,
+          "lane_id": "lane-005",
+          "microvm_id": "microvm-37b3784f-9223-372a-a540-21116168d38c",
+          "resumed_ms": 966.917
+        },
+        {
+          "difference_ms": 55463.297,
+          "fresh_ms": 56410.134,
+          "fresh_over_resumed_ratio": 59.57745,
+          "lane_id": "lane-006",
+          "microvm_id": "microvm-d82e0a60-5289-3da9-8c71-60655abedd07",
+          "resumed_ms": 946.837
+        },
+        {
+          "difference_ms": 55084.351,
+          "fresh_ms": 56084.84,
+          "fresh_over_resumed_ratio": 56.057428,
+          "lane_id": "lane-007",
+          "microvm_id": "microvm-9ed376a0-7177-3288-ac2b-01385b8a2d77",
+          "resumed_ms": 1000.489
+        },
+        {
+          "difference_ms": 55699.622,
+          "fresh_ms": 56666.311,
+          "fresh_over_resumed_ratio": 58.618967,
+          "lane_id": "lane-008",
+          "microvm_id": "microvm-4d0df819-9ab0-386e-8dce-ef2166cd9cf3",
+          "resumed_ms": 966.689
+        },
+        {
+          "difference_ms": 41946.126,
+          "fresh_ms": 42708.568,
+          "fresh_over_resumed_ratio": 56.015498,
+          "lane_id": "lane-009",
+          "microvm_id": "microvm-57a90736-4cc2-3846-b6f2-1e287edac6ca",
+          "resumed_ms": 762.442
+        },
+        {
+          "difference_ms": 55266.735,
+          "fresh_ms": 56214.055,
+          "fresh_over_resumed_ratio": 59.340091,
+          "lane_id": "lane-010",
+          "microvm_id": "microvm-60f5dc7f-93c1-3dff-9a46-4c207077ce3e",
+          "resumed_ms": 947.32
+        },
+        {
+          "difference_ms": 41656.547,
+          "fresh_ms": 42523.438,
+          "fresh_over_resumed_ratio": 49.052808,
+          "lane_id": "lane-011",
+          "microvm_id": "microvm-d241f5f2-38ea-389c-853e-e9e031c17170",
+          "resumed_ms": 866.891
+        },
+        {
+          "difference_ms": 55590.014,
+          "fresh_ms": 56475.423,
+          "fresh_over_resumed_ratio": 63.784559,
+          "lane_id": "lane-012",
+          "microvm_id": "microvm-bb5389f0-b32c-37ef-96bd-4393e8110c72",
+          "resumed_ms": 885.409
+        },
+        {
+          "difference_ms": 41856.382,
+          "fresh_ms": 42636.014,
+          "fresh_over_resumed_ratio": 54.687358,
+          "lane_id": "lane-013",
+          "microvm_id": "microvm-701ed2aa-d735-34fb-a6f0-a3524c4b4669",
+          "resumed_ms": 779.632
+        },
+        {
+          "difference_ms": 54899.833,
+          "fresh_ms": 56169.777,
+          "fresh_over_resumed_ratio": 44.230121,
+          "lane_id": "lane-014",
+          "microvm_id": "microvm-f5d11031-4b17-38ce-b258-36edbdab086a",
+          "resumed_ms": 1269.944
+        },
+        {
+          "difference_ms": 42144.534,
+          "fresh_ms": 42868.79,
+          "fresh_over_resumed_ratio": 59.190107,
+          "lane_id": "lane-015",
+          "microvm_id": "microvm-8e7a2146-be19-3c26-8b5e-566d37941a83",
+          "resumed_ms": 724.256
+        },
+        {
+          "difference_ms": 54993.677,
+          "fresh_ms": 56391.24,
+          "fresh_over_resumed_ratio": 40.349694,
+          "lane_id": "lane-016",
+          "microvm_id": "microvm-3f859a4a-5d8b-3340-a512-8f4ab380fffe",
+          "resumed_ms": 1397.563
+        },
+        {
+          "difference_ms": 55008.608,
+          "fresh_ms": 56208.307,
+          "fresh_over_resumed_ratio": 46.852008,
+          "lane_id": "lane-017",
+          "microvm_id": "microvm-b2321c36-58e0-3382-b80b-ea50cdfc857f",
+          "resumed_ms": 1199.699
+        },
+        {
+          "difference_ms": 55354.288,
+          "fresh_ms": 56288.572,
+          "fresh_over_resumed_ratio": 60.247818,
+          "lane_id": "lane-018",
+          "microvm_id": "microvm-3c509202-12c9-3fff-bdd9-7c7868aef314",
+          "resumed_ms": 934.284
+        },
+        {
+          "difference_ms": 41834.68,
+          "fresh_ms": 42582.98,
+          "fresh_over_resumed_ratio": 56.906294,
+          "lane_id": "lane-019",
+          "microvm_id": "microvm-a0da136b-a511-3751-9c4a-1f460f29e5e4",
+          "resumed_ms": 748.3
+        },
+        {
+          "difference_ms": 41686.069,
+          "fresh_ms": 42440.592,
+          "fresh_over_resumed_ratio": 56.248242,
+          "lane_id": "lane-020",
+          "microvm_id": "microvm-725230d6-37c7-301d-bba7-b37c1fb435d1",
+          "resumed_ms": 754.523
+        },
+        {
+          "difference_ms": 55273.392,
+          "fresh_ms": 56281.852,
+          "fresh_over_resumed_ratio": 55.809702,
+          "lane_id": "lane-021",
+          "microvm_id": "microvm-e27740bd-5ee4-3699-979b-fec4cca92cb8",
+          "resumed_ms": 1008.46
+        },
+        {
+          "difference_ms": 41857.118,
+          "fresh_ms": 42585.352,
+          "fresh_over_resumed_ratio": 58.477566,
+          "lane_id": "lane-022",
+          "microvm_id": "microvm-6ab332af-a992-3c0b-8778-7ed7ceb90d6c",
+          "resumed_ms": 728.234
+        },
+        {
+          "difference_ms": 42069.961,
+          "fresh_ms": 42777.291,
+          "fresh_over_resumed_ratio": 60.477134,
+          "lane_id": "lane-023",
+          "microvm_id": "microvm-826aa27b-8bbf-3255-9bb3-6a02422ebdfb",
+          "resumed_ms": 707.33
+        },
+        {
+          "difference_ms": 55507.182,
+          "fresh_ms": 56555.857,
+          "fresh_over_resumed_ratio": 53.930776,
+          "lane_id": "lane-024",
+          "microvm_id": "microvm-42c69ea9-d444-34b1-9ae9-2832920f65f8",
+          "resumed_ms": 1048.675
+        },
+        {
+          "difference_ms": 41812.216,
+          "fresh_ms": 42606.194,
+          "fresh_over_resumed_ratio": 53.661681,
+          "lane_id": "lane-025",
+          "microvm_id": "microvm-676890ff-5caf-3d10-9bb5-d8b42e712313",
+          "resumed_ms": 793.978
+        },
+        {
+          "difference_ms": 54801.271,
+          "fresh_ms": 56225.267,
+          "fresh_over_resumed_ratio": 39.484147,
+          "lane_id": "lane-026",
+          "microvm_id": "microvm-96ee76ae-ef24-36f2-a31f-8f73b8877c2d",
+          "resumed_ms": 1423.996
+        },
+        {
+          "difference_ms": 55026.912,
+          "fresh_ms": 56524.365,
+          "fresh_over_resumed_ratio": 37.747004,
+          "lane_id": "lane-027",
+          "microvm_id": "microvm-050f97f6-e217-31f4-8e78-460b7fab4bf3",
+          "resumed_ms": 1497.453
+        },
+        {
+          "difference_ms": 55240.873,
+          "fresh_ms": 56291.078,
+          "fresh_over_resumed_ratio": 53.600086,
+          "lane_id": "lane-028",
+          "microvm_id": "microvm-0fa1e865-5851-3de7-a193-5044d6ad3ebf",
+          "resumed_ms": 1050.205
+        },
+        {
+          "difference_ms": 54864.252,
+          "fresh_ms": 55915.632,
+          "fresh_over_resumed_ratio": 53.183085,
+          "lane_id": "lane-029",
+          "microvm_id": "microvm-5e3af82b-300e-3b4f-8621-5b17cf6e8ea7",
+          "resumed_ms": 1051.38
+        },
+        {
+          "difference_ms": 55949.346,
+          "fresh_ms": 56867.557,
+          "fresh_over_resumed_ratio": 61.932995,
+          "lane_id": "lane-030",
+          "microvm_id": "microvm-4f197329-75a4-39c6-9ced-32af7a7dd14e",
+          "resumed_ms": 918.211
+        }
+      ],
+      "resumed": {
+        "count": 30,
+        "max_ms": 1497.453,
+        "mean_ms": 954.252,
+        "min_ms": 707.33,
+        "p50_ms": 934.284,
+        "p90_ms": 1269.944,
+        "standard_deviation_ms": 217.073
+      }
+    }
+  }
+}
