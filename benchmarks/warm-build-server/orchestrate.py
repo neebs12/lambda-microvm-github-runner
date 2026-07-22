@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Launch concurrent MicroVMs and orchestrate the warm-build benchmark."""
+"""Orchestrate repeated exact jobs across persistent Lambda MicroVMs."""
 
 from __future__ import annotations
 
@@ -10,9 +10,10 @@ import gzip
 import json
 import os
 import subprocess
+import threading
 import time
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -26,9 +27,12 @@ class Server:
     server_id: str
     microvm_id: str
     launch_started_ns: int
-    cold_provision_to_running_ms: float = 0
-    suspend_to_suspended_ms: float = 0
-    resume_to_running_ms: float = 0
+    provision_to_running_ms: float = 0
+    provision_to_job_complete_ms: float = 0
+    fresh_suspend_to_suspended_ms: float = 0
+    last_suspended_ns: int | None = None
+    resume_started_ns: dict[int, int] = field(default_factory=dict)
+    cycles: dict[int, dict[str, float | int]] = field(default_factory=dict)
 
 
 class Aws:
@@ -76,7 +80,9 @@ class Aws:
             state = self.state(microvm_id)
             if state == desired:
                 return
-            if state in {"TERMINATED", "TERMINATING"}:
+            if state == "TERMINATED" or (
+                state == "TERMINATING" and desired != "TERMINATED"
+            ):
                 raise RuntimeError(
                     f"{microvm_id} entered {state} while waiting for {desired}"
                 )
@@ -92,9 +98,12 @@ def encoded_run_payload(region: str) -> str:
     return base64.b64encode(gzip.compress(value)).decode("ascii")
 
 
-def launch_servers(args: argparse.Namespace, aws: Aws) -> list[Server]:
-    servers: list[Server] = []
-    run_id = uuid.uuid4().hex[:12]
+def launch_servers(
+    args: argparse.Namespace,
+    aws: Aws,
+    run_id: str,
+    servers: list[Server],
+) -> None:
     ingress = (
         f"arn:aws:lambda:{args.region}:aws:network-connector:"
         "aws-network-connector:SHELL_INGRESS"
@@ -104,57 +113,66 @@ def launch_servers(args: argparse.Namespace, aws: Aws) -> list[Server]:
         "aws-network-connector:INTERNET_EGRESS"
     )
     payload = encoded_run_payload(args.region)
-    for index in range(args.server_count):
-        started = time.perf_counter_ns()
-        try:
-            result = aws.call(
-                "run-microvm",
-                "--image-identifier",
-                args.image_arn,
-                "--image-version",
-                args.image_version,
-                "--execution-role-arn",
-                args.execution_role_arn,
-                "--ingress-network-connectors",
-                json.dumps([ingress]),
-                "--egress-network-connectors",
-                json.dumps([egress]),
-                "--logging",
-                json.dumps(
-                    {"cloudWatch": {"logGroup": args.log_group}},
-                    separators=(",", ":"),
-                ),
-                "--run-hook-payload",
-                payload,
-                "--maximum-duration-in-seconds",
-                str(args.maximum_duration_seconds),
-                "--client-token",
-                f"benchmark-{run_id}-{index}",
-            )
-        except RuntimeError as error:
-            print(f"launch {index + 1} rejected: {error}", flush=True)
-            break
-        servers.append(
-            Server(
-                server_id=f"server-{index + 1:02d}",
-                microvm_id=str(result["microvmId"]),
-                launch_started_ns=started,
-            )
-        )
-        time.sleep(0.25)
+    lock = threading.Lock()
 
-    def wait(server: Server) -> None:
+    def launch(index: int) -> None:
+        started = time.perf_counter_ns()
+        response = aws.call(
+            "run-microvm",
+            "--image-identifier",
+            args.image_arn,
+            "--image-version",
+            args.image_version,
+            "--execution-role-arn",
+            args.execution_role_arn,
+            "--ingress-network-connectors",
+            json.dumps([ingress]),
+            "--egress-network-connectors",
+            json.dumps([egress]),
+            "--logging",
+            json.dumps(
+                {"cloudWatch": {"logGroup": args.log_group}},
+                separators=(",", ":"),
+            ),
+            "--run-hook-payload",
+            payload,
+            "--maximum-duration-in-seconds",
+            str(args.maximum_duration_seconds),
+            "--client-token",
+            f"exact-job-{run_id}-{index}",
+        )
+        server = Server(
+            server_id=f"server-{index + 1:02d}",
+            microvm_id=str(response["microvmId"]),
+            launch_started_ns=started,
+        )
+        with lock:
+            servers.append(server)
         aws.wait_for_state(server.microvm_id, "RUNNING")
-        server.cold_provision_to_running_ms = round(
+        server.provision_to_running_ms = round(
             (time.perf_counter_ns() - server.launch_started_ns) / 1_000_000,
             3,
         )
 
+    errors: list[str] = []
     with concurrent.futures.ThreadPoolExecutor(
-        max_workers=len(servers)
+        max_workers=args.server_count
     ) as executor:
-        list(executor.map(wait, servers))
-    return servers
+        futures = {
+            executor.submit(launch, index): index
+            for index in range(args.server_count)
+        }
+        for future in concurrent.futures.as_completed(futures):
+            index = futures[future]
+            try:
+                future.result()
+            except Exception as error:
+                message = f"launch {index + 1} failed: {error}"
+                errors.append(message)
+                print(message, flush=True)
+    servers.sort(key=lambda server: server.server_id)
+    if errors:
+        raise RuntimeError("; ".join(errors))
 
 
 def shell_credentials(aws: Aws, server: Server) -> tuple[str, str]:
@@ -176,8 +194,9 @@ def run_shell_operation(
     server: Server,
     operation: str,
     guest_script_b64: str,
-    iterations: int,
-    parallel_batches: int,
+    *,
+    kind: str,
+    cycle: int,
 ) -> str:
     result: subprocess.CompletedProcess[str] | None = None
     last_error = ""
@@ -192,8 +211,8 @@ def run_shell_operation(
                     "BENCHMARK_OPERATION": operation,
                     "BENCHMARK_SERVER_ID": server.server_id,
                     "BENCHMARK_GUEST_SCRIPT_B64": guest_script_b64,
-                    "BENCHMARK_ITERATIONS": str(iterations),
-                    "BENCHMARK_PARALLEL_BATCHES": str(parallel_batches),
+                    "BENCHMARK_JOB_KIND": kind,
+                    "BENCHMARK_CYCLE": str(cycle),
                 }
             )
             result = subprocess.run(
@@ -216,137 +235,213 @@ def run_shell_operation(
                 f"exit={result.returncode} stdout={result.stdout.strip()} "
                 f"stderr={result.stderr.strip()}"
             )
-            if result.returncode in {12, 15, 20, 21}:
+            if result.returncode in {12, 15, 16, 17, 18, 20, 21}:
                 break
         if attempt < 6:
             time.sleep(min(5 * attempt, 20))
 
     if result is None or result.returncode != 0:
         raise RuntimeError(
-            f"{server.server_id} {operation} failed after retries: {last_error}"
+            f"{server.server_id} {operation} cycle {cycle} failed "
+            f"after retries: {last_error}"
         )
     return result.stdout.strip().splitlines()[-1]
 
 
-def run_phase(
+def run_jobs(
     aws: Aws,
     servers: list[Server],
-    phase: str,
+    *,
+    kind: str,
+    cycle: int,
     workers: int,
-    iterations: int,
-    parallel_batches: int,
-) -> list[dict[str, Any]]:
+) -> None:
     guest_script_b64 = base64.b64encode(GUEST_SCRIPT.read_bytes()).decode(
         "ascii"
     )
-    def run_operation(server: Server, operation: str) -> str:
+
+    def operation(server: Server, name: str) -> str:
         return run_shell_operation(
             aws,
             server,
-            operation,
+            name,
             guest_script_b64,
-            iterations,
-            parallel_batches,
+            kind=kind,
+            cycle=cycle,
         )
 
     with concurrent.futures.ThreadPoolExecutor(
         max_workers=min(workers, len(servers))
     ) as executor:
         futures = {
-            executor.submit(run_operation, server, f"{phase}-start"): server
+            executor.submit(operation, server, "job-start"): server
             for server in servers
         }
         for future in concurrent.futures.as_completed(futures):
             server = futures[future]
             future.result()
-            print(f"{server.server_id} {phase} started", flush=True)
+            print(
+                f"{server.server_id} {kind} cycle {cycle} started",
+                flush=True,
+            )
 
-    completed: dict[str, str] = {}
     pending = {server.server_id: server for server in servers}
     deadline = time.monotonic() + 1800
     while pending:
         if time.monotonic() >= deadline:
-            raise TimeoutError(f"{phase} did not finish within 30 minutes")
-        time.sleep(15)
+            raise TimeoutError(
+                f"{kind} cycle {cycle} did not finish within 30 minutes"
+            )
+        time.sleep(5)
+        completed: set[str] = set()
         with concurrent.futures.ThreadPoolExecutor(
             max_workers=min(workers, len(pending))
         ) as executor:
             futures = {
-                executor.submit(
-                    run_operation, server, f"{phase}-status"
-                ): server
+                executor.submit(operation, server, "job-status"): server
                 for server in pending.values()
             }
             for future in concurrent.futures.as_completed(futures):
                 server = futures[future]
-                value = future.result()
-                if value == "pending":
+                if future.result() == "pending":
                     continue
-                completed[server.server_id] = value
-                print(f"{server.server_id} {phase} complete", flush=True)
+                completed.add(server.server_id)
+                finished_ns = time.perf_counter_ns()
+                if kind == "fresh":
+                    server.provision_to_job_complete_ms = round(
+                        (finished_ns - server.launch_started_ns) / 1_000_000,
+                        3,
+                    )
+                else:
+                    server.cycles[cycle][
+                        "resume_to_job_complete_ms"
+                    ] = round(
+                        (
+                            finished_ns
+                            - server.resume_started_ns[cycle]
+                        )
+                        / 1_000_000,
+                        3,
+                    )
+                print(
+                    f"{server.server_id} {kind} cycle {cycle} complete",
+                    flush=True,
+                )
         pending = {
             server_id: server
             for server_id, server in pending.items()
             if server_id not in completed
         }
 
-    results: list[dict[str, Any]] = []
-    if phase == "phase1":
-        return results
-    for server in servers:
-        encoded = completed[server.server_id]
-        value = json.loads(base64.b64decode(encoded).decode("utf-8"))
-        value["control_plane"] = {
-            "cold_provision_to_running_ms": (
-                server.cold_provision_to_running_ms
-            ),
-            "suspend_to_suspended_ms": server.suspend_to_suspended_ms,
-            "resume_to_running_ms": server.resume_to_running_ms,
-        }
-        results.append(value)
-    return sorted(results, key=lambda result: result["server_id"])
 
-
-def transition(
-    aws: Aws,
-    servers: list[Server],
-    operation: str,
-    desired_state: str,
-    workers: int,
+def suspend_servers(
+    aws: Aws, servers: list[Server], *, after_cycle: int, workers: int
 ) -> None:
-    def execute(server: Server) -> None:
+    def suspend(server: Server) -> None:
         started = time.perf_counter_ns()
         aws.call(
-            f"{operation}-microvm",
-            "--microvm-identifier",
-            server.microvm_id,
+            "suspend-microvm", "--microvm-identifier", server.microvm_id
         )
-        aws.wait_for_state(server.microvm_id, desired_state)
-        duration = round(
-            (time.perf_counter_ns() - started) / 1_000_000, 3
-        )
-        if operation == "suspend":
-            server.suspend_to_suspended_ms = duration
+        aws.wait_for_state(server.microvm_id, "SUSPENDED")
+        completed = time.perf_counter_ns()
+        duration = round((completed - started) / 1_000_000, 3)
+        if after_cycle == 0:
+            server.fresh_suspend_to_suspended_ms = duration
         else:
-            server.resume_to_running_ms = duration
+            server.cycles[after_cycle][
+                "suspend_to_suspended_ms"
+            ] = duration
+        server.last_suspended_ns = completed
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as executor:
-        list(executor.map(execute, servers))
+        list(executor.map(suspend, servers))
+
+
+def resume_servers(
+    aws: Aws, servers: list[Server], *, cycle: int, workers: int
+) -> None:
+    def resume(server: Server) -> None:
+        started = time.perf_counter_ns()
+        if server.last_suspended_ns is None:
+            raise RuntimeError(f"{server.server_id} was not suspended")
+        server.resume_started_ns[cycle] = started
+        server.cycles[cycle] = {
+            "cycle": cycle,
+            "suspended_dwell_ms": round(
+                (started - server.last_suspended_ns) / 1_000_000, 3
+            ),
+        }
+        aws.call(
+            "resume-microvm", "--microvm-identifier", server.microvm_id
+        )
+        aws.wait_for_state(server.microvm_id, "RUNNING")
+        server.cycles[cycle]["resume_to_running_ms"] = round(
+            (time.perf_counter_ns() - started) / 1_000_000, 3
+        )
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as executor:
+        list(executor.map(resume, servers))
+
+
+def fetch_guest_results(
+    aws: Aws, servers: list[Server], workers: int
+) -> dict[str, dict[str, Any]]:
+    guest_script_b64 = base64.b64encode(GUEST_SCRIPT.read_bytes()).decode(
+        "ascii"
+    )
+
+    def fetch(server: Server) -> tuple[str, dict[str, Any]]:
+        encoded = run_shell_operation(
+            aws,
+            server,
+            "result",
+            guest_script_b64,
+            kind="result",
+            cycle=99,
+        )
+        value = json.loads(base64.b64decode(encoded).decode("utf-8"))
+        return server.server_id, value
+
+    with concurrent.futures.ThreadPoolExecutor(
+        max_workers=min(workers, len(servers))
+    ) as executor:
+        return dict(executor.map(fetch, servers))
 
 
 def terminate_all(aws: Aws, servers: list[Server]) -> None:
     def terminate(server: Server) -> None:
         try:
-            aws.call(
-                "terminate-microvm",
-                "--microvm-identifier",
-                server.microvm_id,
-            )
-        except RuntimeError as error:
+            if aws.state(server.microvm_id) != "TERMINATED":
+                aws.call(
+                    "terminate-microvm",
+                    "--microvm-identifier",
+                    server.microvm_id,
+                )
+                aws.wait_for_state(
+                    server.microvm_id, "TERMINATED", timeout_seconds=180
+                )
+        except (RuntimeError, TimeoutError) as error:
             print(f"cleanup warning for {server.server_id}: {error}")
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
         list(executor.map(terminate, servers))
+
+
+def public_control_plane(server: Server) -> dict[str, Any]:
+    return {
+        "fresh": {
+            "provision_to_running_ms": server.provision_to_running_ms,
+            "provision_to_job_complete_ms": (
+                server.provision_to_job_complete_ms
+            ),
+            "suspend_to_suspended_ms": (
+                server.fresh_suspend_to_suspended_ms
+            ),
+        },
+        "resumed_cycles": [
+            server.cycles[cycle] for cycle in sorted(server.cycles)
+        ],
+    }
 
 
 def main() -> None:
@@ -357,11 +452,10 @@ def main() -> None:
     parser.add_argument("--log-group", required=True)
     parser.add_argument("--profile", default="HomesCollectorAdmin")
     parser.add_argument("--region", default="us-east-1")
-    parser.add_argument("--server-count", type=int, default=9)
-    parser.add_argument("--minimum-server-count", type=int, default=3)
-    parser.add_argument("--shell-workers", type=int, default=3)
-    parser.add_argument("--iterations", type=int, default=5)
-    parser.add_argument("--parallel-batches", type=int, default=2)
+    parser.add_argument("--server-count", type=int, default=10)
+    parser.add_argument("--minimum-server-count", type=int, default=10)
+    parser.add_argument("--cycles", type=int, default=5)
+    parser.add_argument("--shell-workers", type=int, default=10)
     parser.add_argument(
         "--shell-readiness-delay-seconds", type=int, default=30
     )
@@ -369,40 +463,69 @@ def main() -> None:
     parser.add_argument("--image-artifact-sha256")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
+    if args.server_count < 1 or args.minimum_server_count < 1:
+        parser.error("server counts must be positive")
+    if args.minimum_server_count > args.server_count:
+        parser.error("minimum server count cannot exceed server count")
+    if args.cycles < 1:
+        parser.error("cycles must be positive")
+
     aws = Aws(args.profile, args.region)
+    run_id = uuid.uuid4().hex[:12]
     servers: list[Server] = []
+    guest_results: dict[str, dict[str, Any]] = {}
     try:
-        servers = launch_servers(args, aws)
+        launch_servers(args, aws, run_id, servers)
         if len(servers) < args.minimum_server_count:
             raise RuntimeError(
                 f"only {len(servers)} servers launched; "
                 f"minimum is {args.minimum_server_count}"
             )
-        print(f"{len(servers)} servers running", flush=True)
+        print(f"{len(servers)} fresh servers running", flush=True)
         time.sleep(args.shell_readiness_delay_seconds)
-        run_phase(
+
+        run_jobs(
             aws,
             servers,
-            "phase1",
-            args.shell_workers,
-            args.iterations,
-            args.parallel_batches,
+            kind="fresh",
+            cycle=0,
+            workers=args.shell_workers,
         )
-        transition(aws, servers, "suspend", "SUSPENDED", workers=2)
-        print("all servers suspended", flush=True)
-        transition(aws, servers, "resume", "RUNNING", workers=5)
-        print("all servers resumed", flush=True)
-        results = run_phase(
-            aws,
-            servers,
-            "phase2",
-            args.shell_workers,
-            args.iterations,
-            args.parallel_batches,
-        )
-        raw = {
-            "schema_version": 1,
+        suspend_servers(aws, servers, after_cycle=0, workers=5)
+        print("fresh jobs complete; all servers suspended", flush=True)
+
+        for cycle in range(1, args.cycles + 1):
+            resume_servers(aws, servers, cycle=cycle, workers=5)
+            print(f"all servers resumed for cycle {cycle}", flush=True)
+            run_jobs(
+                aws,
+                servers,
+                kind="resumed",
+                cycle=cycle,
+                workers=args.shell_workers,
+            )
+            if cycle == args.cycles:
+                guest_results = fetch_guest_results(
+                    aws, servers, args.shell_workers
+                )
+            suspend_servers(
+                aws, servers, after_cycle=cycle, workers=5
+            )
+            print(
+                f"resumed cycle {cycle} complete; all servers suspended",
+                flush=True,
+            )
+
+        results: list[dict[str, Any]] = []
+        for server in servers:
+            value = guest_results[server.server_id]
+            value["control_plane"] = public_control_plane(server)
+            results.append(value)
+
+        raw: dict[str, Any] = {
+            "schema_version": 2,
             "created_at_unix_ms": time.time_ns() // 1_000_000,
+            "run_id": run_id,
             "configuration": {
                 "image_name": args.image_arn.rsplit(":", 1)[-1],
                 "image_version": args.image_version,
@@ -410,10 +533,11 @@ def main() -> None:
                 "requested_server_count": args.server_count,
                 "actual_server_count": len(servers),
                 "requested_minimum_memory_mib": 2048,
-                "warm_iterations_per_server": args.iterations,
-                "parallel_build_batches_per_server": args.parallel_batches,
+                "resumed_cycles_per_server": args.cycles,
+                "fresh_sample_count": len(servers),
+                "resumed_sample_count": len(servers) * args.cycles,
             },
-            "servers": results,
+            "servers": sorted(results, key=lambda item: item["server_id"]),
         }
         if args.image_artifact_sha256:
             raw["configuration"]["image_artifact_sha256"] = (

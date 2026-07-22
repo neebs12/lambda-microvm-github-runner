@@ -1,7 +1,7 @@
 #!/usr/bin/expect -f
 
 set timeout 60
-match_max 1000000
+match_max 2000000
 log_user 0
 
 set endpoint $env(MICROVM_SHELL_ENDPOINT)
@@ -9,8 +9,8 @@ set token $env(MICROVM_SHELL_TOKEN)
 set operation $env(BENCHMARK_OPERATION)
 set server_id $env(BENCHMARK_SERVER_ID)
 set payload $env(BENCHMARK_GUEST_SCRIPT_B64)
-set iterations $env(BENCHMARK_ITERATIONS)
-set parallel_batches $env(BENCHMARK_PARALLEL_BATCHES)
+set job_kind $env(BENCHMARK_JOB_KIND)
+set cycle $env(BENCHMARK_CYCLE)
 
 set header_argument "--header=X-aws-proxy-auth: $token"
 spawn websocat --binary $header_argument "wss://$endpoint"
@@ -29,29 +29,34 @@ if {[info exists env(BENCHMARK_DEBUG)] && $env(BENCHMARK_DEBUG) eq "1"} {
     log_user 1
 }
 
-if {$operation eq "phase1-start"} {
-    send -- ": > /tmp/lmvm-guest-benchmark.b64\r"
+proc upload_guest {payload} {
+    send -- ": > /tmp/lmvm-exact-job-benchmark.b64\r"
     expect -re {λ \$ $}
     set payload_length [string length $payload]
     for {set offset 0} {$offset < $payload_length} {incr offset 512} {
         set chunk [string range $payload $offset [expr {$offset + 511}]]
-        send -- "printf '%s' '$chunk' >> /tmp/lmvm-guest-benchmark.b64\r"
+        send -- "printf '%s' '$chunk' >> /tmp/lmvm-exact-job-benchmark.b64\r"
         expect -re {λ \$ $}
     }
-    send -- "base64 -d /tmp/lmvm-guest-benchmark.b64 > /tmp/lmvm-guest-benchmark.py\r"
+    send -- "base64 -d /tmp/lmvm-exact-job-benchmark.b64 > /tmp/lmvm-exact-job-benchmark.py\r"
     expect -re {λ \$ $}
-    send -- "if test -f /tmp/lmvm-benchmark-phase1.status || (test -f /tmp/lmvm-benchmark-phase1.pid && kill -0 \"\$(cat /tmp/lmvm-benchmark-phase1.pid)\" 2>/dev/null); then true; else rm -f /tmp/lmvm-benchmark-phase1.status; nohup sh -c 'python3 /tmp/lmvm-guest-benchmark.py phase1 --server-id \"$server_id\" --iterations \"$iterations\" --parallel-batches \"$parallel_batches\" > /tmp/lmvm-benchmark-phase1.log 2>&1; echo \$? > /tmp/lmvm-benchmark-phase1.status' </dev/null >/tmp/lmvm-benchmark-phase1.launcher.log 2>&1 & echo \$! > /tmp/lmvm-benchmark-phase1.pid; fi\r"
+}
+
+set prefix "/tmp/lmvm-exact-job-$cycle"
+if {$operation eq "job-start"} {
+    upload_guest $payload
+    send -- "if test -f $prefix.status || (test -f $prefix.pid && kill -0 \"\$(cat $prefix.pid)\" 2>/dev/null); then true; else rm -f $prefix.status; nohup sh -c 'python3 /tmp/lmvm-exact-job-benchmark.py job --server-id \"$server_id\" --kind \"$job_kind\" --cycle \"$cycle\" > $prefix.log 2>&1; echo \$? > $prefix.status' </dev/null >$prefix.launcher.log 2>&1 & echo \$! > $prefix.pid; fi\r"
     expect -re {λ \$ $}
     send -- "exit\r"
     expect eof
     puts "started"
-} elseif {$operation eq "phase1-status"} {
-    send -- "if test -f /tmp/lmvm-benchmark-phase1.status; then echo BENCHMARK_STATUS=\$(cat /tmp/lmvm-benchmark-phase1.status); elif test -f /tmp/lmvm-benchmark-phase1.pid && kill -0 \"\$(cat /tmp/lmvm-benchmark-phase1.pid)\" 2>/dev/null; then echo BENCHMARK_\"\"PENDING; else echo BENCHMARK_\"\"MISSING; fi\r"
+} elseif {$operation eq "job-status"} {
+    send -- "if test -f $prefix.status; then echo BENCHMARK_STATUS=\$(cat $prefix.status); elif test -f $prefix.pid && kill -0 \"\$(cat $prefix.pid)\" 2>/dev/null; then echo BENCHMARK_\"\"PENDING; else echo BENCHMARK_\"\"MISSING; fi\r"
     expect {
         -re {BENCHMARK_STATUS=0} { puts "complete" }
         -re {BENCHMARK_STATUS=([1-9][0-9]*)} {
             log_user 1
-            send -- "tail -100 /tmp/lmvm-benchmark-phase1.log\r"
+            send -- "tail -120 $prefix.log\r"
             expect -re {λ \$ $}
             exit 12
         }
@@ -62,39 +67,23 @@ if {$operation eq "phase1-start"} {
     }
     send -- "exit\r"
     expect eof
-} elseif {$operation eq "phase2-start"} {
-    send -- "if test -f /tmp/lmvm-benchmark-phase2.status || (test -f /tmp/lmvm-benchmark-phase2.pid && kill -0 \"\$(cat /tmp/lmvm-benchmark-phase2.pid)\" 2>/dev/null); then true; else rm -f /tmp/lmvm-benchmark-phase2.status; nohup sh -c 'python3 /tmp/lmvm-guest-benchmark.py phase2 > /tmp/lmvm-benchmark-phase2.log 2>&1; echo \$? > /tmp/lmvm-benchmark-phase2.status' </dev/null >/tmp/lmvm-benchmark-phase2.launcher.log 2>&1 & echo \$! > /tmp/lmvm-benchmark-phase2.pid; fi\r"
-    expect -re {λ \$ $}
-    send -- "exit\r"
-    expect eof
-    puts "started"
-} elseif {$operation eq "phase2-status"} {
-    send -- "if test -f /tmp/lmvm-benchmark-phase2.status; then echo BENCHMARK_STATUS=\$(cat /tmp/lmvm-benchmark-phase2.status); elif test -f /tmp/lmvm-benchmark-phase2.pid && kill -0 \"\$(cat /tmp/lmvm-benchmark-phase2.pid)\" 2>/dev/null; then echo BENCHMARK_\"\"PENDING; else echo BENCHMARK_\"\"MISSING; fi\r"
+} elseif {$operation eq "result"} {
+    upload_guest $payload
+    send -- "if python3 /tmp/lmvm-exact-job-benchmark.py diagnostic; then echo BENCHMARK_DIAGNOSTIC_OK; else echo BENCHMARK_DIAGNOSTIC_FAILED; fi\r"
     expect {
-        -re {BENCHMARK_STATUS=0} {}
-        -re {BENCHMARK_STATUS=([1-9][0-9]*)} {
-            log_user 1
-            send -- "tail -100 /tmp/lmvm-benchmark-phase2.log\r"
-            expect -re {λ \$ $}
-            exit 15
-        }
-        -re {BENCHMARK_PENDING} {
-            puts "pending"
-            send -- "exit\r"
-            expect eof
-            exit 0
-        }
-        -re {BENCHMARK_MISSING} { exit 20 }
-        timeout { exit 16 }
-        eof { exit 17 }
+        -re {BENCHMARK_DIAGNOSTIC_OK} {}
+        -re {BENCHMARK_DIAGNOSTIC_FAILED} { exit 15 }
+        timeout { exit 15 }
+        eof { exit 16 }
     }
-    send -- "echo BENCHMARK_RESULT_B64=\$(base64 -w0 /tmp/lmvm-warm-build-benchmark/result.json):RESULT_END\r"
+    expect -re {λ \$ $}
+    send -- "echo BENCHMARK_RESULT_B64=\$(base64 -w0 /tmp/lmvm-exact-job-benchmark/result.json):RESULT_END\r"
     expect {
         -re {BENCHMARK_RESULT_B64=([A-Za-z0-9+/=]+):RESULT_END} {
             puts $expect_out(1,string)
         }
-        timeout { exit 18 }
-        eof { exit 19 }
+        timeout { exit 17 }
+        eof { exit 18 }
     }
     send -- "exit\r"
     expect eof

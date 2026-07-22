@@ -34,7 +34,7 @@ that state before the server suspends again.
 
 ## Test shape
 
-The default run uses nine persistent ARM64 MicroVMs. Each server performs:
+The default run uses ten persistent ARM64 MicroVMs. Each server performs:
 
 1. one fresh job;
 2. suspend;
@@ -44,8 +44,8 @@ The default run uses nine persistent ARM64 MicroVMs. Each server performs:
 
 This produces:
 
-- nine fresh-job samples; and
-- 45 resumed-job samples across five cycles.
+- ten fresh-job samples; and
+- 50 resumed-job samples across five cycles.
 
 Each server is its own control. No separate clean MicroVM is needed for every
 cycle.
@@ -183,8 +183,8 @@ when presenting results.
 
 For the total job and each workload, publish:
 
-- fresh p50 and p90 across the nine first runs;
-- resumed p50 and p90 across all 45 runs;
+- fresh p50 and p90 across the ten first runs;
+- resumed p50 and p90 across all 50 runs;
 - resumed results separately for cycles one through five;
 - each server's fresh result and resumed median;
 - fresh-to-resumed speedup ratios; and

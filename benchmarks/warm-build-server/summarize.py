@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Aggregate raw warm-build benchmark samples with nearest-rank percentiles."""
+"""Summarize fresh-versus-resumed exact-job benchmark samples."""
 
 from __future__ import annotations
 
@@ -10,6 +10,13 @@ import statistics
 from pathlib import Path
 from typing import Any
 
+METRICS = (
+    "docker_build_ms",
+    "npm_install_ms",
+    "typescript_build_ms",
+    "job_total_ms",
+)
+
 
 def percentile(values: list[float], proportion: float) -> float:
     ordered = sorted(values)
@@ -17,6 +24,8 @@ def percentile(values: list[float], proportion: float) -> float:
 
 
 def statistics_for(values: list[float]) -> dict[str, float | int]:
+    if not values:
+        raise ValueError("cannot summarize an empty sample")
     return {
         "n": len(values),
         "min_ms": round(min(values), 3),
@@ -29,19 +38,22 @@ def statistics_for(values: list[float]) -> dict[str, float | int]:
 
 
 def comparison(
-    baseline: dict[str, float | int],
-    candidate: dict[str, float | int],
+    fresh: dict[str, float | int], resumed: dict[str, float | int]
 ) -> dict[str, float]:
-    baseline_p50 = float(baseline["p50_ms"])
-    candidate_p50 = float(candidate["p50_ms"])
+    fresh_p50 = float(fresh["p50_ms"])
+    resumed_p50 = float(resumed["p50_ms"])
     return {
-        "baseline_p50_ms": baseline_p50,
-        "candidate_p50_ms": candidate_p50,
-        "p50_speedup": round(baseline_p50 / candidate_p50, 2),
+        "fresh_p50_ms": fresh_p50,
+        "resumed_p50_ms": resumed_p50,
+        "p50_speedup": round(fresh_p50 / resumed_p50, 2),
         "p50_time_reduction_percent": round(
-            (1 - candidate_p50 / baseline_p50) * 100, 1
+            (1 - resumed_p50 / fresh_p50) * 100, 1
         ),
     }
+
+
+def job_metric(job: dict[str, Any], metric: str) -> float:
+    return float(job["timings"][metric])
 
 
 def main() -> None:
@@ -52,79 +64,158 @@ def main() -> None:
     raw: dict[str, Any] = json.loads(
         args.raw_results.read_text(encoding="utf-8")
     )
+    if raw.get("schema_version") != 2:
+        raise ValueError("expected exact-job raw schema version 2")
     servers = raw["servers"]
-    sample_names = sorted(servers[0]["samples"])
-    aggregate: dict[str, dict[str, float | int]] = {}
-    per_server: dict[str, dict[str, dict[str, float | int]]] = {}
-    for sample_name in sample_names:
-        combined: list[float] = []
-        for server in servers:
-            values = [float(value) for value in server["samples"][sample_name]]
-            if values:
-                combined.extend(values)
-                per_server.setdefault(server["server_id"], {})[
-                    sample_name
-                ] = statistics_for(values)
-        if combined:
-            aggregate[sample_name] = statistics_for(combined)
+    if not servers:
+        raise ValueError("raw results contain no servers")
 
-    post_resume_first = [
-        float(server["samples"]["post_resume_exact_build_ms"][0])
-        for server in servers
-    ]
-    post_resume_steady = [
-        float(value)
-        for server in servers
-        for value in server["samples"]["post_resume_exact_build_ms"][1:]
-    ]
-    aggregate["post_resume_first_exact_build_ms"] = statistics_for(
-        post_resume_first
-    )
-    if post_resume_steady:
-        aggregate["post_resume_steady_exact_build_ms"] = statistics_for(
-            post_resume_steady
+    fresh_jobs: list[dict[str, Any]] = []
+    resumed_jobs: list[dict[str, Any]] = []
+    per_cycle_jobs: dict[int, list[dict[str, Any]]] = {}
+    per_server: dict[str, Any] = {}
+    input_hashes: set[str] = set()
+    verified_jobs = 0
+
+    for server in servers:
+        jobs = server["jobs"]
+        server_fresh = [job for job in jobs if job["kind"] == "fresh"]
+        server_resumed = [job for job in jobs if job["kind"] == "resumed"]
+        if len(server_fresh) != 1:
+            raise ValueError(
+                f"{server['server_id']} has {len(server_fresh)} fresh jobs"
+            )
+        expected_cycles = list(
+            range(1, raw["configuration"]["resumed_cycles_per_server"] + 1)
         )
+        observed_cycles = sorted(int(job["cycle"]) for job in server_resumed)
+        if observed_cycles != expected_cycles:
+            raise ValueError(
+                f"{server['server_id']} cycles {observed_cycles} "
+                f"do not match {expected_cycles}"
+            )
+        fresh_jobs.extend(server_fresh)
+        resumed_jobs.extend(server_resumed)
+        for job in jobs:
+            input_hashes.add(str(job["input_tree_sha256"]))
+            verified_jobs += int(bool(job["verified"]))
+            if job["kind"] == "resumed":
+                per_cycle_jobs.setdefault(int(job["cycle"]), []).append(job)
 
-    for control_name in (
-        "cold_provision_to_running_ms",
-        "suspend_to_suspended_ms",
-        "resume_to_running_ms",
-    ):
-        values = [
-            float(server["control_plane"][control_name]) for server in servers
-        ]
-        aggregate[control_name] = statistics_for(values)
+        metrics: dict[str, Any] = {}
+        for metric in METRICS:
+            fresh_value = job_metric(server_fresh[0], metric)
+            resumed_values = [
+                job_metric(job, metric) for job in server_resumed
+            ]
+            resumed_statistics = statistics_for(resumed_values)
+            metrics[metric] = {
+                "fresh_ms": round(fresh_value, 3),
+                "resumed": resumed_statistics,
+                "fresh_to_resumed_median_speedup": round(
+                    fresh_value / float(resumed_statistics["p50_ms"]), 2
+                ),
+            }
+        per_server[server["server_id"]] = {"metrics": metrics}
 
-    comparisons = {
-        "docker_cold_to_warm_exact": comparison(
-            aggregate["docker_cold_build_ms"],
-            aggregate["docker_warm_exact_build_ms"],
-        ),
-        "docker_cold_to_changed_source": comparison(
-            aggregate["docker_cold_build_ms"],
-            aggregate["docker_changed_source_build_ms"],
-        ),
-        "npm_cold_to_warm": comparison(
-            aggregate["npm_cold_install_ms"],
-            aggregate["npm_warm_install_ms"],
-        ),
-        "typescript_cold_to_incremental": comparison(
-            aggregate["typescript_cold_artifact_build_ms"],
-            aggregate["typescript_incremental_artifact_build_ms"],
-        ),
+    configured_fresh = int(raw["configuration"]["fresh_sample_count"])
+    configured_resumed = int(raw["configuration"]["resumed_sample_count"])
+    if len(fresh_jobs) != configured_fresh:
+        raise ValueError(
+            f"expected {configured_fresh} fresh samples, found {len(fresh_jobs)}"
+        )
+    if len(resumed_jobs) != configured_resumed:
+        raise ValueError(
+            "expected "
+            f"{configured_resumed} resumed samples, found {len(resumed_jobs)}"
+        )
+    if verified_jobs != len(fresh_jobs) + len(resumed_jobs):
+        raise ValueError("one or more benchmark jobs failed verification")
+    if len(input_hashes) != 1:
+        raise ValueError(f"benchmark used multiple input trees: {input_hashes}")
+
+    aggregate: dict[str, Any] = {}
+    comparisons: dict[str, Any] = {}
+    by_cycle: dict[str, Any] = {}
+    for metric in METRICS:
+        fresh_statistics = statistics_for(
+            [job_metric(job, metric) for job in fresh_jobs]
+        )
+        resumed_statistics = statistics_for(
+            [job_metric(job, metric) for job in resumed_jobs]
+        )
+        aggregate[metric] = {
+            "fresh": fresh_statistics,
+            "resumed": resumed_statistics,
+        }
+        comparisons[metric] = comparison(
+            fresh_statistics, resumed_statistics
+        )
+        by_cycle[metric] = {
+            str(cycle): statistics_for(
+                [job_metric(job, metric) for job in jobs]
+            )
+            for cycle, jobs in sorted(per_cycle_jobs.items())
+        }
+
+    control_metrics = {
+        "provision_to_running_ms": [
+            float(server["control_plane"]["fresh"]["provision_to_running_ms"])
+            for server in servers
+        ],
+        "provision_to_job_complete_ms": [
+            float(
+                server["control_plane"]["fresh"][
+                    "provision_to_job_complete_ms"
+                ]
+            )
+            for server in servers
+        ],
+        "fresh_suspend_to_suspended_ms": [
+            float(
+                server["control_plane"]["fresh"][
+                    "suspend_to_suspended_ms"
+                ]
+            )
+            for server in servers
+        ],
+        "resume_to_running_ms": [
+            float(cycle["resume_to_running_ms"])
+            for server in servers
+            for cycle in server["control_plane"]["resumed_cycles"]
+        ],
+        "resume_to_job_complete_ms": [
+            float(cycle["resume_to_job_complete_ms"])
+            for server in servers
+            for cycle in server["control_plane"]["resumed_cycles"]
+        ],
+        "resumed_suspend_to_suspended_ms": [
+            float(cycle["suspend_to_suspended_ms"])
+            for server in servers
+            for cycle in server["control_plane"]["resumed_cycles"]
+        ],
+        "suspended_dwell_ms": [
+            float(cycle["suspended_dwell_ms"])
+            for server in servers
+            for cycle in server["control_plane"]["resumed_cycles"]
+        ],
     }
-    if post_resume_steady:
-        comparisons["docker_cold_to_post_resume_steady"] = comparison(
-            aggregate["docker_cold_build_ms"],
-            aggregate["post_resume_steady_exact_build_ms"],
-        )
 
     summary = {
-        "schema_version": 1,
+        "schema_version": 2,
         "method": "nearest-rank percentiles",
         "server_count": len(servers),
+        "fresh_sample_count": len(fresh_jobs),
+        "resumed_sample_count": len(resumed_jobs),
+        "input_tree_sha256": next(iter(input_hashes)),
+        "verified_job_count": verified_jobs,
         "aggregate": aggregate,
         "comparisons": comparisons,
+        "resumed_by_cycle": by_cycle,
+        "control_plane": {
+            name: statistics_for(values)
+            for name, values in control_metrics.items()
+        },
         "per_server": per_server,
     }
     text = json.dumps(summary, indent=2, sort_keys=True) + "\n"

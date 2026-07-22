@@ -1,29 +1,23 @@
-# Warm build-server benchmark
+# Fresh versus resumed exact-job benchmark
 
-The proposed [fresh-versus-resumed exact-job methodology](METHODOLOGY.md)
-defines the next benchmark: run one fixed Docker, npm, and TypeScript job on a
-fresh MicroVM, then suspend, resume, and time that exact job repeatedly on the
-same MicroVM. The current scripts and published run below use the earlier
-single-resume methodology.
+This benchmark compares one fixed build job on a fresh Lambda MicroVM with the
+exact same job after that MicroVM suspends and resumes. Read the frozen
+[methodology](METHODOLOGY.md) before changing or running it.
 
-This benchmark measures whether a suspended Lambda MicroVM preserves useful
-build state. It runs the workload directly inside disposable MicroVMs so GitHub
-queueing and runner-registration time do not contaminate the cache timings.
+The default run launches ten persistent ARM64 MicroVMs. Each server runs one
+fresh job, then completes five `suspend → resume → exact same job` cycles. The
+result contains exactly 10 fresh samples and 50 resumed samples.
 
-The workload creates a 500-module TypeScript project and measures:
+The fixed job times:
 
-- a first Docker build, exact cache hits, and builds after a source change;
-- npm installs with an empty and then populated npm cache volume;
-- full and incremental TypeScript artifact builds;
-- warm container start/run/remove time;
-- batches of three concurrent Docker builds; and
-- exact Docker builds and container starts after suspend/resume.
+- an unchanged, layered multi-stage Node 24 Docker build;
+- `npm ci` with `node_modules` removed and the npm download cache preserved;
+- an unchanged incremental TypeScript artifact build; and
+- the complete job containing all three workloads and their verification.
 
-`orchestrate.py` launches the requested servers, starts the guest workload as a
-detached process, polls it over short-lived shell connections, suspends and
-resumes every server, retrieves the results, and terminates every server in a
-`finally` block. The detached process is necessary because preview shell
-connections have a bounded session lifetime.
+The workload runs directly inside disposable MicroVMs so GitHub queueing and
+runner-registration time do not contaminate the build measurements. The
+orchestrator separately records provision/resume-to-job-complete timings.
 
 ## Requirements
 
@@ -34,8 +28,7 @@ connections have a bounded session lifetime.
 - a warm-capable MicroVM image with Docker and Python 3
 
 The image should request a 2,048 MiB minimum and use the same runtime supervisor
-as the Action. The guest records the memory actually visible at runtime because
-the service can allocate more than the requested minimum.
+as the Action. The guest records the resources actually visible at runtime.
 
 ## Run
 
@@ -46,29 +39,30 @@ python3 benchmarks/warm-build-server/orchestrate.py \
   --image-artifact-sha256 "$IMAGE_ARTIFACT_SHA256" \
   --execution-role-arn "$RUNTIME_ROLE_ARN" \
   --log-group "$RUNTIME_LOG_GROUP" \
-  --server-count 9 \
-  --minimum-server-count 9 \
-  --shell-workers 9 \
-  --iterations 5 \
-  --parallel-batches 2 \
-  --output build/benchmark-raw.json
+  --server-count 10 \
+  --minimum-server-count 10 \
+  --shell-workers 10 \
+  --cycles 5 \
+  --output build/exact-job-benchmark-raw.json
 
 python3 benchmarks/warm-build-server/summarize.py \
-  build/benchmark-raw.json \
-  --output build/benchmark-summary.json
+  build/exact-job-benchmark-raw.json \
+  --output build/exact-job-benchmark-summary.json
 ```
 
-This creates billable resources and consumes regional MicroVM quota. Confirm
-that no non-terminated benchmark MicroVM remains if the host process is killed
-with an uncatchable signal.
+This creates billable resources and consumes regional MicroVM quota. The
+orchestrator terminates every server in a `finally` block, but an uncatchable
+host termination still requires a manual check for non-terminal MicroVMs.
 
-Percentiles use the nearest-rank method. The summary separates the first exact
-build after resume from subsequent exact builds because the first call pays a
-repeatable page-cache/daemon rewarming penalty even though the Docker layer
-cache survives.
+The summarizer rejects incomplete runs, changed inputs, missing cycles, and
+failed verification. Percentiles use the nearest-rank method. Because cycles on
+one server are repeated observations, the output includes per-server and
+per-cycle results rather than presenting all 50 samples as independent servers.
 
-## Published run
+## Earlier published run
 
-See the [2026-07-19 report](results/2026-07-19/REPORT.md),
+The [2026-07-19 report](results/2026-07-19/REPORT.md),
 [raw samples](results/2026-07-19/raw.json), and
-[generated summary](results/2026-07-19/summary.json).
+[summary](results/2026-07-19/summary.json) used the earlier single-resume
+methodology. They remain historical evidence and must not be mixed into the new
+exact-job statistics.
