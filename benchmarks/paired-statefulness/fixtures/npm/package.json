@@ -1,0 +1,16 @@
+{
+  "name": "paired-statefulness-production-like-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Frozen production-like npm dependency fixture",
+  "dependencies": {
+    "axios": "1.12.2",
+    "express": "5.1.0",
+    "jsonwebtoken": "9.0.2",
+    "lodash": "4.17.21",
+    "pino": "9.9.5",
+    "pg": "8.16.3",
+    "redis": "5.8.2",
+    "zod": "4.1.11"
+  }
+}

@@ -1,0 +1,84 @@
+#!/usr/bin/expect -f
+
+set timeout 90
+match_max 3000000
+log_user 0
+
+spawn websocat --binary "--header=X-aws-proxy-auth: $env(MICROVM_SHELL_TOKEN)" "wss://$env(MICROVM_SHELL_ENDPOINT)"
+expect {
+    -re {"type":"session_init"} {}
+    timeout { exit 10 }
+    eof { exit 11 }
+}
+send -- "\r"
+expect -re {λ \$ $}
+if {[info exists env(BENCHMARK_DEBUG)] && $env(BENCHMARK_DEBUG) eq "1"} {
+    log_user 1
+}
+
+set operation $env(BENCHMARK_OPERATION)
+set marker "/tmp/lmvm-paired-$env(BENCHMARK_WORKLOAD)-$env(BENCHMARK_PHASE)"
+
+if {$operation eq "start"} {
+    if {$env(BENCHMARK_PHASE) eq "fresh"} {
+        send -- ": > /tmp/lmvm-paired-guest.b64\r"
+        expect -re {λ \$ $}
+        set payload $env(BENCHMARK_GUEST_SCRIPT_B64)
+        set payload_length [string length $payload]
+        for {set offset 0} {$offset < $payload_length} {incr offset 768} {
+            set chunk [string range $payload $offset [expr {$offset + 767}]]
+            send -- "printf '%s' '$chunk' >> /tmp/lmvm-paired-guest.b64\r"
+            expect -re {λ \$ $}
+        }
+        send -- "base64 -d /tmp/lmvm-paired-guest.b64 > /tmp/lmvm-paired-guest.py\r"
+        expect -re {λ \$ $}
+        send -- ": > /tmp/lmvm-paired-config.b64\r"
+        expect -re {λ \$ $}
+        set config_payload $env(BENCHMARK_GUEST_CONFIG_B64)
+        set config_length [string length $config_payload]
+        for {set offset 0} {$offset < $config_length} {incr offset 768} {
+            set chunk [string range $config_payload $offset [expr {$offset + 767}]]
+            send -- "printf '%s' '$chunk' >> /tmp/lmvm-paired-config.b64\r"
+            expect -re {λ \$ $}
+        }
+        send -- "base64 -d /tmp/lmvm-paired-config.b64 > /tmp/lmvm-paired-config.json\r"
+        expect -re {λ \$ $}
+    }
+    set command "python3 /tmp/lmvm-paired-guest.py --config /tmp/lmvm-paired-config.json --phase \"$env(BENCHMARK_PHASE)\""
+    send -- "if test -f $marker.status || (test -f $marker.pid && kill -0 \"\$(cat $marker.pid)\" 2>/dev/null); then true; else rm -f $marker.status; nohup sh -c '$command > $marker.log 2>&1; echo \$? > $marker.status' </dev/null >$marker.launch.log 2>&1 & echo \$! > $marker.pid; fi; echo BENCHMARK_\"\"LAUNCHED\r"
+    expect -re {BENCHMARK_LAUNCHED}
+    send -- "exit\r"
+    puts "started"
+    exit 0
+} elseif {$operation eq "status"} {
+    send -- "if test -f $marker.status; then echo BENCHMARK_STATUS=\$(cat $marker.status); elif test -f $marker.pid && kill -0 \"\$(cat $marker.pid)\" 2>/dev/null; then echo BENCHMARK_\"\"PENDING; else echo BENCHMARK_\"\"MISSING; fi\r"
+    expect {
+        -re {BENCHMARK_STATUS=0} { puts "complete" }
+        -re {BENCHMARK_STATUS=([1-9][0-9]*)} {
+            log_user 1
+            send -- "tail -160 $marker.log\r"
+            expect -re {λ \$ $}
+            exit 12
+        }
+        -re {BENCHMARK_PENDING} { puts "pending" }
+        -re {BENCHMARK_MISSING} { exit 20 }
+        timeout { exit 13 }
+        eof { exit 14 }
+    }
+    send -- "exit\r"
+    exit 0
+} elseif {$operation eq "tail"} {
+    log_user 1
+    send -- "tail -200 $marker.log\r"
+    expect -re {λ \$ $}
+    send -- "exit\r"
+    exit 0
+} elseif {$operation eq "diagnostic"} {
+    log_user 1
+    send -- "ls -l $marker.* 2>/dev/null; cat $marker.status 2>/dev/null; cat $marker.launch.log 2>/dev/null; ps -ef | grep lmvm-paired-guest | grep -v grep\r"
+    expect -re {λ \$ $}
+    send -- "exit\r"
+    exit 0
+} else {
+    exit 21
+}
