@@ -525,11 +525,11 @@ pool configuration and no workflow can silently reconfigure another workflow.
 
 ## Testing strategy
 
-The direct nine-server build-cache benchmark, raw measurements, and percentile
-summary are published in the
-[warm build-server benchmark report](../benchmarks/warm-build-server/results/2026-07-19/REPORT.md).
-It complements the workflow E2Es below by isolating cache and suspend/resume
-behavior from GitHub queueing and runner-registration time.
+Benchmark harnesses, raw measurements, and research notes are maintained outside
+this product repository. Public articles and reproducible summaries should be
+linked from the README as they are published. These experiments complement the
+workflow E2Es below by isolating cache and suspend/resume behavior from GitHub
+queueing and runner-registration time.
 
 ### TypeScript unit tests
 
