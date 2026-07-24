@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import base64
 import binascii
+import hashlib
 import json
 import os
 import pwd
@@ -28,6 +29,7 @@ HOOK_PREFIX = "/aws/lambda-microvms/runtime/v1"
 MAX_HOOK_BODY_BYTES = 8_192
 MAX_RUN_HOOK_PAYLOAD_BYTES = 4_096
 MAX_JIT_CONFIG_BYTES = 1024 * 1024
+MAX_CONTROL_BODY_BYTES = MAX_JIT_CONFIG_BYTES + 8_192
 CONTAINERD_SOCKET = "/run/containerd/containerd.sock"
 
 
@@ -38,6 +40,7 @@ def log(message: str) -> None:
 @dataclass(frozen=True)
 class Settings:
     hook_port: int = 9000
+    control_port: int = 8080
     docker_dns: str = "169.254.169.253"
     docker_storage_driver: str = "overlay2"
     docker_start_attempts: int = 1
@@ -54,6 +57,9 @@ class Settings:
     def from_environment(cls) -> Settings:
         return cls(
             hook_port=_integer_environment("HOOK_PORT", 9000, 1, 65_535),
+            control_port=_integer_environment(
+                "CONTROL_PORT", 8080, 1, 65_535
+            ),
             docker_dns=os.environ.get("DOCKER_DNS", "169.254.169.253"),
             docker_storage_driver=os.environ.get(
                 "DOCKER_STORAGE_DRIVER", "overlay2"
@@ -140,6 +146,8 @@ class DockerManager:
 
             drivers = [self.settings.docker_storage_driver]
             if self.settings.docker_storage_driver != "vfs":
+                if self.settings.docker_storage_driver != "fuse-overlayfs":
+                    drivers.append("fuse-overlayfs")
                 drivers.append("vfs")
 
             for attempt in range(1, self.settings.docker_start_attempts + 1):
@@ -263,7 +271,11 @@ class DockerManager:
 
     def _driver_is_accepted(self) -> bool:
         driver = self.storage_driver()
-        return driver in (self.settings.docker_storage_driver, "vfs")
+        return driver in (
+            self.settings.docker_storage_driver,
+            "fuse-overlayfs",
+            "vfs",
+        )
 
     def _stop_process(self) -> None:
         if self.process is not None and self.process.poll() is None:
@@ -394,9 +406,13 @@ class SelfTerminator:
 
 class RunnerState(str, Enum):
     SNAPSHOTTED = "SNAPSHOTTED"
+    IDLE = "IDLE"
     STARTING_DOCKER = "STARTING_DOCKER"
     STARTING_RUNNER = "STARTING_RUNNER"
     RUNNING = "RUNNING"
+    SUSPENDING = "SUSPENDING"
+    SUSPENDED = "SUSPENDED"
+    RESUMING = "RESUMING"
     TERMINATING = "TERMINATING"
     FAILED = "FAILED"
 
@@ -416,10 +432,15 @@ class RunnerSupervisor:
         self.microvm_id: str | None = None
         self.runner_process: subprocess.Popen[bytes] | None = None
         self.external_termination = False
+        self.warm_mode = False
+        self.aws_region: str | None = None
+        self.last_request_id: str | None = None
+        self.last_request_fingerprint: str | None = None
+        self.last_request_succeeded = False
 
     def run(self, payload: dict[str, Any]) -> bool:
         try:
-            microvm_id, encoded_jit_config, aws_region = parse_run_payload(
+            microvm_id, encoded_jit_config, aws_region, warm_mode = parse_run_payload(
                 payload
             )
         except ValueError:
@@ -437,6 +458,8 @@ class RunnerSupervisor:
                 return False
             self.state = RunnerState.STARTING_DOCKER
             self.microvm_id = microvm_id
+            self.aws_region = aws_region
+            self.warm_mode = warm_mode
             self.external_termination = False
 
         if not self.docker.start():
@@ -445,8 +468,55 @@ class RunnerSupervisor:
             )
             return False
 
+        if warm_mode:
+            with self.lock:
+                self.state = RunnerState.IDLE
+            log(f"warm supervisor ready (microvm={microvm_id})")
+            return True
+
+        assert encoded_jit_config is not None
+        return self._start_runner(encoded_jit_config, None)
+
+    def start_runner(self, payload: dict[str, Any]) -> bool:
+        try:
+            request_id, microvm_id, encoded_jit_config = (
+                parse_control_payload(payload)
+            )
+        except ValueError:
+            log("control request is invalid")
+            return False
+
+        fingerprint = hashlib.sha256(
+            (microvm_id + "\0" + encoded_jit_config).encode("utf-8")
+        ).hexdigest()
         with self.lock:
+            if not self.warm_mode or self.microvm_id != microvm_id:
+                return False
+            if self.last_request_id == request_id:
+                return (
+                    self.last_request_fingerprint == fingerprint
+                    and self.last_request_succeeded
+                )
+            if self.state != RunnerState.IDLE:
+                return False
+            self.last_request_id = request_id
+            self.last_request_fingerprint = fingerprint
+            self.last_request_succeeded = False
             self.state = RunnerState.STARTING_RUNNER
+
+        succeeded = self._start_runner(encoded_jit_config, request_id)
+        with self.lock:
+            self.last_request_succeeded = succeeded
+        return succeeded
+
+    def _start_runner(
+        self, encoded_jit_config: str, request_id: str | None
+    ) -> bool:
+        with self.lock:
+            microvm_id = self.microvm_id
+            aws_region = self.aws_region
+        if microvm_id is None:
+            return False
 
         try:
             process = self.launcher.launch(encoded_jit_config)
@@ -469,7 +539,7 @@ class RunnerSupervisor:
             self.state = RunnerState.RUNNING
             watcher = threading.Thread(
                 target=self._watch_runner,
-                args=(process, microvm_id, aws_region),
+                args=(process, microvm_id, aws_region, request_id),
                 name="runner-watcher",
                 daemon=True,
             )
@@ -479,17 +549,36 @@ class RunnerSupervisor:
 
     def resume(self) -> bool:
         with self.lock:
-            process = self.runner_process
-            if (
-                self.state != RunnerState.RUNNING
-                or process is None
-                or process.poll() is not None
-            ):
+            if not self.warm_mode:
+                process = self.runner_process
+                if (
+                    self.state != RunnerState.RUNNING
+                    or process is None
+                    or process.poll() is not None
+                ):
+                    return False
+                return self.docker.is_ready() or self.docker.start()
+            if self.state not in {
+                RunnerState.SUSPENDING,
+                RunnerState.SUSPENDED,
+            }:
                 return False
-        return self.docker.is_ready() or self.docker.start()
+            self.state = RunnerState.RESUMING
+        ready = self.docker.is_ready() or self.docker.start()
+        with self.lock:
+            self.state = RunnerState.IDLE if ready else RunnerState.FAILED
+        return ready
 
     def suspend(self) -> bool:
+        with self.lock:
+            if not self.warm_mode or self.state != RunnerState.IDLE:
+                return False
+            self.state = RunnerState.SUSPENDING
+        self.docker.stop()
+        os.sync()
         sys.stderr.flush()
+        with self.lock:
+            self.state = RunnerState.SUSPENDED
         return True
 
     def terminate(self) -> None:
@@ -510,16 +599,25 @@ class RunnerSupervisor:
         process: subprocess.Popen[bytes],
         microvm_id: str,
         aws_region: str | None,
+        request_id: str | None,
     ) -> None:
         exit_code = process.wait()
         process.args = ["runner", "***"]
         log(f"runner exited (status={exit_code})")
-        self.docker.stop()
         with self.lock:
-            self.state = RunnerState.TERMINATING
-            should_self_terminate = not self.external_termination
+            self.runner_process = None
+            if self.warm_mode and not self.external_termination:
+                self.state = RunnerState.IDLE
+                should_self_terminate = False
+            else:
+                self.state = RunnerState.TERMINATING
+                should_self_terminate = not self.external_termination
+        if not self.warm_mode:
+            self.docker.stop()
         if should_self_terminate:
             self.terminator.terminate(microvm_id, aws_region)
+        elif request_id is not None:
+            log(f"warm runner complete (request={request_id[:12]})")
 
     def _fail_start(
         self, microvm_id: str, aws_region: str | None, reason: str
@@ -719,7 +817,7 @@ class Hooks(BaseHTTPRequestHandler):
             return
         hook = path.removeprefix(HOOK_PREFIX).strip("/")
         try:
-            payload = self._read_payload()
+            payload = self._read_payload(allow_missing=hook != "run")
         except ValueError:
             self._send_result(400, "invalid request")
             return
@@ -727,8 +825,10 @@ class Hooks(BaseHTTPRequestHandler):
         status, message = self.application.handle(hook, payload)
         self._send_result(status, message)
 
-    def _read_payload(self) -> dict[str, Any]:
+    def _read_payload(self, *, allow_missing: bool = False) -> dict[str, Any]:
         content_length_text = self.headers.get("Content-Length")
+        if content_length_text is None and allow_missing:
+            return {}
         if content_length_text is None or not content_length_text.isdigit():
             raise ValueError("invalid content length")
         content_length = int(content_length_text)
@@ -756,9 +856,72 @@ class Hooks(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
 
+class ControlApplication:
+    def __init__(self, supervisor: RunnerSupervisor) -> None:
+        self.supervisor = supervisor
+
+    def start_runner(self, payload: dict[str, Any]) -> tuple[int, str]:
+        return (
+            (202, "runner accepted")
+            if self.supervisor.start_runner(payload)
+            else (409, "runner rejected")
+        )
+
+
+class Control(BaseHTTPRequestHandler):
+    application: ControlApplication
+
+    def log_message(self, *_args: object) -> None:
+        return
+
+    def do_GET(self) -> None:
+        if self.path.split("?", 1)[0] == "/healthz":
+            self._send_result(200, "ok")
+        else:
+            self._send_result(404, "unknown path")
+
+    def do_POST(self) -> None:
+        if self.path.split("?", 1)[0] != "/v1/runner/start":
+            self._send_result(404, "unknown path")
+            return
+        try:
+            payload = self._read_payload()
+        except ValueError:
+            self._send_result(400, "invalid request")
+            return
+        status, message = self.application.start_runner(payload)
+        self._send_result(status, message)
+
+    def _read_payload(self) -> dict[str, Any]:
+        content_length_text = self.headers.get("Content-Length")
+        if content_length_text is None or not content_length_text.isdigit():
+            raise ValueError("invalid content length")
+        content_length = int(content_length_text)
+        if content_length < 1 or content_length > MAX_CONTROL_BODY_BYTES:
+            raise ValueError("invalid body size")
+        raw_body = self.rfile.read(content_length)
+        if len(raw_body) != content_length:
+            raise ValueError("incomplete body")
+        try:
+            payload = json.loads(raw_body)
+        except (json.JSONDecodeError, UnicodeDecodeError) as error:
+            raise ValueError("invalid json") from error
+        if not isinstance(payload, dict):
+            raise ValueError("body must be an object")
+        return payload
+
+    def _send_result(self, status: int, message: str) -> None:
+        body = f"{message}\n".encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "text/plain; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+
 def parse_run_payload(
     payload: dict[str, Any],
-) -> tuple[str, str, str | None]:
+) -> tuple[str, str | None, str | None, bool]:
     microvm_id = payload.get("microvmId")
     run_hook_payload = payload.get("runHookPayload")
     if (
@@ -769,18 +932,35 @@ def parse_run_payload(
         or not isinstance(run_hook_payload, str)
     ):
         raise ValueError("invalid run payload")
-    encoded_jit_config, aws_region = decode_run_hook_payload(run_hook_payload)
-    return microvm_id, encoded_jit_config, aws_region
+    encoded_jit_config, aws_region, warm_mode = decode_run_hook_payload(
+        run_hook_payload
+    )
+    return microvm_id, encoded_jit_config, aws_region, warm_mode
 
 
-def decode_run_hook_payload(payload: str) -> tuple[str, str | None]:
+def decode_run_hook_payload(
+    payload: str,
+) -> tuple[str | None, str | None, bool]:
     value = decode_jit_payload(payload)
     try:
         envelope = json.loads(value)
     except json.JSONDecodeError:
-        return value, None
-    if not isinstance(envelope, dict) or envelope.get("version") != 1:
-        return value, None
+        return value, None, False
+    if not isinstance(envelope, dict):
+        return value, None, False
+    if envelope.get("version") == 2 and envelope.get("mode") == "warm":
+        aws_region = envelope.get("region")
+        if (
+            not isinstance(aws_region, str)
+            or re.fullmatch(
+                r"[a-z]{2}(?:-[a-z0-9]+)+-\d", aws_region
+            )
+            is None
+        ):
+            raise ValueError("invalid warm run hook envelope")
+        return None, aws_region, True
+    if envelope.get("version") != 1:
+        return value, None, False
     encoded_jit_config = envelope.get("jit")
     aws_region = envelope.get("region")
     if (
@@ -790,7 +970,32 @@ def decode_run_hook_payload(payload: str) -> tuple[str, str | None]:
         or re.fullmatch(r"[a-z]{2}(?:-[a-z0-9]+)+-\d", aws_region) is None
     ):
         raise ValueError("invalid run hook envelope")
-    return encoded_jit_config, aws_region
+    return encoded_jit_config, aws_region, False
+
+
+def parse_control_payload(
+    payload: dict[str, Any],
+) -> tuple[str, str, str]:
+    if payload.get("version") != 1:
+        raise ValueError("unsupported control version")
+    request_id = payload.get("requestId")
+    microvm_id = payload.get("microvmId")
+    encoded_jit_config = payload.get("jit")
+    for value in (request_id, microvm_id):
+        if (
+            not isinstance(value, str)
+            or not value
+            or len(value) > 256
+            or any(character.isspace() for character in value)
+        ):
+            raise ValueError("invalid control identity")
+    if (
+        not isinstance(encoded_jit_config, str)
+        or not encoded_jit_config
+        or len(encoded_jit_config.encode("utf-8")) > MAX_JIT_CONFIG_BYTES
+    ):
+        raise ValueError("invalid JIT configuration")
+    return request_id, microvm_id, encoded_jit_config
 
 
 def decode_jit_payload(payload: str) -> str:
@@ -870,6 +1075,7 @@ def main() -> None:
     settings = Settings.from_environment()
     application = create_application(settings)
     Hooks.application = application
+    Control.application = ControlApplication(application.supervisor)
 
     def shutdown(signum: int, _frame: object) -> None:
         log(f"received signal {signum}; shutting down")
@@ -878,8 +1084,21 @@ def main() -> None:
 
     signal.signal(signal.SIGINT, shutdown)
     signal.signal(signal.SIGTERM, shutdown)
+    control_server = HookServer(
+        ("0.0.0.0", settings.control_port), Control
+    )
+    threading.Thread(
+        target=control_server.serve_forever,
+        name="control-server",
+        daemon=True,
+    ).start()
+    log(f"control server listening on 0.0.0.0:{settings.control_port}")
     log(f"lifecycle server listening on 0.0.0.0:{settings.hook_port}")
-    HookServer(("0.0.0.0", settings.hook_port), Hooks).serve_forever()
+    try:
+        HookServer(("0.0.0.0", settings.hook_port), Hooks).serve_forever()
+    finally:
+        control_server.shutdown()
+        control_server.server_close()
 
 
 if __name__ == "__main__":

@@ -2,9 +2,10 @@
 
 ## Status
 
-This document proposes an opt-in warm-cache mode. It is not part of the current
-Action contract. The existing `start` and `stop` modes remain the default and
-continue to create a new MicroVM and one GitHub JIT runner for each target job.
+This document defines the implementation and release gates for the opt-in,
+experimental warm-cache mode. Ordinary `start` and `stop` remain the default
+ephemeral contract and continue to create a new MicroVM and one GitHub JIT
+runner for each target job.
 
 Warm-cache mode reuses a Lambda MicroVM's disk and memory state for trusted jobs
 within the platform's eight-hour maximum lifetime. It does not reuse a GitHub
@@ -27,7 +28,8 @@ The intended product description is:
 - Deliver the first working version without DynamoDB or another state service.
 - Add cross-workflow discovery and concurrency control only after local
   suspend/resume behavior is proven.
-- Continue supporting `overlay2` with the production `vfs` fallback.
+- Continue supporting `overlay2`, copy-on-write `fuse-overlayfs`, and the final
+  production `vfs` fallback.
 - Keep setup script-driven and avoid Terraform.
 
 ## Non-goals
@@ -58,7 +60,7 @@ See GitHub's
 A workflow has root-equivalent access through Docker and can modify any cache
 that a later job consumes. A fresh JIT registration prevents accidental job
 assignment to an old runner identity, but it does not clean the filesystem or
-memory. Warm reuse is supported only when every job sharing a server key is
+memory. Warm reuse is supported only when every job sharing a server name is
 equally trusted.
 
 ### Make ownership changes conditional
@@ -97,47 +99,50 @@ than the remaining lifetime.
 
 ## Target action contract
 
-The public lifecycle remains the existing two modes:
+The public lifecycle remains the existing two modes and uses one `server`
+input/output:
 
-- `start` without `server-key`: preserve today's ephemeral behavior.
-- `start` with `server-key`: lease an available member of that warm server pool,
-  or create a member when the request's capacity permits it.
-- `stop` with an ephemeral handle or legacy `microvm-id`: terminate the MicroVM.
-- `stop` with a warm `server-handle`: conditionally release that exact lease and
-  suspend the member. At or beyond its reuse deadline, terminate it instead.
+- `start` without `server`: preserve today's ephemeral behavior.
+- `start` with a human-readable `server`: lease an available member of that warm
+  pool, or create a member when the request's capacity permits it.
+- `start` with an opaque `lmvm1_...` server value: resume the exact explicit
+  no-DynamoDB MicroVM used by the Phase 2 proof.
+- `stop` with legacy `microvm-id`: terminate an ephemeral MicroVM.
+- `stop` with the opaque `server` returned by warm `start`: conditionally
+  release that exact lease and suspend it. At or beyond its reuse deadline,
+  terminate it instead.
 
-Every Phase 2 warm operation performs targeted reconciliation for its server
+Every DynamoDB-backed warm operation performs targeted reconciliation for its
 pool. There are no additional lifecycle modes and no `gc` mode.
 
 Proposed inputs:
 
-| Input                         | Phase | Purpose                                                                   |
-| ----------------------------- | ----- | ------------------------------------------------------------------------- |
-| `microvm-id`                  | 1     | Explicit MicroVM used by the Phase 1 proof and legacy termination         |
-| `server-key`                  | 1/2   | Repository-scoped warm pool and trust-boundary identity                   |
-| `server-capacity`             | 2     | Optional ceiling for this request creating another pool member            |
-| `server-handle`               | 1/2   | Exact ephemeral resource or warm member lease returned by `start`         |
-| `state-table`                 | 2     | DynamoDB table used for pool discovery and leases                         |
-| `lease-timeout-seconds`       | 2     | Deadline for recovering an abandoned lease                                |
-| `warm-retention-seconds`      | 2     | Maximum desired suspended retention                                       |
-| `reuse-safety-margin-seconds` | 2     | Required lifetime remaining before another job; defaults to 1,800 seconds |
+| Input                         | Phase  | Purpose                                                                   |
+| ----------------------------- | ------ | ------------------------------------------------------------------------- |
+| `server`                      | 2-4    | Human pool name on start, or opaque exact lease returned by warm start    |
+| `server-capacity`             | 4      | Optional ceiling for this request creating another pool member            |
+| `state-table`                 | 3-4    | DynamoDB table used for pool discovery and leases                         |
+| `lease-timeout-seconds`       | 3-4    | Abandoned-lease deadline; defaults to `max-lifetime-seconds`              |
+| `max-lifetime-seconds`        | 2-4    | Platform lifetime; defaults to 7,200 and cannot exceed 28,800 seconds     |
+| `reuse-safety-margin-seconds` | 2-4    | Required lifetime remaining before another job; defaults to 1,800 seconds |
+| `microvm-id`                  | legacy | Direct termination compatibility for the existing ephemeral lifecycle     |
 
 Proposed outputs:
 
 - `label`
 - `runner-name`
 - `runner-id`
-- `microvm-id`
 - `image-version`
-- `server-handle`
-- `warm-hit` in Phase 2
-- `warm-expires-at` in Phase 2
-- `reuse-deadline` in Phase 2
+- `server`
+- `warm-hit`
+- `warm-expires-at`
+- `reuse-deadline`
 
-The `server-handle` identifies one exact resource and lease generation. It must
-be masked and must not contain AWS credentials, GitHub tokens, or JIT
-configuration data. A stale warm handle fails its conditional release without
-making an AWS lifecycle call.
+The opaque `server` value identifies one exact resource and lease generation. It
+intentionally contains no AWS credentials, GitHub tokens, endpoint auth tokens,
+or JIT configuration data, and must remain usable as a GitHub job output. A
+stale warm handle fails its conditional release without making an AWS lifecycle
+call; possession of a handle does not bypass AWS authorization.
 
 ### Request-local capacity semantics
 
@@ -223,59 +228,72 @@ references, records an idle result, and leaves suspension or termination to
 The `/suspend` hook must stop Docker and containerd cleanly, flush logs and
 filesystem writes, and reject suspension while a runner is busy. Stopping the
 daemons must preserve `/var/lib/docker`. The `/resume` hook restarts Docker,
-accepting either `overlay2` or the production `vfs` fallback, validates
-networking, and leaves the supervisor idle until a new JIT payload arrives.
+accepting `overlay2`, `fuse-overlayfs`, or the final production `vfs` fallback,
+validates networking, and leaves the supervisor idle until a new JIT payload
+arrives.
 
-## Phase 1: explicit warm session without DynamoDB
+## Phase 1: warm runtime foundation
 
 ### Purpose
 
-Prove the core claim with the fewest new moving parts: two different GitHub JIT
-jobs use one MicroVM and observe the same Docker cache across a real AWS
-suspend/resume boundary.
+Prove the image and supervisor state machine locally before introducing AWS
+lifecycle and GitHub scheduling variables.
 
-Workflow outputs carry `microvm-id` between control jobs. There is no automatic
-discovery, shared server pool, lease table, or cross-workflow reuse.
+### Implementation and exit criteria
+
+- Version the run-hook envelope so the image distinguishes `ephemeral` from
+  `warm` launches.
+- Add the dedicated control server and reject malformed, oversized,
+  duplicate-conflicting, wrong-MicroVM, and non-idle requests.
+- Make a warm runner exit return to `IDLE`; preserve ephemeral self-termination.
+- Stop Docker and containerd, call `sync`, and preserve `/var/lib/docker` before
+  suspension. Restart and validate them after resume.
+- Prove `overlay2`, `fuse-overlayfs`, and the always-available production `vfs`
+  fallback.
+- Run Node 24 and Redis service-equivalent containers after a local
+  suspend/resume hook cycle.
+
+## Phase 2: explicit AWS warm session without DynamoDB
+
+### Purpose
+
+Prove the core claim with the fewest cloud-side moving parts: two different
+GitHub JIT jobs use one MicroVM and observe the same Docker cache across a real
+AWS suspend/resume boundary. The opaque `server` output carries the exact
+MicroVM between control jobs. There is no discovery, lease table, or
+cross-workflow pool.
 
 ### Implementation
 
 1. Extend the AWS client with `SuspendMicrovm`, `ResumeMicrovm`,
    `CreateMicrovmAuthToken`, and the MicroVM endpoint returned by `RunMicrovm`
    and `GetMicrovm`.
-2. Extend the existing `start` and `stop` parsing with optional `server-key` and
-   `server-handle` inputs. Inputs without a server key or handle must preserve
-   today's behavior.
-3. Version the run-hook envelope so the image can distinguish `ephemeral` from
-   `warm` launches.
-4. Add the dedicated authenticated control server to the runner image.
-5. Refactor the supervisor so a warm JIT runner exit returns to `IDLE` instead
-   of self-terminating.
-6. Make suspend stop Docker and containerd cleanly without deleting Docker
-   state. Make resume restart and validate them with `vfs` fallback available.
-7. Add bounded, full-jitter retries and state polling for suspend and resume.
-8. Add the minimum IAM permissions for suspend, resume, and short-lived MicroVM
+2. Extend the existing `start` and `stop` parsing with the optional unified
+   `server` input/output. Inputs without it preserve today's behavior.
+3. Add bounded, full-jitter retries and state polling for suspend and resume.
+4. Add the minimum IAM permissions for suspend, resume, and short-lived MicroVM
    endpoint tokens. Do not add DynamoDB permissions yet.
-9. Add an experimental workflow that explicitly passes the same `microvm-id`
-   through two start/target/stop cycles and finally terminates it with the
-   legacy `stop` plus `microvm-id` path.
-10. Document that cancellation can leave the experimental VM suspended or
-    running until the existing maximum-duration backstop fires.
+5. Add an experimental workflow that passes the opaque `server` output through
+   two start/target/stop cycles.
+6. Validate `max-lifetime-seconds`, default it to 7,200, reject values over
+   28,800, and derive expiry and reuse deadline from AWS's observed start time.
+7. Document that cancellation can leave the experimental VM suspended or running
+   until the platform lifetime backstop fires.
 
-### Phase 1 example shape
+### Phase 2 example shape
 
 ```yaml
 prepare-first:
   runs-on: ubuntu-latest
   outputs:
     label: ${{ steps.runner.outputs.label }}
-    microvm-id: ${{ steps.runner.outputs.microvm-id }}
-    server-handle: ${{ steps.runner.outputs.server-handle }}
+    server: ${{ steps.runner.outputs.server }}
   steps:
     - id: runner
       uses: neebs12/lambda-microvm-github-runner@ref
       with:
         mode: start
-        server-key: phase1-proof
+        server: phase2-proof
         # The remaining image, role, token, and Region inputs are unchanged.
 
 first-job:
@@ -293,21 +311,20 @@ stop-first:
     - uses: neebs12/lambda-microvm-github-runner@ref
       with:
         mode: stop
-        server-handle: ${{ needs.prepare-first.outputs.server-handle }}
+        server: ${{ needs.prepare-first.outputs.server }}
 
 prepare-second:
   needs: [prepare-first, stop-first]
   runs-on: ubuntu-latest
   outputs:
     label: ${{ steps.runner.outputs.label }}
-    server-handle: ${{ steps.runner.outputs.server-handle }}
+    server: ${{ steps.runner.outputs.server }}
   steps:
     - id: runner
       uses: neebs12/lambda-microvm-github-runner@ref
       with:
         mode: start
-        server-key: phase1-proof
-        microvm-id: ${{ needs.prepare-first.outputs.microvm-id }}
+        server: ${{ needs.prepare-first.outputs.server }}
 
 second-job:
   needs: prepare-second
@@ -316,11 +333,11 @@ second-job:
     - run: docker image inspect warm-cache-proof
 ```
 
-The complete test workflow must include a final `stop` job with `if: always()`
-that passes the `microvm-id` without a warm handle, exercising the existing
-idempotent termination path.
+The complete test workflow must include a final terminating cleanup after the
+proof. The test harness may use legacy `microvm-id` for that terminal cleanup;
+normal warm workflow cleanup uses the opaque `server` value.
 
-### Phase 1 exit criteria
+### Phase 2 exit criteria
 
 - The two target jobs have different runner IDs, names, labels, and JIT
   configurations.
@@ -329,17 +346,20 @@ idempotent termination path.
 - The second job finds the first job's Docker image without pulling or
   rebuilding the unchanged layers.
 - Node 24 job containers and Redis service containers work after resume.
-- The proof passes with `overlay2` and with forced `vfs` fallback.
+- The proof passes with `overlay2`, forced `fuse-overlayfs`, and forced final
+  `vfs` fallback.
 - The existing ephemeral E2E matrix remains unchanged and green.
 - No JIT value, endpoint authentication token, PAT, or AWS secret appears in
   Action, supervisor, runner, or CloudWatch logs.
 
-## Phase 2: DynamoDB discovery and cross-workflow leases
+## Phase 3: DynamoDB discovery and single-member leases
 
 ### Purpose
 
-Allow independent workflow runs to request a repository-scoped server key and
-lease healthy suspended MicroVMs from its pool without knowing their IDs.
+Allow independent workflow runs to request a repository-scoped server name and
+lease a healthy suspended MicroVM without knowing its ID. This phase initially
+proves one-member discovery, fencing, expiry, and on-access recovery; it fails
+clearly when that member is busy.
 
 ### Table and IAM setup
 
@@ -356,7 +376,7 @@ SK = CONTROL
 SK = MEMBER#<member-id>
 ```
 
-The effective server key includes the user value plus Region, architecture,
+The effective server key includes the server name plus Region, architecture,
 image ID and version, execution role, and security-sensitive network
 configuration. The `CONTROL` item contains only the transactional member count
 and revision needed to reserve creation safely; it does not store an
@@ -386,7 +406,7 @@ tokens, or workflow secrets in DynamoDB.
 
 ### Acquire algorithm
 
-1. Normalize and hash the server key together with repository ID, Region,
+1. Normalize and hash the server name together with repository ID, Region,
    architecture, image ID and version, execution role, and network fingerprint.
 2. Read that pool partition consistently and reconcile its expired members.
 3. Prefer the most recently used healthy `READY` member whose
@@ -410,7 +430,7 @@ tokens, or workflow secrets in DynamoDB.
 
 ### Release algorithm
 
-1. Decode the `server-handle` and require the repository identity, server key
+1. Decode the opaque `server` and require the repository identity, server key
    hash, member identity, lease ID, and generation.
 2. Verify the GitHub JIT runner is gone or unambiguously idle.
 3. Conditionally change `LEASED` to `SUSPENDING` only when the lease ID and
@@ -455,22 +475,17 @@ again, the platform still terminates the unrecorded MicroVM at its maximum
 duration.
 
 This model deliberately accepts that unused suspended MicroVMs continue to
-consume regional MicroVM memory quota until their platform or configured
-suspended-duration deadline. A shorter `warm-retention-seconds` value can reduce
-that window without adding a scheduler.
+consume regional MicroVM memory quota until their platform lifetime deadline.
+Use a shorter `max-lifetime-seconds` when a workflow wants a smaller natural
+cleanup window without adding a scheduler.
 
-### Phase 2 exit criteria
+### Phase 3 exit criteria
 
 - A later workflow run using the same effective server key prefers a healthy
   available pool member and receives a new JIT runner identity.
 - Different repositories, Regions, architectures, and image versions cannot
   collide.
 - Exactly one workflow can own each member lease generation.
-- Concurrent starts can create distinct members up to their request-local
-  capacity without overshooting it.
-- A request with capacity `3` can grow a pool beyond the ceiling used by a
-  request with capacity `2`; the smaller request never shrinks the pool.
-- A request without capacity can grow the pool when every member is busy.
 - A stale owner cannot stop, suspend, or rewrite a newer lease.
 - Cancellation and expired leases recover on the next access without manual
   table edits.
@@ -481,7 +496,40 @@ that window without adding a scheduler.
 - The Quickstart setup and teardown scripts create and remove only their exact
   DynamoDB resources and policies.
 
+## Phase 4: concurrent pools and request-local capacity
+
+### Purpose
+
+Allow a server name to behave as a pool when workflows overlap, while keeping
+capacity deliberately simple and request-local. Capacity is not persisted as
+pool configuration and no workflow can silently reconfigure another workflow.
+
+### Semantics and exit criteria
+
+- Every start first leases any available healthy member, regardless of its
+  request's capacity value.
+- If no member is available and `server-capacity` is omitted, start reserves and
+  launches another member without an Action-level bound.
+- If no member is available and capacity is supplied, start creates a member
+  only when the active count is below that request's bound; otherwise it fails
+  clearly.
+- The active-count check, member reservation, and increment happen in one
+  DynamoDB transaction.
+- Concurrent starts create distinct members without overshooting the bound
+  evaluated by each successful transaction.
+- A request with capacity `3` may grow a pool beyond a bound of `2` used by
+  another request. The request with `2` neither shrinks nor terminates members.
+- Twenty concurrent acquisitions with capacity `5` produce at most five active
+  reservations. Mixed capacities `2` and `3`, omitted capacity, retries, and
+  stale lease generations are covered by deterministic adversarial tests.
+
 ## Testing strategy
+
+Benchmark harnesses, raw measurements, and research notes are maintained outside
+this product repository. Public articles and reproducible summaries should be
+linked from the README as they are published. These experiments complement the
+workflow E2Es below by isolating cache and suspend/resume behavior from GitHub
+queueing and runner-registration time.
 
 ### TypeScript unit tests
 
@@ -516,7 +564,8 @@ Extend the Python suite to prove:
 - JIT runner exit returns warm mode to `IDLE` without self-termination;
 - ephemeral mode still self-terminates after runner exit;
 - suspend refuses a busy runner and flushes/stops Docker cleanly when idle;
-- resume accepts working `overlay2` and the automatic `vfs` fallback;
+- resume accepts working `overlay2`, `fuse-overlayfs`, and the automatic `vfs`
+  fallback;
 - terminate stops runner, Docker, containerd, and the control server;
 - process arguments, exceptions, and logs never contain the JIT fixture;
 - concurrent control calls cannot create two runner processes.
@@ -530,14 +579,15 @@ The packaged ARM64 image test should:
 3. invoke the suspend hook and verify Docker/containerd stop successfully;
 4. invoke the resume hook and verify Docker restarts;
 5. verify the image and unchanged build layers still exist;
-6. repeat with forced `overlay2` failure and confirm `vfs` fallback preserves
-   functional cache state;
+6. repeat with forced `overlay2` failure and confirm `fuse-overlayfs` preserves
+   functional cache state, then force both copy-on-write drivers to confirm the
+   final `vfs` fallback starts;
 7. run a Node container and a Redis service-equivalent container after resume.
 
 Local hook calls do not prove AWS snapshot behavior. They are a fast gate before
 the AWS tests.
 
-### AWS Phase 1 E2E
+### AWS Phase 2 E2E
 
 Run in an independent private repository using temporary AWS and GitHub
 credentials. Record the workflow URL, MicroVM IDs, runner IDs, labels, image
@@ -561,12 +611,12 @@ Repeat with:
 - warm stop retry and terminating stop retry;
 - resume-hook failure and Docker startup failure;
 - expired MicroVM maximum duration;
-- `overlay2` and forced `vfs` fallback;
+- `overlay2`, forced `fuse-overlayfs`, and forced final `vfs` fallback;
 - Node 24 job container plus Redis service container;
 - no-op build and changed-layer build to distinguish a real cache hit from a
   merely preserved image tag.
 
-### AWS Phase 2 concurrency and recovery E2E
+### AWS Phase 4 concurrency and recovery E2E
 
 Use a temporary table and repository-scoped IAM policy. Test:
 
@@ -629,7 +679,7 @@ Collect, but do not initially enforce, these metrics:
 - running compute time, suspended storage time, and warm-cache hit rate;
 - behavior as Docker cache size grows.
 
-Phase 1 is successful only if the second job demonstrates an actual local cache
+Phase 2 is successful only if the second job demonstrates an actual local cache
 hit. A faster wall-clock result alone is insufficient evidence.
 
 ## Failure behavior
@@ -659,15 +709,15 @@ Before the feature is described as stable:
 - preserve the ordinary ephemeral example as the recommended default;
 - pass all existing Action and image gates without modifying their expected
   lifecycle;
-- pass the full private-repository Phase 1 and Phase 2 matrices;
+- pass the full private-repository Phase 2 and Phase 4 matrices;
 - review logs manually for secrets;
 - publish Action and runner-image SBOMs and checksums;
-- keep warm mode experimental until cancellation, stale leases, forced `vfs`,
-  and adversarial concurrency tests pass.
+- keep warm mode experimental until cancellation, stale leases, forced
+  `fuse-overlayfs`, forced `vfs`, and adversarial concurrency tests pass.
 
-Do not move the stable major tag based only on the no-DynamoDB proof. Phase 1 is
-an implementation spike and evidence-gathering release; Phase 2 must complete
-before warm-cache mode is marketed as cross-workflow functionality.
+Do not move the stable major tag based only on the no-DynamoDB proof. Phase 2 is
+an implementation spike and evidence-gathering release; Phases 3 and 4 must
+complete before warm-cache mode is marketed as cross-workflow functionality.
 
 ## Platform references
 

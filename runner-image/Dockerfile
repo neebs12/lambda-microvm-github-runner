@@ -2,10 +2,14 @@ FROM public.ecr.aws/lambda/microvms:al2023-minimal@sha256:05cb9b38d841e7ff1b693d
 
 ARG RUNNER_VERSION=2.335.1
 ARG RUNNER_SHA256=6d1e85bfd1a506a8b17c1f1b9b57dba458ffed90898799aaa9f599520b0d9207
+ARG NPM_VERSION=11.18.0
+ARG NPM_SHA512=4faecce0be70366d1c67b1012c4adc1246354a6cc45bf589f92003073b05518d547403df1475c542d67a4845e22b4fafcd7cac0af02c7a96cc6814f09eb003fb
 ARG BUILDX_VERSION=0.35.0
 ARG BUILDX_SHA256=c4248d6cbc4a619a7e0b4609c11e509ad4ac0b475e1c64817c0ac20c5d90c766
 ARG COMPOSE_VERSION=5.3.0
 ARG COMPOSE_SHA256=ba0d9f5ce70086b3830448ce2f8a6405513c996065fe45d2f7c144a1f0d99398
+ARG FUSE_OVERLAYFS_VERSION=1.17
+ARG FUSE_OVERLAYFS_SHA256=34c9995c929dd52f45cca985858d7e58d9a9626104bc2610db218aaa11115c23
 ARG DOCKER_PACKAGE=docker-25.0.16-1.amzn2023.0.2.aarch64
 ARG AWSCLI_VERSION=2.35.13
 ARG AWSCLI_SHA256=c562b596fa9711f340c82307ca9eff576a4b96e75f1a003d1e6b2fec77820883
@@ -59,6 +63,28 @@ RUN set -eux; \
     rm -f "${runner_archive}"
 
 RUN set -eux; \
+    npm_archive="/tmp/npm.tgz"; \
+    curl --fail --location --silent --show-error \
+      "https://registry.npmjs.org/npm/-/npm-${NPM_VERSION}.tgz" \
+      --output "${npm_archive}"; \
+    echo "${NPM_SHA512}  ${npm_archive}" | sha512sum --check --strict; \
+    for node_root in \
+      /opt/actions-runner/externals/node20 \
+      /opt/actions-runner/externals/node24; do \
+      npm_root="${node_root}/lib/node_modules/npm"; \
+      rm -rf "${npm_root}"; \
+      mkdir -p "${npm_root}"; \
+      tar --extract --gzip --file "${npm_archive}" \
+        --directory "${npm_root}" --strip-components=1; \
+      test "$("${node_root}/bin/node" \
+        "${npm_root}/bin/npm-cli.js" --version)" = "${NPM_VERSION}"; \
+      test "$("${node_root}/bin/node" -p \
+        "require('${npm_root}/node_modules/tar/package.json').version")" = \
+        "7.5.19"; \
+    done; \
+    rm -f "${npm_archive}"
+
+RUN set -eux; \
     plugin_dir="/usr/local/lib/docker/cli-plugins"; \
     mkdir -p "${plugin_dir}"; \
     curl --fail --location --silent --show-error \
@@ -72,6 +98,15 @@ RUN set -eux; \
     chmod 0755 "${plugin_dir}/docker-buildx" "${plugin_dir}/docker-compose"; \
     docker buildx version; \
     docker compose version
+
+RUN set -eux; \
+    fuse_overlayfs="/usr/local/bin/fuse-overlayfs"; \
+    curl --fail --location --silent --show-error \
+      "https://github.com/containers/fuse-overlayfs/releases/download/v${FUSE_OVERLAYFS_VERSION}/fuse-overlayfs-aarch64" \
+      --output "${fuse_overlayfs}"; \
+    echo "${FUSE_OVERLAYFS_SHA256}  ${fuse_overlayfs}" | sha256sum --check --strict; \
+    chmod 0755 "${fuse_overlayfs}"; \
+    "${fuse_overlayfs}" --version
 
 RUN set -eux; \
     useradd --create-home --shell /bin/bash runner; \

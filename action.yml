@@ -33,11 +33,15 @@ inputs:
     description: Comma-separated additional runner labels
     required: false
     default: lambda-microvm,docker
+  max-lifetime-seconds:
+    description:
+      Platform-enforced MicroVM lifetime from 1 through 28,800 seconds; defaults
+      to 7,200 seconds
+    required: false
   maximum-duration-seconds:
     description:
-      Platform-enforced MicroVM lifetime from 1 through 28,800 seconds
+      Deprecated alias for max-lifetime-seconds; do not provide both inputs
     required: false
-    default: "3600"
   startup-timeout-seconds:
     description: Overall AWS and GitHub runner readiness timeout
     required: false
@@ -47,9 +51,10 @@ inputs:
     required: false
     default: INTERNET_EGRESS
   ingress-connectors:
-    description: JSON array or comma-separated ingress connector identifiers
+    description:
+      JSON array or comma-separated ingress connectors; defaults to NO_INGRESS
+      for ephemeral runners and ALL_INGRESS for warm control traffic
     required: false
-    default: NO_INGRESS
   cloudwatch-log-group:
     description: Optional CloudWatch log group for MicroVM runtime logs
     required: false
@@ -60,6 +65,26 @@ inputs:
   microvm-id:
     description: MicroVM identifier returned by start mode
     required: false
+  server:
+    description:
+      Warm pool name on start, or the opaque server value returned by start
+    required: false
+  server-capacity:
+    description:
+      Optional request-local ceiling when all members of a warm pool are busy
+    required: false
+  state-table:
+    description: DynamoDB table for cross-workflow warm pool discovery
+    required: false
+  lease-timeout-seconds:
+    description:
+      Recovery deadline for an abandoned warm lease; defaults to the MicroVM max
+      lifetime
+    required: false
+  reuse-safety-margin-seconds:
+    description: Minimum lifetime reserved before a MicroVM can be reused
+    required: false
+    default: "1800"
   debug:
     description: Enable non-secret diagnostic metadata
     required: false
@@ -78,6 +103,14 @@ outputs:
     description: Launch Region
   image-version:
     description: Resolved MicroVM image version
+  server:
+    description: Opaque value for resuming or releasing this exact warm lease
+  warm-hit:
+    description: Whether start reused an existing warm MicroVM
+  warm-expires-at:
+    description: Platform lifetime deadline as an ISO-8601 timestamp
+  reuse-deadline:
+    description: Last reuse deadline as an ISO-8601 timestamp
 
 runs:
   using: node24

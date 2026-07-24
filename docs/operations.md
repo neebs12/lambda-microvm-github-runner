@@ -18,8 +18,8 @@ scripts/teardown-quickstart.sh --yes
 The script requires the generated `build/aws-setup.json` file and uses
 `build/microvm-image.json` when present. It deletes only the resource names and
 ARNs recorded there: repository secrets and variables, the dedicated Quickstart
-IAM user, project IAM roles, the MicroVM image, the versioned artifact bucket,
-and build/runtime log groups.
+IAM user, project IAM roles, the MicroVM image, the warm-state table, the
+versioned artifact bucket, and build/runtime log groups.
 
 ## Quickstart credential rotation
 
@@ -59,6 +59,20 @@ exhaustion. The defaults keep a simulated 200 simultaneous starts within the 100
 quota, request a quota increase or shape GitHub workflow concurrency. Do not add
 an internal queue to this product.
 
+Warm members consume regional MicroVM memory quota while running or suspended.
+`server-capacity` is a request-local creation ceiling, not persistent pool
+configuration: an available member is always reused; if all are busy, an omitted
+bound permits growth and a supplied bound rejects creation once the active count
+reaches it. Mixed bounds are intentionally allowed and the largest successful
+request can grow the pool. Use GitHub concurrency controls when a repository
+needs a stable operational bound.
+
+`max-lifetime-seconds` defaults to 7,200 and cannot exceed Lambda's
+28,800-second limit. A member inside the configured safety margin is terminated
+instead of reused. Untouched members naturally expire at their platform
+deadline; the next warm action reconciles stale table state. No scheduled
+garbage collector or table scan is required.
+
 ## Logs
 
 The AWS bootstrap creates build and runtime log groups with retention. Action
@@ -80,6 +94,11 @@ aws lambda-microvms list-microvms \
 Investigate runners near their maximum duration and terminate confirmed orphans.
 Alert on repeated self-termination failures or VMs consistently reaching the
 duration backstop.
+
+For warm pools, inspect the exact `MICROVM_WARM_STATE_TABLE` partition when a
+pool reports no capacity. Do not edit lease IDs or generations manually while a
+workflow may still own them. Teardown removes the whole project table; preview
+its resource list before using `--yes`.
 
 ## Image updates and rollback
 
@@ -107,7 +126,13 @@ version is active.
   status.
 - runner remains offline: inspect `/run`, Docker, DNS, and GitHub egress logs;
   start cleanup should terminate the VM.
-- Docker validation failure: inspect the supervisor log for both `overlay2` and
-  `vfs` startup failures. `vfs` is the automatic production fallback.
+- Docker validation failure: inspect the supervisor log for `overlay2`,
+  `fuse-overlayfs`, and `vfs` startup failures. `vfs` remains the final
+  production fallback.
+- `vfs` out of space: the fallback copies complete filesystem layers and is
+  substantially more storage-intensive than `overlay2`. On the 2 GiB runner,
+  prefer smaller base images and bounded caches; a large Node image plus service
+  images can exhaust the snapshot filesystem even though the same workload fits
+  with `overlay2`.
 - self-termination denied: correct the runtime role; the explicit stop job and
   maximum duration remain active.

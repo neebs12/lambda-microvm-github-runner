@@ -54,6 +54,9 @@ set_variable \
   MICROVM_RUNTIME_LOG_GROUP \
   "$(jq -r '.runtimeLogGroup // empty' "${SETUP_FILE}")"
 set_variable \
+  MICROVM_WARM_STATE_TABLE \
+  "$(jq -r '.warmStateTable // empty' "${SETUP_FILE}")"
+set_variable \
   MICROVM_RUNNER_IMAGE_ARN \
   "$(jq -r '.imageArn // empty' "${IMAGE_FILE}")"
 set_variable \

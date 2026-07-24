@@ -17,6 +17,20 @@ done
 
 docker build --tag "${IMAGE}" "${REPOSITORY_ROOT}/runner-image"
 
+docker run --rm --entrypoint sh "${IMAGE}" -lc '
+  set -eu
+  for node_root in \
+    /opt/actions-runner/externals/node20 \
+    /opt/actions-runner/externals/node24; do
+    test "$("${node_root}/bin/node" \
+      "${node_root}/lib/node_modules/npm/bin/npm-cli.js" --version)" = \
+      "11.18.0"
+    test "$("${node_root}/bin/node" -p \
+      "require(\"${node_root}/lib/node_modules/npm/node_modules/tar/package.json\").version")" = \
+      "7.5.19"
+  done
+'
+
 container_id=""
 temporary_directory="$(mktemp -d)"
 cleanup() {
@@ -70,9 +84,13 @@ readonly HOOK_PREFIX="/aws/lambda-microvms/runtime/v1"
 start_container
 [[ "$(hook ready '{}')" == "200" ]]
 docker exec "${container_id}" test ! -S /var/run/docker.sock
+docker exec "${container_id}" fuse-overlayfs --version >/dev/null
 stop_container
 
-start_container --privileged
+# Docker Desktop's nested cgroup environment cannot run a FUSE-backed child
+# container reliably. Force the final compatibility driver here; real Lambda
+# MicroVM validation covers fuse-overlayfs.
+start_container --privileged --env DOCKER_STORAGE_DRIVER=vfs
 [[ "$(hook validate '{}')" == "503" ]]
 for _attempt in $(seq 1 120); do
   validation_status="$(hook validate '{}')"

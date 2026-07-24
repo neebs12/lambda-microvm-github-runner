@@ -90,7 +90,7 @@ jobs:
           image-version: ${{ vars.MICROVM_RUNNER_IMAGE_VERSION }}
           execution-role-arn: ${{ vars.MICROVM_EXECUTION_ROLE_ARN }}
           cloudwatch-log-group: ${{ vars.MICROVM_RUNTIME_LOG_GROUP }}
-          maximum-duration-seconds: "3600"
+          max-lifetime-seconds: "3600"
 
   job:
     needs: start-runner
@@ -123,6 +123,26 @@ The start job emits a unique label for one target job. The runner is JIT-only
 and single-use. Its supervisor self-terminates after that job; the explicit stop
 job and platform maximum duration are independent cleanup backstops.
 
+### Experimental warm cache
+
+Warm mode reuses the MicroVM and its local Docker cache while creating a fresh
+JIT runner for every job. Set a human-readable `server` name on `start`, pass
+the opaque `server` output to `stop`, and configure the Quickstart-created
+`MICROVM_WARM_STATE_TABLE` for reuse across workflow runs. The informational
+`warm-hit` output reports whether an existing member was reused.
+
+> [!WARNING] A reused machine is a cache, not an isolation boundary. Enable warm
+> mode only for trusted workflows in the same private repository. Fork pull
+> requests are rejected. The Action uses authenticated MicroVM control traffic,
+> conditional DynamoDB leases, and the platform lifetime as its natural cleanup
+> backstop; it does not run a scheduled garbage collector.
+
+See [the warm-cache example](examples/warm-cache.yml) and the
+[implementation and testing design](docs/warm-cache.md). `server-capacity` is an
+optional request-local creation bound: an available member always wins; if all
+members are busy, omission permits another member, while a supplied bound fails
+once the current active count reaches it.
+
 ## Status
 
 The Action implements and tests:
@@ -136,10 +156,11 @@ The Action implements and tests:
 - typed GitHub and AWS adapters with mocked-boundary integration tests.
 
 The production AL2023 runner image is implemented and validated locally and
-through the AWS image build hooks. Docker prefers `overlay2` and always falls
-back to `vfs` if needed. The complete private-repository workflow is validated
-for success, job failure, cancellation, startup timeout, service containers, and
-the maximum-duration backstop.
+through the AWS image build hooks. Docker prefers `overlay2`, falls back to the
+copy-on-write `fuse-overlayfs`, and retains `vfs` as the final compatibility
+fallback. The complete private-repository workflow is validated for success, job
+failure, cancellation, startup timeout, service containers, and the
+maximum-duration backstop.
 
 ## Development
 
@@ -157,8 +178,8 @@ artifact directly.
 
 Version 1 is ARM64, JIT-only, repository-scoped, and intended for private
 repositories with trusted workflow changes. It has no webhook, queue,
-dispatcher, warm pool, shell ingress, persistent runner, or boot-time package
-installation.
+dispatcher, shell ingress, persistent GitHub runner registration, or boot-time
+package installation. Warm MicroVM reuse is experimental and opt-in.
 
 Detailed guides:
 
@@ -167,8 +188,14 @@ Detailed guides:
 - [security model](docs/security.md)
 - [operations and quotas](docs/operations.md)
 - [testing and release gates](docs/testing.md)
-- [proposed warm-cache implementation and testing plan](docs/warm-cache.md)
+- [warm-cache implementation and testing plan](docs/warm-cache.md)
 - [runner image](runner-image/README.md)
+
+### Performance evidence
+
+Benchmark harnesses, raw measurements, and research notes are maintained
+separately from the Action's product code. Public articles and reproducible
+summaries will be linked here as they are published.
 
 ## Credits and inspirations
 

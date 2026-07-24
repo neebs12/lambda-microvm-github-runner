@@ -50,17 +50,41 @@ export class MockGitHubJitClient implements GitHubJitClient {
 }
 
 export class MockMicrovmClient implements MicrovmClient {
+  public readonly resolveImageVersionRequests: string[] = [];
   public readonly runRequests: RunMicrovmRequest[] = [];
   public readonly getRequests: string[] = [];
+  public readonly suspendRequests: string[] = [];
+  public readonly resumeRequests: string[] = [];
+  public readonly authTokenRequests: {
+    microvmId: string;
+    port: number;
+    expirationMinutes: number;
+  }[] = [];
   public readonly terminateRequests: string[] = [];
 
   public constructor(
     private readonly handlers: {
       run?: (request: RunMicrovmRequest) => Promise<RunMicrovmResult>;
+      resolveImageVersion?: (imageId: string) => Promise<string>;
       get?: (microvmId: string) => Promise<Microvm | undefined>;
+      suspend?: (microvmId: string) => Promise<void>;
+      resume?: (microvmId: string) => Promise<void>;
+      createAuthToken?: (
+        microvmId: string,
+        port: number,
+        expirationMinutes: number,
+      ) => Promise<{ token: string }>;
       terminate?: (microvmId: string) => Promise<void>;
     } = {},
   ) {}
+
+  public async resolveImageVersion(imageId: string): Promise<string> {
+    this.resolveImageVersionRequests.push(imageId);
+    if (this.handlers.resolveImageVersion === undefined) {
+      throw new Error("Unexpected resolveImageVersion call");
+    }
+    return this.handlers.resolveImageVersion(imageId);
+  }
 
   public async run(request: RunMicrovmRequest): Promise<RunMicrovmResult> {
     this.runRequests.push(structuredClone(request));
@@ -68,6 +92,34 @@ export class MockMicrovmClient implements MicrovmClient {
       throw new Error("Unexpected run call");
     }
     return this.handlers.run(request);
+  }
+
+  public async suspend(microvmId: string): Promise<void> {
+    this.suspendRequests.push(microvmId);
+    if (this.handlers.suspend === undefined) {
+      throw new Error("Unexpected suspend call");
+    }
+    await this.handlers.suspend(microvmId);
+  }
+
+  public async resume(microvmId: string): Promise<void> {
+    this.resumeRequests.push(microvmId);
+    if (this.handlers.resume === undefined) {
+      throw new Error("Unexpected resume call");
+    }
+    await this.handlers.resume(microvmId);
+  }
+
+  public async createAuthToken(
+    microvmId: string,
+    port: number,
+    expirationMinutes: number,
+  ): Promise<{ token: string }> {
+    this.authTokenRequests.push({ microvmId, port, expirationMinutes });
+    if (this.handlers.createAuthToken === undefined) {
+      throw new Error("Unexpected createAuthToken call");
+    }
+    return this.handlers.createAuthToken(microvmId, port, expirationMinutes);
   }
 
   public async get(microvmId: string): Promise<Microvm | undefined> {

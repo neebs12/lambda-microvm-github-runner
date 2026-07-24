@@ -93,7 +93,8 @@ run_case() {
     executionRoleArn: "arn:aws:iam::123456789012:role/runner-runtime",
     githubLaunchRoleArn: "arn:aws:iam::123456789012:role/runner-launch",
     buildLogGroup: "/lambda-microvms/runner/build",
-    runtimeLogGroup: "/lambda-microvms/runner/runtime"
+    runtimeLogGroup: "/lambda-microvms/runner/runtime",
+    warmStateTable: "runner-warm-state"
   }' >"${case_directory}/setup.json"
 
   export MOCK_AWS_LOG="${case_directory}/aws.log"
@@ -122,6 +123,7 @@ run_case() {
     ($actions | index("lambda:*Microvm*")) != null and
     ($actions | index("iam:PassRole")) != null and
     ($actions | index("s3:PutObject")) != null and
+    ($actions | index("dynamodb:TransactWriteItems")) != null and
     ($actions | index("iam:CreateRole")) == null and
     ($actions | index("iam:PutRolePolicy")) == null and
     ($actions | index("iam:CreateUser")) == null and
