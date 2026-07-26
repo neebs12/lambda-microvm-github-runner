@@ -125,54 +125,40 @@ job and platform maximum duration are independent cleanup backstops.
 
 ## Warm build servers (experimental)
 
-Ordinary `start` and `stop` remain fully ephemeral: they create and terminate a
-MicroVM for one job. Warm mode is an explicit opt-in that lets trusted jobs
-reuse a suspended MicroVM as a short-lived build server. Its memory, Docker
-layers, package caches, and downloaded toolchains remain available, but every
-job still receives a fresh, single-use GitHub JIT runner registration.
+By default, every job gets a new MicroVM. To opt into warm reuse, give `start` a
+human-readable `server` pool name and the Quickstart-created
+`MICROVM_WARM_STATE_TABLE`. `start` creates or resumes a pool member, and `stop`
+suspends it for another job instead of terminating it.
 
-Give `start` a stable, human-readable `server` pool name and the
-Quickstart-created `MICROVM_WARM_STATE_TABLE`. Pass the opaque `server` output
-to `stop`; warm `stop` releases the lease and suspends the MicroVM instead of
-terminating it.
+The MicroVM is reused; the GitHub runner registration is not. Every target job
+still gets a fresh, single-use JIT runner.
 
-One warm pool member follows this lifecycle:
+One member of the `docker-builds` pool looks like this:
 
 ```text
-                         server: docker-builds
-
- first start           target job #1                stop
-      |                      |                         |
-      v                      v                         v
- create MicroVM -> fresh JIT runner -> cache on disk -> suspend
-                                                          |
- next start                                               |
-      |                                                   |
-      +--------------- resume same MicroVM <--------------+
-                              |
-                              v
-                       fresh JIT runner
-                              |
-                              v
-                       target job #2 -> suspend
-                              |
-                    cached state is still present
+RUN 1: start -> [ MicroVM A | fresh runner #1 | build populates cache ] -> stop -> SUSPEND
+                                                                          ||
+                                                    memory + disk preserved
+                                                                          \/
+RUN 2: start -> RESUME -> [ MicroVM A | fresh runner #2 | build can reuse cache ]
+       -> stop -> SUSPEND
 ```
 
-That makes warm mode useful for repeated, compatible workloads:
+This is useful when repeated, compatible workloads can reuse local state:
 
 - Docker can reuse its native image and build-layer cache without exporting a
   cache archive between jobs.
 - Package managers and build tools can reuse downloads, intermediate outputs,
   and installed toolchains left on the machine.
-- A named pool can serve multiple workflow runs. Conditional DynamoDB leases
-  ensure that only one job owns a particular MicroVM at a time.
+- A named pool can serve multiple workflow runs. Each MicroVM is leased to only
+  one job at a time.
 - Suspended members retain memory and disk state without remaining active
   between jobs. Lambda's maximum lifetime still provides a final cleanup
   boundary.
 
-The complete pattern uses the `server` output—not the human-readable pool
-name—when releasing the exact lease:
+There are only two warm-specific additions to the normal workflow: set the pool
+name and state table on `start`, then pass the opaque `server` output to `stop`.
+The output is a lease handle, not the human-readable pool name.
 
 ```yaml
 jobs:
@@ -198,10 +184,9 @@ jobs:
           image-id: ${{ vars.MICROVM_RUNNER_IMAGE_ARN }}
           image-version: ${{ vars.MICROVM_RUNNER_IMAGE_VERSION }}
           execution-role-arn: ${{ vars.MICROVM_EXECUTION_ROLE_ARN }}
+          # Human-readable pool name
           server: docker-builds
-          server-capacity: "2"
           state-table: ${{ vars.MICROVM_WARM_STATE_TABLE }}
-          max-lifetime-seconds: "7200"
 
   build:
     needs: start-runner
@@ -224,6 +209,7 @@ jobs:
       - uses: neebs12/lambda-microvm-github-runner@v1
         with:
           mode: stop
+          # Opaque lease handle returned by start
           server: ${{ needs.start-runner.outputs.server }}
 ```
 
@@ -232,12 +218,10 @@ member always wins. When every member is busy, `server-capacity` optionally
 limits whether that request may create another member; omitting it leaves pool
 growth unbounded by the Action.
 
-> [!WARNING] A reused machine is a cache, not an isolation boundary. A trusted
-> job has root-equivalent access through Docker and can alter state consumed by
-> later jobs. Use a warm pool only for equally trusted workflows in the same
-> private repository. Fork pull requests are rejected. Warm caches are
-> temporary, may expire, and do not guarantee that every workload becomes
-> faster.
+> [!WARNING] A warm cache is not an isolation boundary. Jobs can read or alter
+> state left by other jobs, so share a pool only between equally trusted
+> workflows in the same private repository. Warm caches are temporary, and cache
+> reuse does not guarantee that every workload becomes faster.
 
 See the copy-ready [warm-cache workflow](examples/warm-cache.yml) and the
 [warm-cache design and testing guide](docs/warm-cache.md) for lifecycle,
