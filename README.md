@@ -136,12 +136,39 @@ still gets a fresh, single-use JIT runner.
 One member of the `docker-builds` pool looks like this:
 
 ```text
-RUN 1: start -> [ MicroVM A | fresh runner #1 | build populates cache ] -> stop -> SUSPEND
-                                                                          ||
-                                                    memory + disk preserved
-                                                                          \/
-RUN 2: start -> RESUME -> [ MicroVM A | fresh runner #2 | build can reuse cache ]
-       -> stop -> SUSPEND
+RUN 1
+  |
+start
+  |
+  v
++-----------------------+
+| MicroVM A             |
+| fresh runner #1       |
+| build populates cache |
++-----------------------+
+  |
+stop
+  |
+  v
+SUSPEND
+memory + disk preserved
+  |
+  v
+RUN 2
+  |
+start + resume
+  |
+  v
++-----------------------+
+| same MicroVM A        |
+| fresh runner #2       |
+| build can reuse cache |
++-----------------------+
+  |
+stop
+  |
+  v
+SUSPEND
 ```
 
 This is useful when repeated, compatible workloads can reuse local state:
