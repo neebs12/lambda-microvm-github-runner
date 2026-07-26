@@ -123,25 +123,136 @@ The start job emits a unique label for one target job. The runner is JIT-only
 and single-use. Its supervisor self-terminates after that job; the explicit stop
 job and platform maximum duration are independent cleanup backstops.
 
-### Experimental warm cache
+## Warm build servers (experimental)
 
-Warm mode reuses the MicroVM and its local Docker cache while creating a fresh
-JIT runner for every job. Set a human-readable `server` name on `start`, pass
-the opaque `server` output to `stop`, and configure the Quickstart-created
-`MICROVM_WARM_STATE_TABLE` for reuse across workflow runs. The informational
-`warm-hit` output reports whether an existing member was reused.
+By default, every job gets a new MicroVM. To opt into warm reuse, give `start` a
+human-readable `server` pool name and the Quickstart-created
+`MICROVM_WARM_STATE_TABLE`. `start` creates or resumes a pool member, and `stop`
+suspends it for another job instead of terminating it.
 
-> [!WARNING] A reused machine is a cache, not an isolation boundary. Enable warm
-> mode only for trusted workflows in the same private repository. Fork pull
-> requests are rejected. The Action uses authenticated MicroVM control traffic,
-> conditional DynamoDB leases, and the platform lifetime as its natural cleanup
-> backstop; it does not run a scheduled garbage collector.
+The MicroVM is reused; the GitHub runner registration is not. Every target job
+still gets a fresh, single-use JIT runner.
 
-See [the warm-cache example](examples/warm-cache.yml) and the
-[implementation and testing design](docs/warm-cache.md). `server-capacity` is an
-optional request-local creation bound: an available member always wins; if all
-members are busy, omission permits another member, while a supplied bound fails
-once the current active count reaches it.
+One member of the `docker-builds` pool looks like this:
+
+```text
+RUN 1
+  |
+start
+  |
+  v
++-----------------------+
+| MicroVM A             |
+| fresh runner #1       |
+| build populates cache |
++-----------------------+
+  |
+stop
+  |
+  v
+SUSPEND
+memory + disk preserved
+  |
+  v
+RUN 2
+  |
+start + resume
+  |
+  v
++-----------------------+
+| same MicroVM A        |
+| fresh runner #2       |
+| build can reuse cache |
++-----------------------+
+  |
+stop
+  |
+  v
+SUSPEND
+```
+
+This is useful when repeated, compatible workloads can reuse local state:
+
+- Docker can reuse its native image and build-layer cache without exporting a
+  cache archive between jobs.
+- Package managers and build tools can reuse downloads, intermediate outputs,
+  and installed toolchains left on the machine.
+- A named pool can serve multiple workflow runs. Each MicroVM is leased to only
+  one job at a time.
+- Suspended members retain memory and disk state without remaining active
+  between jobs. Lambda's maximum lifetime still provides a final cleanup
+  boundary.
+
+There are only two warm-specific additions to the normal workflow: set the pool
+name and state table on `start`, then pass the opaque `server` output to `stop`.
+The output is a lease handle, not the human-readable pool name.
+
+```yaml
+jobs:
+  start-runner:
+    runs-on: ubuntu-latest
+    outputs:
+      label: ${{ steps.start.outputs.label }}
+      server: ${{ steps.start.outputs.server }}
+      warm-hit: ${{ steps.start.outputs.warm-hit }}
+      region: ${{ steps.start.outputs.region }}
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.MICROVM_AWS_REGION }}
+
+      - uses: neebs12/lambda-microvm-github-runner@v1
+        id: start
+        with:
+          mode: start
+          github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
+          image-id: ${{ vars.MICROVM_RUNNER_IMAGE_ARN }}
+          image-version: ${{ vars.MICROVM_RUNNER_IMAGE_VERSION }}
+          execution-role-arn: ${{ vars.MICROVM_EXECUTION_ROLE_ARN }}
+          # Human-readable pool name
+          server: docker-builds
+          state-table: ${{ vars.MICROVM_WARM_STATE_TABLE }}
+
+  build:
+    needs: start-runner
+    runs-on: ${{ needs.start-runner.outputs.label }}
+    steps:
+      - uses: actions/checkout@v6
+      - run: docker build --tag app:ci .
+
+  stop-runner:
+    if: ${{ always() && needs.start-runner.outputs.server != '' }}
+    needs: [start-runner, build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ needs.start-runner.outputs.region }}
+
+      - uses: neebs12/lambda-microvm-github-runner@v1
+        with:
+          mode: stop
+          # Opaque lease handle returned by start
+          server: ${{ needs.start-runner.outputs.server }}
+```
+
+`warm-hit` reports whether `start` resumed an existing member. An available
+member always wins. When every member is busy, `server-capacity` optionally
+limits whether that request may create another member; omitting it leaves pool
+growth unbounded by the Action.
+
+> [!WARNING] A warm cache is not an isolation boundary. Jobs can read or alter
+> state left by other jobs, so share a pool only between equally trusted
+> workflows in the same private repository. Warm caches are temporary, and cache
+> reuse does not guarantee that every workload becomes faster.
+
+See the copy-ready [warm-cache workflow](examples/warm-cache.yml) and the
+[warm-cache design and testing guide](docs/warm-cache.md) for lifecycle,
+security, failure-recovery, and capacity details.
 
 ## Status
 
